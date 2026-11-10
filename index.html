@@ -410,7 +410,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-10b';
+const APP_VER='2026-11-10c';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -2629,7 +2629,12 @@ function medRow(m,p){
   if(m.isDrip){const c=matchDrip(m),d=c&&p.drips[c.id];
     if(c&&d){const r=computeResult(c,+d.amp,+d.dose,+d.vol,+d.flow,parseFloat(p.wt));extra=r.stage==='done'?`<span class="tag t-drip">${esc(doseSummary(c,r))}</span>`:'<span class="tag t-warn">未填流速</span>';}}
   const del=S.editMode&&!S.archive?`<button class="xdel" data-del="med" data-k="${esc(m.ordKey||'')}" data-n="${(p.medList||[]).indexOf(m)}" title="${m.ordKey?'從醫囑起迄隱藏此藥':'刪除此筆'}">✕</button> `:'';
-  return `<div class="medrow ${m.cls==='exp'?'old':''}"><div><div class="mn">${del}${esc(m.display)}</div><div class="md">${esc(sub+notes)}</div></div>
+  let st='';
+  if(!m.expired&&m.cls!=='fluid'){
+    if(m.fromOrders&&m.startAt){st=`起 ${m.startMaybeEarlier?'≤ ':''}${m.startAt}${m.dot!=null&&!m.abx?`・累計 ${m.dot} 天`:''}${m.segAt&&m.segAt!==m.startAt?`・目前處方自 ${m.segAt}`:''}`;}
+    else{const L=p.medLog&&p.medLog[m.key];if(L&&(L.start||L.first))st=`起 ${L.start?'':'≤ '}${(L.start||L.first).slice(5).replace('-','/')}`;}
+  }
+  return `<div class="medrow ${m.cls==='exp'?'old':''}"><div><div class="mn">${del}${esc(m.display)}</div><div class="md">${esc(sub+notes)}</div>${st?`<div class="md" style="color:var(--navy2)">${esc(st)}</div>`:''}</div>
     <div class="right"><b>${esc(m.dose)}</b> ${esc(m.freq)}<br><span class="tag ${cls}">${lab}</span>${extra}</div></div>`;
 }
 function renderMeds(p,ro){
@@ -2641,12 +2646,12 @@ function renderMeds(p,ro){
     <span class="small mute">${p.medPasteAt?'用藥清單更新：'+esc(p.medPasteAt.slice(0,10))+' '+esc(hm(new Date(p.medPasteAt))):'尚未貼上醫囑'}</span></div>`;
   if(hasOrd)h+=renderOrders(p,ro);
   if(!list.length)return h+(hasOrd?'<div class="todo">醫囑紀錄中目前沒有使用中的藥品。</div>':'<div class="todo">還沒有用藥資料。按上方按鈕，貼上「目前用藥」或整份「醫囑列印紀錄」皆可，系統會自動判斷格式。</div>');
-  h+=renderStartTable(p);
   const groups=[['drip','輸注'],['pn','靜脈營養（PN）'],['fluid','輸液／稀釋液'],['abx','抗生素'],['reg','常規用藥'],['prn','PRN'],['once','單次'],['exp','已到期']];
   h+=`<div class="card"><h3>目前用藥${hasOrd?' <span class="small mute">（由醫囑起迄中仍使用中的藥品推得）</span>':''}</h3>`;
   groups.forEach(([k,t])=>{const g=list.filter(m=>m.cls===k);if(!g.length)return;
     h+=`<div class="secT">${t}（${g.length}）</div>`+g.map(m=>medRow(m,p)).join('');});
   h+='</div>';
+  h+=renderStartTable(p);
   // 抗生素療程
   const inList=new Set(list.filter(m=>!m.expired).map(m=>m.key));
   const abx=hasOrd?[]:Object.entries(p.medLog).filter(([,L])=>L.abx);
@@ -2676,7 +2681,7 @@ function renderStartTable(p){
   const rows=startRows(p);if(!rows.length)return '';
   const fromOrd=rows.some(r=>r.m.fromOrders);
   const [cls]=['t-reg'];
-  return `<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">現行用藥起始時間</h3><button class="small pri" id="btnCopyStart">複製起始時間清單</button></div>
+  return `<details class="card"${S.startOpen?' open':''} id="startDet"><summary style="cursor:pointer"><div class="row" style="justify-content:space-between;display:inline-flex;width:calc(100% - 20px)"><h3 style="margin:0;display:inline">現行用藥起始時間 <span class="small mute">（表格版，可展開）</span></h3><button class="small pri" id="btnCopyStart">複製起始時間清單</button></div></summary>
     <div class="tblwrap" style="margin-top:8px"><table class="tbl"><thead><tr><th>藥品</th><th>劑量／途徑／頻次</th><th>起始</th><th>天數</th><th>目前處方自</th><th>有效至</th></tr></thead><tbody>
     ${rows.map(r=>{const [c,l]=CLS_TAG[r.m.cls];return `<tr><td><span class="tag ${c}">${l}</span> <b>${esc(r.m.display)}</b></td>
       <td class="num">${esc(r.m.dose)}${r.m.route?' '+esc(r.m.route):''} ${esc(r.m.freq)}</td>
@@ -2687,7 +2692,7 @@ function renderStartTable(p){
     </tbody></table></div>
     <div class="small mute" style="margin-top:6px">${fromOrd
       ?'起始＝同一藥品療程的第一筆醫囑（到期或停用後重開仍算同一療程）；「目前處方自」＝最近一次換劑量或頻次的時間。標 ≤ 表示起始落在貼上範圍的第一張醫囑單、且不是 NEW 開立，實際可能更早，請往前補貼醫囑。抗生素天數為 DOT。'
-      :'目前用藥來自「目前用藥」清單，起始為第一次貼上的日期（標 ≤，實際可能更早）。要取得準確的起始時間，請貼上醫囑列印紀錄。'}</div></div>`;
+      :'目前用藥來自「目前用藥」清單，起始為第一次貼上的日期（標 ≤，實際可能更早）。要取得準確的起始時間，請貼上醫囑列印紀錄。'}</div></details>`;
 }
 function startText(p){
   return `【現行用藥起始時間】${ymd()}\n`+startRows(p).map(r=>{
@@ -2720,7 +2725,8 @@ async function copyText(text){
 function bindMeds(p,ro){
   if($('btnRepaste'))$('btnRepaste').onclick=()=>openPaste(p.id);
   if($('btnCopySoapMeds'))$('btnCopySoapMeds').onclick=async()=>{toast(await copyText(medsSoapText(p))?'已複製用藥清單':'複製失敗');};
-  if($('btnCopyStart'))$('btnCopyStart').onclick=async()=>{toast(await copyText(startText(p))?'已複製起始時間清單':'複製失敗');};
+  if($('startDet'))$('startDet').addEventListener('toggle',e=>{S.startOpen=e.target.open;});
+  if($('btnCopyStart'))$('btnCopyStart').onclick=async(ev)=>{ev.preventDefault();ev.stopPropagation();toast(await copyText(startText(p))?'已複製起始時間清單':'複製失敗');};
   if((p.orderSources||[]).length)bindOrders(p,ro);
   if(ro)return;
   document.querySelectorAll('[data-abx]').forEach(el=>el.onchange=()=>{
