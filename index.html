@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
@@ -31,7 +31,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--navy2);outline-o
 .mute{color:var(--mute)}
 .small{font-size:12.5px}
 
-
 /* ===== Lock screen ===== */
 #lock{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px 16px}
 .lockbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 24px;width:100%;max-width:440px;box-shadow:0 6px 24px rgba(0,0,0,.06)}
@@ -43,7 +42,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--navy2);outline-o
 .notice.warn{background:var(--warn-soft);color:var(--warn)}
 .notice.bad{background:var(--bad-soft);color:var(--bad)}
 .notice.info{background:var(--accent-soft);color:var(--accent)}
-
 
 /* ===== App ===== */
 #app{display:flex;flex-direction:column;height:100%}
@@ -85,7 +83,6 @@ main{flex:1;overflow-y:auto;padding:16px 18px 50px;min-width:0}
 .kv .k{color:var(--mute)}
 .todo{border:1px dashed var(--line);border-radius:12px;padding:30px 20px;text-align:center;color:var(--mute)}
 
-
 /* ===== Modal / toast ===== */
 .ov{position:fixed;inset:0;background:rgba(10,20,35,.5);display:flex;align-items:center;justify-content:center;padding:18px;z-index:100}
 .mbox{background:var(--card);border-radius:14px;padding:20px;width:100%;max-width:400px;box-shadow:0 12px 32px rgba(0,0,0,.3)}
@@ -94,7 +91,6 @@ main{flex:1;overflow-y:auto;padding:16px 18px 50px;min-width:0}
 .mbox .mb input{margin-top:8px}
 .mbox .ma{display:flex;gap:8px;justify-content:flex-end}
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:9px 18px;border-radius:999px;font-size:13.5px;z-index:120;max-width:90vw;text-align:center}
-
 
 /* ===== 一鍵貼上 ===== */
 .pbox{background:var(--card);border-radius:14px;padding:18px 20px;width:100%;max-width:980px;max-height:92vh;overflow-y:auto;box-shadow:0 12px 32px rgba(0,0,0,.3)}
@@ -179,7 +175,6 @@ button.link{border:none;background:none;color:var(--navy);padding:0;text-decorat
 .sir{font-weight:700}.sir-S{color:var(--accent)}.sir-I{color:var(--warn)}.sir-R{color:var(--bad)}.sir-D{color:#0e6b88}
 /* 檢驗表 */
 
-
 .tpnkv .k{white-space:nowrap;margin-right:10px}
 .issuebar{background:var(--warn-soft);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px}
 .issue{display:flex;gap:8px;align-items:flex-start;background:var(--card);border-radius:8px;padding:7px 10px;margin-top:6px}
@@ -216,7 +211,6 @@ tr.old td{opacity:.5;text-decoration:line-through}
 .gbar.expired{opacity:.55;border-right:2px dashed var(--ink)}
 .gbar.once{width:8px!important;height:8px;top:7px;border-radius:50%;transform:translateX(-4px)}
 
-
 @media (max-width:720px){
   .body{flex-direction:column}
   aside{width:auto;max-height:38vh;border-right:none;border-bottom:1px solid var(--line)}
@@ -225,13 +219,11 @@ tr.old td{opacity:.5;text-decoration:line-through}
 </head>
 <body>
 
-
 <!-- ======================= 鎖定 / 開啟畫面 ======================= -->
 <div id="lock">
   <div class="lockbox">
     <h1>病患工作平台</h1>
     <div class="sub">資料只存在你開啟的加密工作檔中，不上傳任何伺服器，瀏覽器也不留存。</div>
-
 
     <!-- 首頁 -->
     <div id="lkHome" class="stack">
@@ -242,7 +234,6 @@ tr.old td{opacity:.5;text-decoration:line-through}
       <div id="envCheck" class="small mute"></div>
     </div>
 
-
     <!-- 解鎖 -->
     <div id="lkUnlock" class="stack hidden">
       <div class="small mute">工作檔：<b id="lkFileName"></b></div>
@@ -251,7 +242,6 @@ tr.old td{opacity:.5;text-decoration:line-through}
       <button class="ghost" id="btnBack1">改開其他檔案</button>
       <div id="unlockMsg"></div>
     </div>
-
 
     <!-- 建立 -->
     <div id="lkCreate" class="stack hidden">
@@ -265,7 +255,6 @@ tr.old td{opacity:.5;text-decoration:line-through}
     </div>
   </div>
 </div>
-
 
 <!-- ======================= 主畫面 ======================= -->
 <div id="app" class="hidden">
@@ -298,7 +287,6 @@ tr.old td{opacity:.5;text-decoration:line-through}
   </div>
 </div>
 
-
 <div id="modal" class="ov hidden"><div class="mbox"><h4 id="mT"></h4><div class="mb" id="mB"></div><div class="ma" id="mA"></div></div></div>
 <div id="pasteOv" class="ov hidden"><div class="pbox">
   <h4>一鍵貼上病人資料／醫囑</h4>
@@ -314,10 +302,8 @@ tr.old td{opacity:.5;text-decoration:line-through}
 <input type="file" id="fileInput" accept=".jcpw" style="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0" tabindex="-1" aria-hidden="true">
 <script>/* iPad/iPhone 的檔案選擇器不認得 .jcpw，設 accept 會讓檔案變灰無法點選 */(function(){var i=document.getElementById("fileInput");if(/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1))i.removeAttribute("accept");})();</script>
 
-
 <script>
 'use strict';
-
 
 /*CRYPTO-START*/
 const ITER = 600000;
@@ -343,7 +329,6 @@ async function decryptText(text,pw){
 }
 /*CRYPTO-END*/
 
-
 /* ===================== 狀態 ===================== */
 const FS = 'showOpenFilePicker' in window && 'showSaveFilePicker' in window;
 const IS_TABLET=/iPad|Android|Tablet/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
@@ -365,14 +350,13 @@ const hm=(d=new Date())=>`${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const uid=()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const safeName=s=>String(s).replace(/[\\/:*?"<>|\s]+/g,'_').replace(/^_+|_+$/g,'')||'patient';
 
-
 function emptyData(){return {version:1,created:new Date().toISOString(),settings:{hideNames:false,dripInclDrugVol:true},patients:[]};}
 function ensurePatient(p){
   // 舊工作檔補上新欄位
   for(const [k,v] of Object.entries({medList:[],medLog:{},medPasteAt:'',drips:{},dripHistory:[],orderSources:[]}))if(p[k]==null)p[k]=JSON.parse(JSON.stringify(v));
   if(!p.labs||Array.isArray(p.labs))p.labs={cols:{},items:{}};
   RT.ensure(p);
-  microStore(p);examStore(p);consStore(p);issueStore(p);progStore(p);
+  microStore(p);examStore(p);consStore(p);issueStore(p);progStore(p);lineStore(p);
   return p;
 }
 function newPatient(){
@@ -384,7 +368,6 @@ function newPatient(){
     medList:[],medLog:{},medPasteAt:'',drips:{},dripHistory:[],orderSources:[],
     labs:{cols:{},items:{}},rt:{recs:[],rass:'',medExtra:''},soapDraft:null};
 }
-
 
 /* ===================== Modal / Toast ===================== */
 function modal(title,bodyHtml,buttons){
@@ -401,14 +384,12 @@ function modal(title,bodyHtml,buttons){
 const confirmBox=(t,msg,okText='確定',danger=false)=>modal(t,`<div>${msg}</div>`,[{t:'取消',v:false},{t:okText,v:true,cls:danger?'danger':'pri'}]).then(r=>r.v);
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.remove('hidden');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.add('hidden'),2600);}
 
-
 /* ===================== 密碼強度 ===================== */
 function pwWarn(pw){
   if(!pw)return '';
   if(pw.length<8||/^\d+$/.test(pw))return `<div class="notice warn">這組密碼${/^\d+$/.test(pw)?'只有數字':'少於 8 個字元'}，工作檔若遺失，別人可以在很短時間內用電腦逐一嘗試破解。建議至少 8 個字元並混合英文與數字。仍可使用。</div>`;
   return '<div class="notice info">密碼強度可接受。</div>';
 }
-
 
 /* ===================== 鎖定畫面流程 ===================== */
 function showLock(view){
@@ -421,7 +402,6 @@ $('fsNotice').innerHTML=FS
   ?'<div class="notice info">修改會自動存回工作檔。建議工作檔放在隨身碟或個人資料夾，換電腦時開同一個檔案即可。</div>'
   :`<div class="notice warn">${IS_TABLET?'平板模式：':'這個瀏覽器不支援直接存檔。'}開啟工作檔後照常使用，<b>結束前按「下載工作檔（存回）」</b>，會產生帶時間的新檔（例如 病患工作檔_1109-1230.jcpw）；回到筆電時開啟時間最新的那個檔。</div>`;
 
-
 let pendingFileText=null;
 $('btnOpen').onclick=async()=>{
   if(FS){
@@ -430,7 +410,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-09c';
+const APP_VER='2026-11-10a';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -456,7 +436,6 @@ $('btnBack1').onclick=()=>{S.handle=null;pendingFileText=null;showLock('lkHome')
 $('btnBack2').onclick=()=>showLock('lkHome');
 $('pwUnlock').addEventListener('keydown',e=>{if(e.key==='Enter')$('btnUnlock').click();});
 
-
 $('btnUnlock').onclick=async()=>{
   const pw=$('pwUnlock').value;if(!pw)return;
   const btn=$('btnUnlock');btn.disabled=true;btn.textContent='解鎖中…';
@@ -481,7 +460,6 @@ $('btnUnlock').onclick=async()=>{
   }finally{btn.disabled=false;btn.textContent='解鎖';}
 };
 
-
 $('btnNew').onclick=()=>{$('pwNew1').value='';$('pwNew2').value='';$('pwStrength').innerHTML='';showLock('lkCreate');setTimeout(()=>$('pwNew1').focus(),40);};
 $('pwNew1').addEventListener('input',()=>$('pwStrength').innerHTML=pwWarn($('pwNew1').value));
 $('btnCreate').onclick=async()=>{
@@ -505,7 +483,6 @@ $('btnCreate').onclick=async()=>{
   }finally{btn.disabled=false;btn.textContent='選擇存檔位置並建立';}
 };
 
-
 $('btnSample').onclick=()=>{
   S.data=sampleData();S.km=null;S.pw=null;S.handle=null;S.fileName='範例資料';S.mode='sample';S.canWrite=false;S.archive=null;
   const p1=S.data.patients[0];
@@ -523,14 +500,12 @@ $('btnSample').onclick=()=>{
   enterApp();toast('範例模式：所有資料皆為虛構，不會存檔');
 };
 
-
 /* ===================== 裝置與交接 ===================== */
 function deviceName(){let d='';try{d=localStorage.getItem('pw_device')||'';}catch(e){}return d||(IS_TABLET?'平板':'筆電');}
 function stampMeta(){S.data.meta=Object.assign(S.data.meta||{},{updatedAt:new Date().toISOString(),device:deviceName()});}
 function metaTxt(d){const m=d&&d.meta;if(!m||!m.updatedAt)return '';const t=new Date(m.updatedAt);return `${pad(t.getMonth()+1)}/${pad(t.getDate())} ${hm(t)}（${m.device||'?'}）`;}
 // 檔名：原名去掉舊時間戳，加上 _MMDD-HHmm
 function stampedName(){const d=new Date();const base=S.fileName.replace(/\.jcpw$/,'').replace(/(_備份)?_\d{4,8}-\d{4}$/,'');return `${base}_${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}.jcpw`;}
-
 
 /* ===================== 存檔 ===================== */
 let saveTimer=null;
@@ -589,7 +564,6 @@ $('btnDownload').onclick=async()=>{
 };
 window.addEventListener('beforeunload',e=>{if(S.data&&S.dirty&&S.mode!=='sample'){e.preventDefault();e.returnValue='';}});
 
-
 /* ===================== 鎖定 / 閒置 ===================== */
 async function lockNow(reason){
   if(!S.data)return;
@@ -611,14 +585,13 @@ let idleTimer=null;
 function resetIdle(){clearTimeout(idleTimer);if(S.data)idleTimer=setTimeout(()=>lockNow(`閒置超過 ${IDLE_MIN} 分鐘已自動鎖定。`),IDLE_MIN*60000);}
 ['mousemove','keydown','click','touchstart','scroll'].forEach(ev=>document.addEventListener(ev,resetIdle,{passive:true}));
 
-
 /* ===================== 主畫面 ===================== */
 function enterApp(){
   $('lock').classList.add('hidden');$('app').classList.remove('hidden');
   $('hdFile').textContent=S.fileName;
   $('btnDownload').textContent=S.mode==='download'?'下載工作檔（存回）':'匯出給平板／其他裝置';
   $('btnMerge').classList.toggle('hidden',S.mode==='sample');
-  const mt=metaTxt(S.data);if(mt)$('hdFile').textContent=S.fileName+' 最後更新 '+mt;
+  const mt=metaTxt(S.data);if(mt)$('hdFile').textContent=S.fileName+'　最後更新 '+mt;
   $('btnChangePw').classList.toggle('hidden',S.mode==='sample');
   S.data.patients.forEach(ensurePatient);
   if(S.data.settings.dripInclDrugVol==null)S.data.settings.dripInclDrugVol=true;
@@ -629,13 +602,12 @@ function enterApp(){
 function sortedPatients(){return [...S.data.patients].sort((a,b)=>(a.bed||'~').localeCompare(b.bed||'~','zh-Hant',{numeric:true}));}
 const hide=()=>S.data&&S.data.settings.hideNames;
 
-
 function renderList(){
   const q=$('ptSearch').value.trim().toLowerCase();
   const list=sortedPatients().filter(p=>!q||[p.bed,p.code,p.name,p.chartNo,p.dx].join(' ').toLowerCase().includes(q));
   $('ptList').innerHTML=list.map(p=>`
     <div class="pitem ${p.id===S.selId&&!S.archive?'on':''}" data-id="${p.id}">
-      <div class="b">${esc(p.bed||'（未填床號）')}${p.code?' '+esc(p.code):''}${(p.issues||[]).some(x=>x.status==='待討論')?` <span class="tag t-warn" title="待與醫師討論">📌 ${p.issues.filter(x=>x.status==='待討論').length}</span>`:''}</div>
+      <div class="b">${esc(p.bed||'（未填床號）')}${p.code?'　'+esc(p.code):''}${(p.issues||[]).some(x=>x.status==='待討論')?` <span class="tag t-warn" title="待與醫師討論">📌 ${p.issues.filter(x=>x.status==='待討論').length}</span>`:''}</div>
       <div class="c ${hide()?'blur':''}">${esc(p.name||'')}${p.chartNo?' · '+esc(p.chartNo):''}</div>
     </div>`).join('')||`<div class="small mute" style="padding:12px">${q?'找不到符合的病患':'尚無在院病患'}</div>`;
   $('ptCount').textContent=`在院 ${S.data.patients.length} 位`;
@@ -648,22 +620,19 @@ $('btnAddPt').onclick=()=>{
   setTimeout(()=>{const el=document.querySelector('[data-f="bed"]');if(el)el.focus();},50);
 };
 
-
 const TPL={adult:'成人一般',peds:'兒科',ami:'AMI',hf:'HF'};
-const TABS=[['overview','總覽'],['basic','基本資料'],['prog','病程'],['meds','用藥'],['drip','輸注速算'],['tpn','TPN'],['lab','檢驗'],['micro','抗微生物圖譜'],['exam','檢查報告'],['consult','會診'],['rt','呼吸治療'],['soap','SOAP']];
-
+const TABS=[['overview','總覽'],['basic','基本資料'],['prog','病程'],['lines','管路'],['meds','用藥'],['drip','輸注速算'],['tpn','TPN'],['lab','檢驗'],['micro','抗微生物圖譜'],['exam','檢查報告'],['consult','會診'],['rt','呼吸治療'],['soap','SOAP']];
 
 function curPatient(){return S.archive?S.archive.patient:S.data.patients.find(p=>p.id===S.selId)||null;}
-
 
 function renderMain(){
   const p=curPatient(),m=$('main');
   if(!p){m.innerHTML='<div class="empty">尚無病患。點左上「＋ 新增病患」開始。</div>';return;}
   const ro=!!S.archive;
   let h='';
-  if(ro)h+=`<div class="banner"><b>舊病患檔（唯讀）</b><span>${esc(S.archive.fileName)} 歸檔於 ${esc((p.dischargedAt||'').slice(0,10))}</span><span style="flex:1"></span>
+  if(ro)h+=`<div class="banner"><b>舊病患檔（唯讀）</b><span>${esc(S.archive.fileName)}　歸檔於 ${esc((p.dischargedAt||'').slice(0,10))}</span><span style="flex:1"></span>
     <button id="btnRestore">復原為在院病患</button><button id="btnCloseArchive">關閉</button></div>`;
-  h+=`<div class="phead"><div><h2>${esc(p.bed||'（未填床號）')}${p.code?' '+esc(p.code):''}</h2>
+  h+=`<div class="phead"><div><h2>${esc(p.bed||'（未填床號）')}${p.code?'　'+esc(p.code):''}</h2>
     <div class="meta"><span class="${hide()?'blur':''}">${esc(p.name)}${p.chartNo?' · '+esc(p.chartNo):''}</span>
     ${p.sex?' · '+(p.sex==='M'?'男':'女'):''}${ageDisp(p)?' · '+esc(ageDisp(p)):''}${p.template==='peds'&&pmaTxt(p)?' · PMA '+pmaTxt(p):''}
     ${p.wt?' · '+esc(p.wt)+' kg':''}${bwMeta(p)?' · '+bwMeta(p):''} · ${TPL[p.template]} 範本</div></div>
@@ -691,12 +660,12 @@ function renderMain(){
   if(S.tab==='micro')bindMicro(p,ro);
   if(S.tab==='exam')bindExam(p,ro);
   if(S.tab==='prog')bindProg(p,ro);
+  if(S.tab==='lines')bindLines(p,ro);
   if(S.tab==='tpn')bindTPN(p,ro);
   if(S.tab==='lab')bindLabNotes(p,ro);
   if(S.tab==='consult')bindConsult(p,ro);
   bindIssues(p,S.tab,ro);
 }
-
 
 function fld(p,key,label,opt={}){
   const v=esc(p[key]??''),ro=opt.ro?'disabled':'',cls=opt.wide?'fld wide':'fld',blur=opt.sens&&hide()?' blur':'';
@@ -706,7 +675,6 @@ function fld(p,key,label,opt={}){
   else input=`<input data-f="${key}" class="${blur}" type="${opt.type||'text'}" ${opt.step?`step="${opt.step}"`:''} value="${v}" ${ro} placeholder="${opt.ph||''}">`;
   return `<div class="${cls}"><label>${label}</label>${input}</div>`;
 }
-
 
 // 體重換算：BMI（國健署分級）、IBW（Devine，= ARDSnet PBW）、AdjBW = IBW + 0.4 ×（TBW − IBW）
 function bodyW(p){
@@ -740,15 +708,14 @@ function calcBody(p){
   const r=renalCalc(p);
   if(r){
     const src=`Cr ${r.scr} mg/dL（${skMD(r.crSk)}）`;
-    if(r.peds)out.push(['eGFR（Brion, k='+r.peds.k+'）',`${r.peds.egfr.toFixed(1)} mL/min/1.73m² ${src}`]);
+    if(r.peds)out.push(['eGFR（Brion, k='+r.peds.k+'）',`${r.peds.egfr.toFixed(1)} mL/min/1.73m²　${src}`]);
     else if(r.crcl!=null){
-      out.push(['CrCl（Cockcroft-Gault，實際體重）',`${r.crcl.toFixed(1)} mL/min ${src}`]);
+      out.push(['CrCl（Cockcroft-Gault，實際體重）',`${r.crcl.toFixed(1)} mL/min　${src}`]);
       if(r.adj!=null)out.push(['CrCl（AdjBW）',`${r.adj.toFixed(1)} mL/min`]);
-    }else out.push(['CrCl',`需年齡、性別、體重 ${src}`]);
+    }else out.push(['CrCl',`需年齡、性別、體重　${src}`]);
   }
   return out;
 }
-
 
 function renderTab(p,ro){
   if(S.tab==='basic'){
@@ -794,6 +761,7 @@ function renderTab(p,ro){
   if(S.tab==='micro')return renderMicro(p,ro);
   if(S.tab==='exam')return renderExam(p,ro);
   if(S.tab==='prog')return renderProg(p,ro);
+  if(S.tab==='lines')return renderLines(p,ro);
   if(S.tab==='tpn')return renderTPN(p,ro);
   if(S.tab==='consult')return renderConsult(p,ro);
   const todo={
@@ -802,9 +770,8 @@ function renderTab(p,ro){
     drip:'ICU notebook 的輸注速算，每日保存一筆，可回看劑量變化。Rocuronium 會加上濃度上限 1.67 mg/mL 警示。',
     soap:'依所選範本（'+TPL[p.template]+'）自動帶入最新數值，drip 自動列入 Medications，其他用藥自行貼上。',
   };
-  return `<div class="todo"><b>${TABS.find(t=>t[0]===S.tab)[1]}</b> 下一階段加入<br><span class="small">${todo[S.tab]}</span></div>`;
+  return `<div class="todo"><b>${TABS.find(t=>t[0]===S.tab)[1]}</b>　下一階段加入<br><span class="small">${todo[S.tab]}</span></div>`;
 }
-
 
 function bindForm(p,ro){
   if($('btnAdmPaste'))$('btnAdmPaste').onclick=()=>openPaste(p.id);
@@ -826,7 +793,6 @@ function bindForm(p,ro){
     });
   });
 }
-
 
 /* ===================== 舊病患 ===================== */
 async function discharge(p){
@@ -852,7 +818,6 @@ async function discharge(p){
   S.selId=sortedPatients()[0]?.id||null;S.tab='basic';
   markDirty();renderList();renderMain();toast(`已歸檔：${handle?handle.name:fname}`);
 }
-
 
 $('btnOpenArchive').onclick=async()=>{
   if(S.mode==='sample'){toast('範例模式不提供此功能');return;}
@@ -882,7 +847,6 @@ async function restoreArchive(){
   if(S.data.patients.some(x=>x.id===p.id))p.id=uid();
   delete p.dischargedAt;S.data.patients.push(p);S.selId=p.id;S.archive=null;markDirty();renderList();renderMain();toast('已復原');
 }
-
 
 /* ===================== 刪除與復原 ===================== */
 S.undo=[];
@@ -928,6 +892,8 @@ async function doDelete(p,kind,k,n){
     snapshot(p,'刪除培養 '+(R.acc||''));delete M.reports[k];}
   else if(kind==='org'){const R=M.reports[k];const o=R&&R.orgs.find(x=>String(x.no)===String(n));if(!o||!await ask('刪除菌株',`刪除「${esc(o.name)}」及其藥敏？`))return;
     snapshot(p,'刪除菌株');R.orgs=R.orgs.filter(x=>x!==o);}
+  else if(kind==='line'){const x=lineStore(p).items.find(y=>y.id===k);if(!x||!await ask('刪除管路',`刪除 ${esc(x.at)} ${esc(x.name)} 這筆管路紀錄？`))return;
+    snapshot(p,'刪除管路');p.lines.items=p.lines.items.filter(y=>y!==x);}
   else if(kind==='prog'){const x=progStore(p).find(y=>y.id===k);if(!x||!await ask('刪除病程',`刪除 ${esc(x.at)} 這份病程紀錄？`))return;
     snapshot(p,'刪除病程');p.prog=p.prog.filter(y=>y!==x);}
   else if(kind==='exam'){const x=examStore(p).find(y=>y.id===k);if(!x||!await ask('刪除檢查報告',`刪除 ${esc(x.date||'')} ${esc(x.title||x.type)} 這份報告？`))return;
@@ -939,7 +905,6 @@ async function doDelete(p,kind,k,n){
   else return;
   p.updatedAt=new Date().toISOString();markDirty();renderMain();toast('已刪除，可按右上角「復原」');
 }
-
 
 /* ===================== 合併工作檔 ===================== */
 async function mergeWorkText(text,fileName){
@@ -970,7 +935,6 @@ $('btnMerge').onclick=async()=>{
   else{$('fileInput').dataset.purpose='merge';$('fileInput').click();}
 };
 
-
 /* ===================== 變更密碼 ===================== */
 $('btnChangePw').onclick=async()=>{
   const r=await modal('變更密碼','新密碼<input type="password" autocomplete="new-password">再輸入一次<input type="password" autocomplete="new-password"><div class="small" style="margin-top:8px">已歸檔的舊病患檔仍使用原本的密碼。</div>',[{t:'取消',v:false},{t:'變更',v:true,cls:'pri'}]);
@@ -980,7 +944,6 @@ $('btnChangePw').onclick=async()=>{
   S.km=await newKeyMaterial(a);S.pw=a;markDirty();
   toast(a.length<8||/^\d+$/.test(a)?'已變更（提醒：密碼偏弱）':'密碼已變更');
 };
-
 
 /* =====================================================================
    醫囑起訖引擎（沿用「醫囑起訖整理」工具的判讀規則）
@@ -1012,7 +975,6 @@ const drugKey = name => {
   return (out.join(" ")||t[0]||name).toLowerCase();
 };
 const drugLabel = name => { const k=drugKey(name); return k.charAt(0).toUpperCase()+k.slice(1); };
-
 
 const D_CAT=/^\s{0,4}(NEWD|NEW|CHG|REN|EXTN|TAPE|PREP|EXP|DC-[A-Z]|DC|\*\*\*#|St|ST)\s/;
 // 劑量與頻次在欄寬不足時會黏在一起（如 0.75PCQ12H），所以單位用已知清單比對，頻次前的空白可省略
@@ -1106,7 +1068,6 @@ function parse(text){
   return {orders,grid,batches,unrec,g0,nonDrug,sheets,sheetTimes,sheetInfo,drugLines};
 }
 
-
 let SOURCES=[];
 function parseAll(texts){
   const parts=texts.map(t=>parse(t));
@@ -1159,7 +1120,6 @@ function activeOn(e,r){
   if(e.status==="open") return true;
   return e.stop && +e.stop>+a;
 }
-
 
 const regimen = e => `${e.qty}|${e.unit}|${e.freq}|${e.route||""}`;
 const catTxt = c => c ? `${c} ${(CAT[c]||{n:""}).n}` : "DC";
@@ -1348,10 +1308,8 @@ function buildEpisodes(p){
   return eps;
 }
 
-
 return {parseAll,buildEpisodes,courseOf,abxClass,genericOf,doseText,drugKey,drugLabel,fmt,fmtDay,durTxt,isLocal,catTxt,activeOn,FREQ,ROUTE,UNIT,CAT};
 })();
-
 
 /* =====================================================================
    呼吸治療紀錄判讀（移植自「呼吸治療紀錄整理與簡易判讀」）
@@ -1401,10 +1359,8 @@ const GROUPS=[
 ];
 const MODE_RE = /(?:^|[^A-Za-z])(PRVC|APRV|SIMV(?:[-\s]?(?:PC|VC|PRVC))?(?:\s?\+\s?PS)?|PC[-\s]?AC|VC[-\s]?AC|AC[-\s]?(?:PC|VC)|A\/C|PCV|VCV|PSV|CPAP(?:\s?\+\s?PS)?|Bi-?PAP|NIV|HFNC|HFOV|T[-\s]?piece|ASV|NAVA|PC|VC|PS|AC)(?![A-Za-z])/i;
 
-
 function aliasRe(a){return new RegExp('(?:^|[^A-Za-z0-9])(?:'+a+')(?![A-Za-z])\\s*(?:\\([^)]{0,12}\\))?\\s*%?\\s*[:：=]?\\s*(-?\\d+(?:\\.\\d+)?)','gi');}
 const ALIAS_RES = FIELDS.map(f=>[f[0],f[3].map(aliasRe)]);
-
 
 function norm(k,v){
   if(v==null||isNaN(v))return null;
@@ -1415,10 +1371,8 @@ function norm(k,v){
   return v;
 }
 
-
 /* ===================== 去識別:移除簽章區段 ===================== */
 function cutSig(txt){const i=txt.search(/簽章人員|呼吸治療師/);return i>=0?txt.slice(0,i).replace(/\s+$/,''):txt;}
-
 
 /* ===================== 長庚 RT 照護紀錄(橫向時間欄位) ===================== */
 const WIDE=[
@@ -1482,7 +1436,6 @@ function tryWide(txt){
   recs.forEach(r=>{if(r.mv==null&&r.mvmin!=null)r.mv=r.mvmin;});
   return recs.filter(r=>Object.keys(r).length>1);
 }
-
 
 /* ===================== 一般文字 / Excel 解析 ===================== */
 function parseChunk(txt){
@@ -1566,7 +1519,6 @@ function mergeClose(recs,win){
   return {out,n};
 }
 
-
 /* ===================== 計算 ===================== */
 const isSpont=m=>/^(PSV?|CPAP(\s?\+\s?PS)?|T[-\s]?PIECE|VS|SPONT|HFNC)$/i.test((m||'').trim());
 const isVC=m=>/(^|[^R])VC/i.test(m||'');
@@ -1604,7 +1556,6 @@ function calc(r,pt){
 }
 function berlin(pf){if(pf==null)return null;if(pf<=100)return['重度 Severe','bad'];if(pf<=200)return['中度 Moderate','bad'];if(pf<=300)return['輕度 Mild','warn'];return['未達 ARDS 氧合標準','ok'];}
 
-
 function abgInterp(r){
   const ph=r.ph,pc=r.paco2,h=r.hco3;if(ph==null||pc==null)return null;
   const N={RAc:'呼吸性酸中毒 Respiratory acidosis',MAc:'代謝性酸中毒 Metabolic acidosis',RAl:'呼吸性鹼中毒 Respiratory alkalosis',MAl:'代謝性鹼中毒 Metabolic alkalosis'};
@@ -1637,7 +1588,6 @@ function abgInterp(r){
   if(add.length&&lvl==='ok')lvl='warn';
   return {status,primary,lines,add,ag,cag,dd,hagma,P,lvl};
 }
-
 
 /* ===================== 用藥 ===================== */
 // [key, 名稱, 類別, 別名(學名/商品名), 標準單位]
@@ -1738,7 +1688,6 @@ function renderMeds(){
 }
 function latestVal(k){for(let j=recs.length-1;j>=0;j--)if(recs[j][k]!=null)return recs[j][k];if(k==='cr'&&CTX.lab){const v=CTX.lab('72-333');if(v!=null)return v;}return null;}
 
-
 /* ===================== 藥師提醒規則 ===================== */
 function buildHints(r,c,A,pass,known){
   const H=[],M=meds,has=k=>M.find(m=>m.key===k),byCat=x=>M.filter(m=>m.cat===x),list=a=>a.map(medTxt).join('、');
@@ -1749,11 +1698,9 @@ function buildHints(r,c,A,pass,known){
   const isMAc=A&&(A.P.includes('MAc')||A.add.some(x=>x.includes('代謝性酸')));
   const RED=t=>`<b style="color:var(--bad)">${t}</b>`;
 
-
   // 1. NMBA 安全
   if(nmba.length&&!sed.length)H.push(RED(`使用 NMBA(${list(nmba)})但未見鎮靜劑輸注:有清醒麻痺(awareness)風險,請立即確認鎮靜與止痛。`));
   if(nmba.length)H.push(`NMBA 使用中(${list(nmba)}):TOF 監測(目標 1–2/4)、角膜保護、每日評估是否可停藥;脫離評估「無 NMBA」不符合。`+(ste.length?`合併類固醇(${list(ste)})會增加 ICU-acquired weakness 風險。`:''));
-
 
   // 2. 低血壓
   if(c.map!=null&&c.map<65){
@@ -1777,7 +1724,6 @@ function buildHints(r,c,A,pass,known){
     H.push(s);
   }
 
-
   // 3. 呼吸驅力強
   if(c.effort){
     let s=`壓力控制模式下總 RR(${r.rr})明顯高於設定(${r.rrset}):呼吸驅力強,Vte 與跨肺壓可能超出肺保護範圍(P-SILI 風險)。先找原因:疼痛、躁動、發燒、代謝性酸中毒、低氧。`;
@@ -1786,12 +1732,10 @@ function buildHints(r,c,A,pass,known){
     H.push(s);
   }
 
-
   // 4. 鎮靜深度
   if(rass!=null&&rass<=-3&&!nmba.length)H.push(`RASS ${rass}(深鎮靜)且未使用 NMBA:PADIS 2018 建議淺鎮靜(RASS −2 ~ 0),除非有深鎮靜適應症(嚴重不同步、顱內壓控制等)。`+(sed.length?`可評估 ${list(sed)} 減量或每日 SAT。`:''));
   if(rass!=null&&rass>=2)H.push(`RASS +${rass}(躁動):先排除疼痛、低氧、尿滯留與譫妄(CAM-ICU)。`+(opi.length?'':'目前無鴉片類輸注,先評估止痛。'));
   if(c.sedated===false&&recs.slice(0,sel).some(x=>/SEDATION/i.test(x.gcs||'')))H.push(`意識已脫離鎮靜狀態:可配合 SAT 評估 SBT 條件`+(sed.length?`,並檢視 ${list(sed)} 是否可減量`:'')+'。');
-
 
   // 5. 個別藥物
   if(pro){
@@ -1804,7 +1748,6 @@ function buildHints(r,c,A,pass,known){
   if(lor&&A&&A.hagma)H.push('Lorazepam 輸注合併 AG 升高:注意 propylene glycol 蓄積,建議測 osmolar gap(>10–12 時高度懷疑)。');
   if(has('morphine')&&cr!=null&&cr>=2)H.push(`Morphine 使用中且 Cr ${cr}:M6G/M3G 蓄積,延遲甦醒與呼吸抑制,可考慮改 fentanyl。`);
   if(dex&&r.hr!=null&&r.hr<60)H.push(`Dexmedetomidine 使用中且 HR ${r.hr}:心搏過緩,評估減量。`);
-
 
   // 6. ABG 相關
   if(A){
@@ -1838,7 +1781,6 @@ function buildHints(r,c,A,pass,known){
     }
   }
 
-
   // 7. 呼吸器/氧合
   if((r.pplat>30)||(c.dpx>15)||(c.vtkg>8))H.push(`肺保護通氣未達標(${[r.pplat>30?'Pplat>30':'',c.dpx>15?`ΔP ${fx(c.dpx)}${c.dp==null?'(估)':''}>15`:'',c.vtkg>8?'Vt>8 mL/kg PBW':''].filter(Boolean).join('、')}):與團隊討論 Vt/PEEP 調整。`+(nmba.length?'':'若以深鎮靜或 NMBA 改善同步性,需同步監測鎮靜深度與 TOF。'));
   if(c.pf!=null&&c.pf<150&&(r.peep||0)>=5)H.push('P/F <150:俯臥通氣(PROSEVA)為主要選項;NMBA 不建議常規使用(ROSE 2019 無死亡率差異),僅用於嚴重不同步時。');
@@ -1848,7 +1790,6 @@ function buildHints(r,c,A,pass,known){
   if(known>=5&&pass===known)H.push('自動項目皆符合:建議配合每日 SAT+SBT(ABCDEF bundle)'+(sed.length?`,SAT 時暫停 ${list(sed)}`:'')+';拔管前評估高風險族群是否需類固醇預防喉頭水腫。');
   return H;
 }
-
 
 /* ===================== 狀態 ===================== */
 let recs=[],sel=-1;
@@ -1861,7 +1802,6 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 function pt(){const p=CUR||{};return{sex:p.sex||'',ht:parseFloat(p.ht)||null,wt:parseFloat(p.wt)||null,age:parseFloat(p.age)||null};}
 function getRass(){const v=CUR&&CUR.rt?CUR.rt.rass:'';return v===''||v==null?null:parseInt(v,10);}
 function sortRecs(){recs.sort((a,b)=>(a.time||'').localeCompare(b.time||''));}
-
 
 /* ===================== 表格 ===================== */
 function renderToggles(){
@@ -1879,7 +1819,6 @@ function renderTable(){
   else h+=`<tr><td colspan="${cols.length+CCOLS.length+1}" class="sub" style="text-align:left">* ΔP:有 Pplat 時為實測 Pplat−PEEP;壓力控制模式無 Pplat 時以 Vte ÷ 呼吸器 Compliance 估算。</td></tr>`;
   $('tbl').innerHTML=h;
 }
-
 
 /* ===================== 趨勢圖 ===================== */
 const CHARTS=[['pf','P/F ratio',[300,200,100]],['fio2','FiO₂ (%)',[]],['peep','PEEP',[]],['vt','Vte (mL)',[]],['rr','RR total',[35]],['dpx','Driving P(實測/估算)',[15]],['cx','Compliance',[]],['map','MAP',[65]],['ph','pH',[7.35,7.45]],['paco2','PaCO₂',[35,45]]];
@@ -1903,7 +1842,6 @@ function renderCharts(){
     const dec=k==='ph'?2:0;
     return `<div class="chart"><div class="t"><span>${lab}</span><span>${pts.length?'最新 '+pts[pts.length-1].v.toFixed(dec):''}</span></div>${pts.length?chartSVG(pts,th,dec):'<div class="sub" style="padding:30px 0;text-align:center">無資料</div>'}</div>`;}).join('');
 }
-
 
 /* ===================== 判讀 ===================== */
 const kv=(k,v,b)=>`<div class="kv"><span class="k">${k}</span><span>${v}${b?`<span class="b ${b[1]}">${b[0]}</span>`:''}</span></div>`;
@@ -1980,11 +1918,9 @@ function renderInterp(){
   $('interp').innerHTML=[['氧合 Oxygenation',o],['肺力學 Respiratory mechanics',m],[`脫離評估 Weaning(自動項目 ${pass}/${known} 符合)`,w],['ABG 酸鹼判讀',a]]
     .map(([t,b])=>`<div class="card" style="margin:0"><h2>${t}</h2>${b}</div>`).join('');
 
-
   // 藥師提醒
   const HL=buildHints(r,c,A,pass,known);
   $('hints').innerHTML=HL.length?HL.map(x=>`<li>${x}</li>`).join(''):'<li class="sub">此筆未觸發特定提醒。</li>';
-
 
   // 摘要(不含任何人員姓名)
   const t=[];
@@ -2004,12 +1940,10 @@ function renderInterp(){
   $('noteOut').textContent=t.join('\n');
 }
 
-
 function renderAll(){
   const p=pbw(pt());$('pbwOut').textContent='PBW:'+(p?p.toFixed(1)+' kg(6 mL/kg ≈ '+(p*6).toFixed(0)+' mL;8 mL/kg ≈ '+(p*8).toFixed(0)+' mL)':'—');
   renderMeds();renderTable();renderCharts();renderInterp();
 }
-
 
 /* ===================== 範例(虛構資料) ===================== */
 const SAMPLE=`照護時間\t\t\t2026/10/15 15:00\t2026/10/15 08:30\t2026/10/14 21:47\t2026/10/14 09:00
@@ -2038,7 +1972,6 @@ Con，s Level (E.V.M.)\t\t\t1/E/4/SEDATION\t4/E/6/\t1/E/1/SEDATION\t1/E/1/SEDATI
 \tCa/Cl(mg%、meq/L)\t\t/\t/\t9.8/99\t/
 MV(day)/Weaning(day)\t\t\t2/\t2/\t1/\t1/`;
 
-
 const MED_SAMPLE=`Fresofol 1% 3.5 mg/kg/h\nFentanyl 25 mcg/h\nLevophed 4mg/250mL 0.3 mcg/kg/min\nLasix 20 mg IV Q12H\nSolu-Cortef 50 mg IV Q6H`;
 /* ===================== 事件 ===================== */
 function doParse(){
@@ -2054,7 +1987,6 @@ function doParse(){
   $('log').textContent=`${how}:解析 ${nr.length} 個時間點(新增 ${added}、更新 ${updated})`+(merged?`,合併 ${merged} 筆`:'')+`,目前共 ${recs.length} 筆。`+(hadSig?'\n已移除簽章人員區段(治療師姓名不會被保留)。':'');
   renderAll();
 }
-
 
 /* ===================== 平台連接 ===================== */
 let CUR=null,CTX={};
@@ -2138,7 +2070,6 @@ function bind(){
 return {mount,importInto,preview,summary,matchDrug,ensure,SAMPLE,MED_SAMPLE};
 })();
 
-
 /* =====================================================================
    一鍵貼上：解析 HIS 病人資訊列與醫囑
    ===================================================================== */
@@ -2147,7 +2078,6 @@ const UNIT_RE='(mg|mcg|µg|μg|ug|gm|g|units?|IU|U)';
 function normUnit(u){u=(u||'').toLowerCase();if(u==='gm')return 'g';if(['µg','μg','ug'].includes(u))return 'mcg';if(['iu','u','unit','units'].includes(u))return 'U';if(u==='ml')return 'mL';return u;}
 function fmtN(n){if(n==null||n===''||isNaN(n))return '';n=+n;const a=Math.abs(n);return String(+n.toFixed(a>=100?1:a>=1?2:a>=0.1?3:4));}
 const capFirst=s=>s?s[0].toUpperCase()+s.slice(1):s;
-
 
 function isHeaderLine(l){return /(病歷號|姓名|入院日期?|床號)\s*[:：]/.test(l);}
 function parseHeaderLine(line){
@@ -2169,7 +2099,6 @@ function parseHeaderLine(line){
   for(const k in h)if(!h[k])delete h[k];
   return h;
 }
-
 
 function parseMedLine(raw){
   const line=raw.replace(/\s+$/,'');
@@ -2229,10 +2158,9 @@ function parseMedLine(raw){
     amount,unit,ampVol,qty,qunit,freq,dose,isDrip,dilName,dilVol,prn,once,abx,cls,pn,pnCode,cont:(spec.match(/\/\s*(amp|vial|bot|bag|pk|tab|cap)\b/i)||[])[1]||''};
 }
 
-
 function parsePaste(txt){
   const res={header:{},meds:[],unknown:[]};
-  txt.replace(/\r/g,'').split('\n').map(l=>l.replace(/ /g,' ')).forEach(l=>{
+  txt.replace(/\r/g,'').split('\n').map(l=>l.replace(/ /g,' ')).forEach(l=>{
     if(!l.trim())return;
     if(isHeaderLine(l)){Object.assign(res.header,parseHeaderLine(l));return;}
     const m=parseMedLine(l);
@@ -2240,7 +2168,6 @@ function parsePaste(txt){
   });
   return res;
 }
-
 
 /* ===================== 匯入 ===================== */
 function convertAmt(v,from,to){
@@ -2273,7 +2200,6 @@ function syncDrips(p,meds){
   return n;
 }
 
-
 function importParsed(res,targetId){
   const today=ymd();
   let p=targetId&&targetId!=='new'?S.data.patients.find(x=>x.id===targetId):null;
@@ -2301,7 +2227,6 @@ function importParsed(res,targetId){
   return {p,isNew,dripN,autoPeds:!!res.autoPeds};
 }
 
-
 /* ===================== 貼上視窗 ===================== */
 let pasteTarget=null,lastParse=null;
 function openPaste(targetId){
@@ -2318,6 +2243,7 @@ $('btnParsePaste').onclick=()=>{
   if(isOrderSheet($('pasteText').value)){previewOrders($('pasteText').value);return;}
   if(isLabReport($('pasteText').value)){previewLab($('pasteText').value);return;}
   if(isMicro($('pasteText').value)){previewMicro($('pasteText').value);return;}
+  if(isLineRecord($('pasteText').value)){previewLines($('pasteText').value);return;}
   if(isRTRecord($('pasteText').value)){previewRT($('pasteText').value);return;}
   if(isProgress($('pasteText').value)){previewProg($('pasteText').value);return;}
   if(isAdmission($('pasteText').value)){previewAdmission($('pasteText').value);return;}
@@ -2359,7 +2285,6 @@ $('btnParsePaste').onclick=()=>{
     toast(`${r.isNew?'已新增病患':'已更新病患'}${r.autoPeds?'（未滿 18 歲，已切換兒科範本）':''}${r.dripN?`，${r.dripN} 項輸注已帶入速算`:''}`);
   };
 };
-
 
 /* =====================================================================
    醫囑列印紀錄 → 用藥起迄
@@ -2552,7 +2477,6 @@ function previewOrders(txt){
   };
 }
 
-
 /* ----- 起迄畫面 ----- */
 S.ordUI={from:'',to:'',type:'all',hideOnce:false,q:''};
 function ordRows(R){
@@ -2589,7 +2513,7 @@ function ganttHTML(rows){
     const bars=r.eps.map(e=>{
       const s=e.start?+e.start:a,en=e.status==='open'?now:e.status==='once'?s:+(e.stop||s);
       const cls=e.status==='once'?'once':e.status==='open'?'open':e.status==='expired'?'expired':'stopped';
-      const tip=`${MT.doseText(e,true)} ${e.start?MT.fmt(e.start):'?'} – ${epEnd(e)}`;
+      const tip=`${MT.doseText(e,true)}　${e.start?MT.fmt(e.start):'?'} – ${epEnd(e)}`;
       return `<span class="gbar ${cls}${r.g.abx?' abx':''}${r.g.isDrip?' drip':''}" style="left:${X(s)}%;width:${e.status==='once'?0:Math.max(0.6,X(en)-X(s))}%" title="${esc(tip)}"></span>`;
     }).join('');
     return `<div class="grow"><div class="gname" title="${esc(r.g.label)}">${esc(r.g.label)}</div><div class="gtrack">${lines}${nowL}${bars}</div></div>`;
@@ -2625,7 +2549,7 @@ function renderOrders(p,ro){
   h+=`<div class="tblwrap" style="margin-top:12px"><table class="tbl"><thead><tr><th>處方</th><th>開始</th><th>停止</th><th>狀態</th><th>原因／備註</th></tr></thead><tbody>`;
   rows.forEach(({g,eps})=>{
     h+=`<tr class="ghead"><td colspan="5">${S.editMode&&!ro?`<button class="xdel" data-del="ordgrp" data-k="${esc(g.key)}" data-n="${esc(g.label)}" title="隱藏此藥（誤貼時用）">✕</button> `:''}<b>${esc(g.label)}</b> ${g.abx?`<span class="tag t-abx">${esc(g.abx)}</span>`:''}${g.restricted?'<span class="tag t-warn">需感控審核</span>':''}${g.local&&g.abx?'<span class="tag t-reg">局部，不計 DOT</span>':''}${g.isDrip?'<span class="tag t-drip">輸注</span>':''}
-      <span class="small mute"> ${esc(courseTxt(g))}</span></td></tr>`;
+      <span class="small mute">　${esc(courseTxt(g))}</span></td></tr>`;
     eps.forEach(e=>{const [c,t]=ST_CHIP[e.status]||['t-reg',e.status];
       h+=`<tr><td class="num">${e.reopen?'↻ ':''}${esc(MT.doseText(e,true))}</td><td class="num">${e.start?MT.fmt(e.start):'?'}</td><td class="num">${esc(epEnd(e))}</td><td><span class="tag ${c}">${t}</span></td><td class="small mute">${esc(e.reason||'')}</td></tr>`;});
   });
@@ -2664,7 +2588,6 @@ function bindOrders(p,ro){
     p.orderSources=[];markDirty();renderMain();};
 }
 
-
 /* =====================================================================
    用藥分頁
    ===================================================================== */
@@ -2698,7 +2621,7 @@ function medRow(m,p){
   let sub=m.spec;
   if(m.cls==='fluid'&&m.forDrug)sub='稀釋用：'+m.forDrug;
   if(m.isDrip)sub=`${m.qty} × ${fmtN(m.amount)} ${m.unit}${m.dilVol?` in ${m.dilName} ${m.dilVol} mL`:''}`;
-  if(m.cls==='pn'){const pc=pnComp(m);sub=[m.spec,pc?'組成：'+pc:''].filter(Boolean).join(' ');}
+  if(m.cls==='pn'){const pc=pnComp(m);sub=[m.spec,pc?'組成：'+pc:''].filter(Boolean).join('　');}
   const notes=m.notes.length?' · '+m.notes.join(' · '):'';
   let extra=pedsDoseTag(m,p);
   if(m.abx&&!m.expired){if(m.dot)extra=`<span class="tag t-abx">DOT ${m.dot}</span>`;else{const L=p.medLog[m.key];if(L)extra=`<span class="tag t-abx">D${abxDay(L,true)}</span>`;}}
@@ -2804,7 +2727,6 @@ function bindMeds(p,ro){
     const L=p.medLog[el.dataset.abx];if(!L)return;L.start=el.value===L.first?'':el.value;markDirty();renderMain();});
 }
 
-
 /* =====================================================================
    輸注速算（移植自 ICU notebook）
    ===================================================================== */
@@ -2844,7 +2766,6 @@ const DRIP_CFG=[
 ];
 const DRIP_BY_ID=Object.fromEntries(DRIP_CFG.map(c=>[c.id,c]));
 
-
 function computeResult(cfg,amp,dose,vol,flow,weight){
   if(!amp||!dose||!vol)return {stage:'incomplete-basic'};
   const concOrig=amp*dose/vol,concOut=concOrig*cfg.conv;
@@ -2869,7 +2790,7 @@ function dresHTML(c,r){
   if(r.concWarn)h+=`<div class="over">⚠ 超過最高濃度 ${c.maxConc} ${c.ampUnit}/mL</div>`;
   if(r.stage==='incomplete-flow')return h+'<div class="mute">輸入流速計算劑量</div>';
   r.rangesEval.forEach(x=>{
-    const lab=x.label?x.label+' ':'';
+    const lab=x.label?x.label+'　':'';
     if(x.flag==='empty'){h+=`<div class="line"><span class="mute">${lab}${x.min}–${x.max} ${x.unit}</span><span class="mute">需體重</span></div>`;return;}
     const cls=x.flag==='over'?'over':x.flag==='under'?'under':'ok',ic=x.flag==='over'?'⚠ ':x.flag==='ok'?'✓ ':'↓ ';
     h+=`<div class="line"><span class="mute">${lab}範圍 ${x.min}–${x.max}</span><span class="v ${cls}">${ic}${fmtN(x.value)} ${x.unit}</span></div>`;
@@ -2944,7 +2865,6 @@ function bindDrip(p,ro){
     $('dres-'+id).innerHTML=dresHTML(c,computeResult(c,+d.amp,+d.dose,+d.vol,+d.flow,parseFloat(p.wt)));
   }));
 }
-
 
 /* =====================================================================
    檢驗報告（移植自「檢驗報告自動分類工具」，改為累積式）
@@ -3035,7 +2955,6 @@ const labNum=v=>v?parseFloat(String(v.value).replace(/^[<>≦≧=\s]+/,'')):NaN;
 const skMD=sk=>`${sk.slice(4,6)}/${sk.slice(6,8)}`;
 const skDate=sk=>`${sk.slice(0,4)}-${sk.slice(4,6)}-${sk.slice(6,8)}`;
 
-
 /* ----- 腎功能估算 ----- */
 // 3Y2M、2M15D、5歲3月 → 3 歲 2 個月 / 2 個月 15 天
 function normAgeText(t){
@@ -3076,7 +2995,6 @@ function renalCalc(p){
   return out;
 }
 
-
 /* ----- 一鍵貼上預覽 ----- */
 function previewLab(txt){
   let P;
@@ -3106,7 +3024,6 @@ function previewLab(txt){
     toast(`${isNew?'已新增病患並':'已'}加入檢驗 ${n} 個數值`);
   };
 }
-
 
 /* ----- 檢驗分頁 ----- */
 S.labUI={range:'all',from:'',to:'',open:{}};
@@ -3203,7 +3120,6 @@ function bindLab(p,ro){
   if($('btnLabClear'))$('btnLabClear').onclick=async()=>{if(!await confirmBox('清除檢驗資料','移除這位病人所有已貼上的檢驗數值？','清除',true))return;p.labs={cols:{},items:{}};markDirty();renderMain();};
 }
 
-
 /* =====================================================================
    SOAP（依範本自動帶入）
    ===================================================================== */
@@ -3261,7 +3177,7 @@ function buildSoap(p){
   const ht=p.ht||'',wt=p.wt||'';const labs=soapLabLines(p).join('\n');const abx=abxDurationTxt(p);
   const ct=microSoapTxt(p),cult=ct?'\n'+ct.split('\n').map(l=>'  - '+l).join('\n'):'no';
   const exT=examSoapTxt(p),coT=consultSoapTxt(p),ind=t=>t?'\n'+t.split('\n').map(l=>'  - '+l).join('\n'):'';
-  const exL=exT?ind(exT):'',coL=coT?ind(coT):'';
+  const exL=exT?ind(exT):'',coL=coT?ind(coT):'';const lnT=linesSoapTxt(p),lnL=lnT?ind(lnT.split('; ').join('\n')):'';
   const lastLab=hasLabs(p)?Object.keys(p.labs.cols).sort().reverse()[0]:'';
   const labHead=`Laboratory findings${lastLab?` (${skMD(lastLab)})`:''}:`;
   if(t==='peds'){
@@ -3270,22 +3186,18 @@ function buildSoap(p){
     return `<Subjective>
 A ${ageTxt} ${sex} had ${ccTxt(p)}. This is a case of ${dx}
 
-
 # Allergy: ${allergy}
 # GA ${p.ga?p.ga+' weeks':''}${pmaTxt(p)?`, PMA ${pmaTxt(p)} weeks`:''}${paliSoapTxt(p)?'\n'+paliSoapTxt(p):''}
-
 
 <Objective>
 # Body height：${ht}cm,birth body weight：${p.birthWt||''}g  ,body weight：${wt?Math.round(parseFloat(wt)*1000):''}g
 # Vital sign：
 # ${labHead}
 ${labs}
-# Culture：${cult}${exL?`\n# Image／Exam：${exL}`:''}${coL?`\n# Consult：${coL}`:''}${tpnSoapTxt(p)?'\n'+tpnSoapTxt(p):''}
-
+# Culture：${cult}${lnL?`\n# Lines/tubes：${lnL}`:''}${exL?`\n# Image／Exam：${exL}`:''}${coL?`\n# Consult：${coL}`:''}${tpnSoapTxt(p)?'\n'+tpnSoapTxt(p):''}
 
 <Medications>
 ${meds}
-
 
 <Assessment>
 # Appropriate indications, dosage and interval: (yes)
@@ -3296,7 +3208,6 @@ ${meds}
 # Compatiable with NG feeding: (yes)
 # Duration of Abx: (${abx})
 
-
 <Plan>
 Medication therapeutic monitoring : Keep current therapy.
 Monitor vital sign, infection sign, and bleeding sign.`;
@@ -3306,10 +3217,8 @@ Monitor vital sign, infection sign, and bleeding sign.`;
 **Review medications for AMI
 This is an ${age}-year-old ${sex}, a case of ${dx}
 
-
 # Social histories
 # Allergy: ${allergy}
-
 
 # Body height： ${ht} cm, body weight： ${wt} kg
 # Vital sign：
@@ -3324,13 +3233,11 @@ ${meds}
 *Acute management:(Beta-blocker(if contra->CCB), aspirin+ (P2Y12 inhibitor: stop before CABG, IV anticoagulants)
 *post-ACS management:(Beta-blocker, DAPT, Statin, ACEI/ARB (stop if AKI), MRA(LVEF<=40))
 
-
 # Appropriate indications, dosage and interval(for ACS): (yes) subtherapeutic/ supratherapeutic dose of based on CrCl
 # Major drug-drug interactions: (no)
 # Contraindications: (no)
 # Repetition: (no)
 # Adverse drug reactions: (no) bleeding sign for DAPT
-
 
 Medication therapeutic monitoring : Keep current therapy.
 Monitor vital sign,and infection sign, angina sypmtoms and bleeding sign.`;
@@ -3340,9 +3247,7 @@ Monitor vital sign,and infection sign, angina sypmtoms and bleeding sign.`;
 **Review medications for HF
 This is an ${age}-year-old ${sex}, a case of ${dx}
 
-
 # Allergy: ${allergy}
-
 
 <Objective>
 # Body height： ${ht} cm, body weight： ${wt} kg
@@ -3352,10 +3257,9 @@ ${labs}
 # BNP -, NT-ProBNP ${soapCtx(p).V(latestLab(p,'72-571'))} pg/mL
 #NYHA functional classification
 #LVEF
-# Culture: ${ct?cult:''}${exL?`\n# Image／Exam：${exL}`:''}${coL?`\n# Consult：${coL}`:''}
+# Culture: ${ct?cult:''}${lnL?`\n# Lines/tubes：${lnL}`:''}${exL?`\n# Image／Exam：${exL}`:''}${coL?`\n# Consult：${coL}`:''}
 # Medications：
 ${meds}
-
 
 <Assessment>
 # LVEF:
@@ -3371,7 +3275,6 @@ ${meds}
 (+/-)RAASI->Target dose(+/-)
 (+/-)SGLT2I->Target dose(+/-)
 
-
 <Plan>
 Medication therapeutic monitoring : Keep current therapy and avoid NSAIDs.
 Monitor vital sign, electrolyte status, heart failure symptoms and thyroid function.`;
@@ -3379,21 +3282,17 @@ Monitor vital sign, electrolyte status, heart failure symptoms and thyroid funct
   return `<Subjective>
 A ${age}-year-old ${sex} had ${ccTxt(p)}. This is a case of ${dx}
 
-
 * Allergy: ${allergy}
-
 
 <Objective>
 * Body height：${ht}cm, body weight：${wt}kg
 * Vital sign：
 * ${labHead}
 ${labs}
-* Culture：${cult}${exL?`\n* Image／Exam：${exL}`:''}${coL?`\n* Consult：${coL}`:''}
-
+* Culture：${cult}${lnL?`\n* Lines/tubes：${lnL}`:''}${exL?`\n* Image／Exam：${exL}`:''}${coL?`\n* Consult：${coL}`:''}
 
 <Medications>
 ${meds}
-
 
 <Assessment>
 * Appropriate indications, dosage and interval: (yes)
@@ -3404,7 +3303,6 @@ ${meds}
 * Compatiable with NG feeding: (yes)
 * Identified medication discrepancies via Pharm-Cloud: (no)
 * Duration of Abx: (${abx})
-
 
 <Plan>
 Medication therapeutic monitoring : Keep current therapy.
@@ -3431,7 +3329,6 @@ function bindSoap(p,ro){
     p.soapDraft=null;markDirty();renderMain();};
   $('soapText').addEventListener('input',()=>{p.soapDraft={text:$('soapText').value,template:p.template,at:new Date().toISOString()};markDirty();});
 }
-
 
 /* =====================================================================
    呼吸治療分頁（連接 RT 模組）
@@ -3476,7 +3373,6 @@ function renderRT(p,ro){
     <div class="sub" id="rt_pbwOut">PBW：—</div>
     <div class="sub">性別、身高、體重、年齡取自「基本資料」；用藥取自「輸注速算」與「目前用藥」；缺少的 Na、Cl、Alb、Lactate 與同時段 ABG 由「檢驗」帶入。</div></div></div>
 
-
   <div class="card"><h3>呼吸判讀相關用藥 <span class="sub">（自動帶入）</span></h3>
     <div class="row" style="margin-bottom:8px"><label class="sub">目前 RASS <select id="rt_rass" style="width:auto"><option value="">—</option><option>+4</option><option>+3</option><option>+2</option><option>+1</option><option>0</option><option>-1</option><option>-2</option><option>-3</option><option>-4</option><option>-5</option></select></label></div>
     <div class="tblwrap"><table id="rt_medTbl"></table></div>
@@ -3484,7 +3380,6 @@ function renderRT(p,ro){
       <textarea id="rt_medRaw" style="min-height:70px;margin-top:6px" placeholder="一行一個，例：Propofol 2 mg/kg/h"></textarea>
       <div class="row" style="margin-top:6px"><button class="small" id="rt_medParseBtn">套用補充用藥</button></div></details>
   </div>
-
 
   <div class="card"><h3>貼上呼吸治療紀錄</h3>
     <textarea id="rt_raw" placeholder="直接從 RT 照護紀錄表全選複製貼上（橫向時間欄位），簽章人員區段會自動移除。也接受逐筆文字紀錄或 Excel 表格。可分次貼上，同一時間點會更新。"></textarea>
@@ -3497,12 +3392,10 @@ function renderRT(p,ro){
     </div>
     <div class="rtlog" id="rt_log"></div></div>
 
-
   <div class="card"><h3>整理後紀錄 <span class="sub">（可直接修改；點一列看判讀）</span></h3>
     <div class="row" id="rt_grpToggles" style="margin-bottom:8px"></div>
     <div class="tblwrap"><table id="rt_tbl"></table></div>
     <div class="row" style="margin-top:8px"><button class="small" id="rt_csvBtn">匯出 CSV</button></div></div>
-
 
   <div class="card"><h3>趨勢圖</h3><div class="charts" id="rt_charts"></div></div>
   <div class="card"><h3>判讀：<span id="rt_selTime" class="sub"></span></h3><div class="rtgrid" id="rt_interp"></div></div>
@@ -3530,7 +3423,6 @@ function previewRT(txt){
     toast(`${isNew?'已新增病患並':'已'}加入呼吸治療紀錄：新增 ${r.added}、更新 ${r.updated} 個時間點`);
   };
 }
-
 
 /* =====================================================================
    抗微生物圖譜（微生物培養與藥敏）
@@ -3754,7 +3646,6 @@ function bindMicro(p,ro){
   if($('btnMicroClear'))$('btnMicroClear').onclick=async()=>{if(!await confirmBox('清除培養資料','移除這位病人所有已貼上的培養與藥敏？','清除',true))return;p.micro={reports:{}};markDirty();renderMain();};
 }
 
-
 /* =====================================================================
    入院紀錄（Admission note：「中文:(English)」＋「──」分段）
    ===================================================================== */
@@ -3826,7 +3717,6 @@ function renderAdmission(p,ro){
     ${A.length?A.map((x,i)=>`<details class="lgroup" style="margin-top:8px" ${i<3?'open':''}><summary><span>${esc(x.zh)} <span class="small mute">${esc(x.en)}</span></span>${S.editMode&&!ro?`<button class="xdel" data-del="adm" data-k="${i}">✕</button>`:''}</summary><div style="padding:10px 14px;white-space:pre-wrap;font-size:14px">${esc(x.text)||'<span class="mute">（空白）</span>'}</div></details>`).join('')
       :'<div class="small mute" style="margin-top:6px">尚未貼上。可以整份貼上 admission note，系統會依「主訴:(Chief Complaint)」這類標題分段。</div>'}</div>`;
 }
-
 
 const copyMsg=async(t,m)=>toast(await copyText(t)?m:'複製失敗');
 /* =====================================================================
@@ -3921,7 +3811,6 @@ function bindExam(p,ro){
 }
 function isExamText(t){return /(檢查項目|檢查名稱|報告內容|檢查結果)\s*[:：]/.test(t)||(EXAM_IMP.test(t.split('\n').find(l=>EXAM_IMP.test(l))||'')&&EXAM_TYPES.some(([,re])=>re.test(t)));}
 
-
 /* =====================================================================
    會診
    ===================================================================== */
@@ -3992,11 +3881,10 @@ function bindConsult(p,ro){
 }
 function isConsultText(t){return /(會診科別|照會科別|受會診科|被會診科|會診原因|照會原因|會診目的|會診回覆|會診意見|回覆內容)\s*[:：]?/.test(t);}
 
-
 /* =====================================================================
    待與醫師討論（各分頁的藥師筆記）
    ===================================================================== */
-const ISSUE_SEC={overview:'整體',basic:'基本資料',prog:'病程',tpn:'TPN',meds:'用藥',drip:'輸注',lab:'檢驗',micro:'抗微生物',exam:'檢查',consult:'會診',rt:'呼吸治療',soap:'SOAP'};
+const ISSUE_SEC={overview:'整體',basic:'基本資料',prog:'病程',lines:'管路',tpn:'TPN',meds:'用藥',drip:'輸注',lab:'檢驗',micro:'抗微生物',exam:'檢查',consult:'會診',rt:'呼吸治療',soap:'SOAP'};
 const locTs=iso=>{const d=new Date(iso);return isNaN(d)?'':`${pad(d.getMonth()+1)}/${pad(d.getDate())} ${hm(d)}`;};
 const ISSUE_ST=['待討論','已討論','已採納','未採納'];
 function issueStore(p){if(!Array.isArray(p.issues))p.issues=[];return p.issues;}
@@ -4022,8 +3910,8 @@ function renderIssueBar(p,sec,ro){
   if(ro&&!mine.length)return '';
   const stTag={待討論:'t-warn',已討論:'t-reg',已採納:'t-new',未採納:'t-abx'};
   const item=x=>`<div class="issue ${x.status==='待討論'?'':'done'}"><div style="flex:1;min-width:0">
-      ${sec==='overview'?`<span class="tag t-reg">${esc(ISSUE_SEC[x.sec]||x.sec)}</span> `:''}${x.ref?`<b>${esc(x.ref)}</b> `:''}<span style="white-space:pre-wrap">${esc(x.text)}</span>
-      <div class="small mute">${esc(locTs(x.createdAt))}${x.result?` → ${esc(x.result)}`:''}</div></div>
+      ${sec==='overview'?`<span class="tag t-reg">${esc(ISSUE_SEC[x.sec]||x.sec)}</span> `:''}${x.ref?`<b>${esc(x.ref)}</b>　`:''}<span style="white-space:pre-wrap">${esc(x.text)}</span>
+      <div class="small mute">${esc(locTs(x.createdAt))}${x.result?`　→ ${esc(x.result)}`:''}</div></div>
       ${ro?`<span class="tag ${stTag[x.status]}">${esc(x.status)}</span>`:`<select class="small" data-isst="${x.id}" style="width:auto">${ISSUE_ST.map(s=>`<option ${s===x.status?'selected':''}>${s}</option>`).join('')}</select>
       <button class="small" data-ised="${x.id}">編輯</button>${S.editMode?`<button class="xdel" data-del="issue" data-k="${x.id}">✕</button>`:''}`}</div>`;
   return `<div class="issuebar"><div class="row" style="justify-content:space-between"><b>📌 待與醫師討論${sec==='overview'?'（全部分頁）':'・'+esc(ISSUE_SEC[sec]||'')} <span class="small mute">${open.length} 項未決</span></b>
@@ -4063,7 +3951,6 @@ function bindIssues(p,sec,ro){
     snapshot(p,'更新筆記狀態');x.status=s.value;x.doneAt=s.value==='待討論'?'':new Date().toISOString();p.updatedAt=new Date().toISOString();markDirty();renderList();renderMain();});
 }
 
-
 /* ===================== 醫囑單內的 Admission order（診斷／過敏） ===================== */
 function admFromOrders(text){
   const N=parseOrderNotes(text);let best=null;
@@ -4072,7 +3959,6 @@ function admFromOrders(text){
   const al=[...N].reverse().find(n=>/^Allergy\s*[:：]/i.test(n.text));
   return {dx:best?best.dx.map((d,i)=>`${i+1}. ${d}`).join('\n'):'',dxAt:best?best.t:null,allergy:al?al.text.replace(/^Allergy\s*[:：]\s*/i,'').trim():''};
 }
-
 
 /* =====================================================================
    新生兒／兒科：出生日期、PNA、PMA
@@ -4089,7 +3975,6 @@ function ageDisp(p){
 function gaDays(p){const m=String(p.ga||'').match(/(\d{2})(?:\s*\+\s*(\d))?/);return m?(+m[1])*7+(+m[2]||0):null;}
 function pmaTxt(p){const g=gaDays(p),d=dobDays(p);if(g==null||d==null)return '';const t=g+d;return `${Math.floor(t/7)}+${t%7}`;}
 const wkTxt=g=>`${Math.floor(g/7)}+${g%7}`;
-
 
 // 入院紀錄／病程中的新生兒資料：GA、出生體重、出生日、身長、性別
 function neoExtract(t,refYear){
@@ -4118,7 +4003,6 @@ function applyNeo(p,o){
   if((o.ga||o.dob)&&p.template==='adult'){p.template='peds';got.push('切換兒科範本');}
   return got;
 }
-
 
 /* =====================================================================
    病程紀錄（Progress note：S／O／A／P）
@@ -4218,7 +4102,6 @@ function previewProg(txt){
     toast(`${isNew?'已新增病患並':'已'}加入病程${x.got.length?'；'+x.got.join('、'):''}`);};
 }
 
-
 /* =====================================================================
    健保給付提醒：8.2.8 Palivizumab（Synagis）
    ===================================================================== */
@@ -4294,7 +4177,6 @@ function bindPali(p,ro){
   if($('btnPaliAdd'))$('btnPaliAdd').onclick=()=>{const d=$('paliDate').value;if(!d){toast('請選日期');return;}snapshot(p,'Palivizumab 施打');P.doses.push({date:d,mg:$('paliMg').value.trim(),wt:p.wt||''});P.doses.sort((a,b)=>a.date.localeCompare(b.date));save();toast('已記錄');};
   document.querySelectorAll('[data-palidel]').forEach(b=>b.onclick=async()=>{if(!await confirmBox('刪除施打紀錄','刪除這一劑的紀錄？','刪除',true))return;snapshot(p,'刪除施打紀錄');P.doses.splice(+b.dataset.palidel,1);save();});
 }
-
 
 /* =====================================================================
    TPN：從醫囑單的「IVF 醫囑」區塊整理處方時間軸與判讀
@@ -4454,7 +4336,7 @@ function tpnChart(rows){
   const days=[];for(let d=new Date(t0);+d<=t1;d.setDate(d.getDate()+1)){const x=new Date(d);x.setHours(0,0,0,0);if(+x>=t0)days.push(x);}
   const xl=days.map(d=>`<text x="${X(d)}" y="${H-6}" font-size="10" text-anchor="middle" fill="var(--mute)">${d.getMonth()+1}/${d.getDate()}</text>`).join('');
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto">${grid}${xl}${step(r=>r.pn&&r.pn.aa,'var(--accent)')}${step(r=>r.lipid&&r.lipid.g,'var(--warn)')}</svg>
-    <div class="small"><span style="color:var(--accent)">━ AA g/kg/day</span> <span style="color:var(--warn)">━ 脂肪 g/kg/day</span></div>`;
+    <div class="small"><span style="color:var(--accent)">━ AA g/kg/day</span>　<span style="color:var(--warn)">━ 脂肪 g/kg/day</span></div>`;
 }
 function renderTPN(p,ro){
   const R=tpnOf(p);if(!R||!R.rows.length)return '<div class="todo">醫囑單中沒有找到「IVF 醫囑」區塊。到「用藥」分頁貼上醫囑列印紀錄後，TPN 處方會自動整理到這裡。</div>';
@@ -4474,7 +4356,7 @@ function renderTPN(p,ro){
     ${kv('GIR',c.gir!=null?`<b>${c.gir.toFixed(1)}</b> mg/kg/min`:'<span class="small mute">需葡萄糖濃度（下方成分表）</span>')}
     </div>
     ${c.flags.length?`<div style="margin-top:8px">${c.flags.map(([k,t])=>`<div class="small ${k==='bad'?'over':k==='warn'?'under':'mute'}">${k==='info'?'ℹ':'⚠'} ${esc(t)}</div>`).join('')}</div>`:''}
-    ${(()=>{const L=tpnLabsFor(p,last);return L.length?`<div class="small" style="margin-top:8px">同期檢驗：${L.map(x=>`<span class="${x.bad?'over':''}">${x.n} ${esc(x.val)}</span> <span class="mute">${skMD(x.sk)}</span>`).join(' ')}</div>`:'';})()}
+    ${(()=>{const L=tpnLabsFor(p,last);return L.length?`<div class="small" style="margin-top:8px">同期檢驗：${L.map(x=>`<span class="${x.bad?'over':''}">${x.n} ${esc(x.val)}</span> <span class="mute">${skMD(x.sk)}</span>`).join('　')}</div>`:'';})()}
     ${last.next?`<div class="small under" style="margin-top:4px">下一瓶：${esc(last.next)}</div>`:''}</div>`;
   // TPN routine 提醒
   const tg=hasLabs(p)?latestLab(p,'72-310'):null;
@@ -4515,6 +4397,118 @@ function bindTPN(p,ro){
   document.querySelectorAll('[data-pnp]').forEach(el=>el.onchange=()=>{const [k,f]=el.dataset.pnp.split('|');const P=S.data.settings.pnProd=S.data.settings.pnProd||{};P[k]=P[k]||{};P[k][f]=el.value.trim();markDirty();renderMain();});
 }
 
+/* =====================================================================
+   管路紀錄（HIS 管路清單：置入時間｜管路｜部位｜規格｜天數｜類別｜註記｜移除時間｜地點｜置放原因｜移除原因｜護理師）
+   ===================================================================== */
+const LINE_DT=/^(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})$/;
+const LINE_CAT=[
+  ['cvc','中心靜脈',/CVP|CVC|中心靜脈|PICC|PCVC|Port-?A|Double\s*lumen|\bDL\b|Permcath|Perm-?cath|Hickman|Swan|UV\s*line|臍靜脈/i,'CLABSI'],
+  ['art','動脈',/A-?Line|動脈導管|UA\s*line|UAC|臍動脈/i,''],
+  ['airway','人工氣道',/Endotracheal|氣管內管|ETT|Tracheostomy|氣切|Trach/i,'VAP'],
+  ['uro','泌尿',/Foley|導尿管|Cystofix|膀胱造口|Nephrostomy|PCN|腎造口|D-?J/i,'CAUTI'],
+  ['gi','腸胃',/\bNG\b|NG-|鼻胃管|\bOG\b|口胃管|PEG|胃造口|NJ|鼻腸管/i,''],
+  ['drain','引流',/Chest\s*tube|胸管|Drain|引流|JP|Hemovac|Pigtail|EVD/i,''],
+  ['pv','周邊靜脈',/周邊靜脈|IV\s*cath|Peripheral|PIV/i,''],
+];
+function lineCat(n){const c=LINE_CAT.find(x=>x[2].test(n||''));return c?{id:c[0],zh:c[1],risk:c[3]}:{id:'other',zh:'其他',risk:''};}
+const lineIso=s=>{const m=String(s||'').trim().match(LINE_DT);return m?`${m[1]}-${pad(+m[2])}-${pad(+m[3])} ${pad(+m[4])}:${m[5]}`:'';};
+function isLineRecord(t){
+  const c=String(t||'').replace(/\r/g,'').split(/\t|\n/).map(x=>x.trim());
+  let n=0;for(let i=0;i<c.length-2;i++)if(LINE_DT.test(c[i])&&c[i+1]&&!LINE_DT.test(c[i+1])&&LINE_CAT.some(x=>x[2].test(c[i+1])))n++;
+  return n>=1&&/\t/.test(t);
+}
+function parseLines(t){
+  const c=String(t||'').replace(/\r/g,'').split(/\t|\n/).map(x=>x.trim());
+  const out=[];
+  for(let i=0;i<c.length;i++){
+    if(!LINE_DT.test(c[i])||!c[i+1]||LINE_DT.test(c[i+1])||/^(插管|置入|日期)/.test(c[i+1]))continue;
+    const r=c.slice(i,i+12);while(r.length<12)r.push('');
+    const it={at:lineIso(r[0]),name:r[1],site:r[2],size:r[3],days:r[4],type:r[5],flag:r[6],rmAt:lineIso(r[7]),place:r[8],reason:r[9],rmReason:r[10],nurse:r[11]};
+    if(r[7]&&!it.rmAt){ // 欄位位移時的保守處理：找後面第一個日期當移除時間
+      const k=r.slice(6,10).findIndex(x=>LINE_DT.test(x));if(k>=0)it.rmAt=lineIso(r[6+k]);}
+    out.push(it);i+=11;
+  }
+  return out;
+}
+function lineStore(p){if(!p.lines||!Array.isArray(p.lines.items))p.lines={items:[]};return p.lines;}
+function mergeLines(p,list){
+  const L=lineStore(p);let add=0,upd=0;
+  list.forEach(x=>{const k=x.at+'|'+x.name+'|'+x.site;const ex=L.items.find(y=>y.key===k);
+    if(ex){Object.assign(ex,x);upd++;}else{L.items.push(Object.assign({key:k,id:'l'+uid().slice(1)},x));add++;}});
+  L.at=new Date().toISOString();return {add,upd};
+}
+const lineDays=(x,now)=>{const a=Date.parse(x.at.replace(' ','T')),b=x.rmAt?Date.parse(x.rmAt.replace(' ','T')):now;return (b-a)/864e5;};
+// 留置第幾天：置入當天＝第 1 天（以日曆日計）
+const lineDayN=x=>Math.round((Date.parse(ymd())-Date.parse(x.at.slice(0,10)))/864e5)+1;
+function linesView(p){
+  const L=lineStore(p),now=Date.now();
+  const items=L.items.map(x=>Object.assign({},x,{cat:lineCat(x.name),dd:lineDays(x,now),active:!x.rmAt})).sort((a,b)=>b.at.localeCompare(a.at));
+  const act=items.filter(x=>x.active),flags=[];
+  const by={};act.forEach(x=>(by[x.cat.id]=by[x.cat.id]||[]).push(x));
+  ['airway','uro','gi'].forEach(k=>{if((by[k]||[]).length>1)flags.push(['warn',`同時有 ${by[k].length} 條「${by[k][0].cat.zh}」管路未登錄移除（${by[k].map(x=>x.name.split(/[(（]/)[0]+' '+x.size+'，'+x.at.slice(5,10).replace('-','/')).join('；')}），請確認舊管是否已移除`]);});
+  act.forEach(x=>{
+    if(x.cat.id==='cvc'&&/fem|股/i.test(x.site))flags.push(['info',`${x.name.split(/[(（]/)[0]} 置於股靜脈（${x.site}），第 ${lineDayN(x)} 天`]);
+    const newer=items.find(y=>y!==x&&y.cat.id===x.cat.id&&y.at>x.at&&['airway','uro','gi'].includes(x.cat.id));
+    if(newer)flags.push(['warn',`${lineShort(x)}（${x.at.slice(5,10).replace('-','/')}）仍是留置中，但之後在 ${newer.at.slice(5,16).replace('-','/')} 又置入 ${lineShort(newer)}，舊管可能已移除但未登錄，請確認`]);
+    if(x.cat.risk&&lineDayN(x)>=7)flags.push(['info',`${x.name.split(/[(（]/)[0]}（${x.site}）已留置至第 ${lineDayN(x)} 天，${x.cat.risk} 風險管路，請評估是否仍需要`]);
+  });
+  return {items,act,flags};
+}
+const lineShort=x=>`${x.name.split(/[(（]/)[0].replace(/-Rubber/i,'')} ${x.size}${x.site?` (${x.site})`:''}`;
+function linesSoapTxt(p){
+  if(!lineStore(p).items.length)return '';const V=linesView(p);
+  return V.act.length?V.act.map(x=>`${lineShort(x)} since ${x.at.slice(5,10).replace('-','/')}, D${lineDayN(x)}`).join('; '):'no indwelling line/tube recorded';
+}
+function linesGantt(V){
+  const its=[...V.items].reverse();if(!its.length)return '';
+  const now=Date.now(),t0=Math.min(...its.map(x=>Date.parse(x.at.replace(' ','T')))),t1=Math.max(now,...its.map(x=>x.rmAt?Date.parse(x.rmAt.replace(' ','T')):now));
+  const W=760,LW=190,RH=22,H=its.length*RH+28,X=t=>LW+(W-LW-10)*(t-t0)/Math.max(t1-t0,1);
+  const col={cvc:'var(--bad)',art:'var(--navy2)',airway:'var(--warn)',uro:'#8a5cc2',gi:'var(--accent)',drain:'#6b7280',pv:'#6b7280',other:'#6b7280'};
+  const days=[];for(let d=new Date(t0);+d<=t1;d.setDate(d.getDate()+1)){const x=new Date(d);x.setHours(0,0,0,0);if(+x>=t0)days.push(x);}
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto">
+    ${days.map(d=>`<line x1="${X(+d)}" x2="${X(+d)}" y1="0" y2="${H-18}" stroke="var(--line)"/><text x="${X(+d)}" y="${H-5}" font-size="10" text-anchor="middle" fill="var(--mute)">${d.getMonth()+1}/${d.getDate()}</text>`).join('')}
+    ${its.map((x,i)=>{const a=Date.parse(x.at.replace(' ','T')),b=x.rmAt?Date.parse(x.rmAt.replace(' ','T')):now,y=i*RH+4;
+      return `<text x="4" y="${y+13}" font-size="11" fill="var(--ink)">${esc(lineShort(x).slice(0,30))}</text><rect x="${X(a)}" y="${y+3}" width="${Math.max(X(b)-X(a),3)}" height="13" rx="3" fill="${col[x.cat.id]}" opacity="${x.active?0.9:0.45}"/>${x.active?`<text x="${Math.min(X(b)+4,W-30)}" y="${y+13}" font-size="10" fill="var(--mute)">D${lineDayN(x)}</text>`:''}`;}).join('')}
+  </svg>`;
+}
+function renderLines(p,ro){
+  const L=lineStore(p);
+  let h=ro?'':`<div class="card"><h3>貼上管路紀錄</h3><textarea id="lineText" rows="4" placeholder="從 HIS 管路清單複製整段貼上（可含多筆）。同一條管路重複貼上會更新移除時間。"></textarea>
+    <div class="row" style="margin-top:8px;justify-content:flex-end"><button class="pri" id="btnLineAdd">解析並加入</button></div></div>`;
+  if(!L.items.length)return h+'<div class="todo">還沒有管路紀錄。</div>';
+  const V=linesView(p),kv=(k,v)=>`<div class="kv"><span class="k">${k}</span><span style="text-align:right">${v}</span></div>`;
+  h+=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">目前留置 <span class="small mute">${V.act.length} 條・依今天 ${ymd()} 計算</span></h3><button class="small" id="btnLineSoap">複製 SOAP 管路段落</button></div>
+    ${V.act.length?V.act.map(x=>kv(`<span class="tag ${x.cat.risk?'t-abx':'t-reg'}">${x.cat.zh}</span> <b>${esc(x.name)}</b> <span class="small mute">${esc(x.site)} ${esc(x.size)}</span>`,`${esc(x.at.slice(5).replace('-','/'))} 起・<b>第 ${lineDayN(x)} 天</b>${x.cat.risk?` <span class="small mute">${x.cat.risk}</span>`:''}`)).join(''):'<div class="small mute">目前沒有未移除的管路</div>'}
+    ${V.flags.length?`<div style="margin-top:8px">${V.flags.map(([k,t])=>`<div class="small ${k==='warn'?'under':'mute'}">${k==='warn'?'⚠':'ℹ'} ${esc(t)}</div>`).join('')}</div>`:''}</div>`;
+  h+=`<div class="card"><h3>管路時間軸</h3>${linesGantt(V)}<div class="small mute">深色＝留置中，淺色＝已移除；紅＝中心靜脈、橘＝人工氣道、紫＝泌尿、綠＝腸胃、藍＝動脈。</div></div>`;
+  h+=`<div class="card"><h3>全部紀錄 <span class="small mute">${V.items.length} 筆</span></h3><div class="tblwrap"><table class="tbl"><thead><tr><th>置入</th><th>管路</th><th>部位／規格</th><th>類別</th><th>移除</th><th>留置</th><th>置放原因</th><th>移除原因</th><th>地點／人員</th>${S.editMode&&!ro?'<th></th>':''}</tr></thead><tbody>
+    ${V.items.map(x=>`<tr${x.active?'':' style="opacity:.75"'}><td style="white-space:nowrap">${esc(x.at.slice(5).replace('-','/'))}</td><td><b>${esc(x.name)}</b></td><td>${esc(x.site)} ${esc(x.size)}</td><td>${esc(x.type)}${x.flag?` <span class="small mute">${esc(x.flag)}</span>`:''}</td>
+      <td style="white-space:nowrap">${x.rmAt?esc(x.rmAt.slice(5).replace('-','/')):'<span class="tag t-new">留置中</span>'}</td><td>${x.active?'D'+(lineDayN(x)):(x.days!==''?x.days:Math.floor(x.dd))+' 天'}</td>
+      <td class="small">${esc(x.reason)}</td><td class="small">${esc(x.rmReason)}</td><td class="small">${esc(x.place)}${x.place&&x.nurse?'<br>':''}${esc(x.nurse)}</td>${S.editMode&&!ro?`<td><button class="xdel" data-del="line" data-k="${x.id}">✕</button></td>`:''}</tr>`).join('')}
+    </tbody></table></div><div class="small mute" style="margin-top:6px">留置中管路的天數以今天計算（置入當天＝第 1 天）；已移除者顯示 HIS 記錄的天數。</div></div>`;
+  return h;
+}
+function bindLines(p,ro){
+  if($('btnLineSoap'))$('btnLineSoap').onclick=()=>copyMsg('Lines/tubes: '+linesSoapTxt(p),'已複製管路段落');
+  if(ro)return;
+  if($('btnLineAdd'))$('btnLineAdd').onclick=()=>{const L=parseLines($('lineText').value);if(!L.length){toast('沒有解析到管路紀錄（需要 Tab 分隔的 HIS 管路清單）');return;}
+    snapshot(p,'加入管路');const r=mergeLines(p,L);p.updatedAt=new Date().toISOString();markDirty();renderMain();toast(`已加入 ${r.add} 筆${r.upd?`、更新 ${r.upd} 筆`:''}管路`);};
+}
+function previewLines(txt){
+  const L=parseLines(txt);
+  let def=pasteTarget||(S.selId&&!S.archive?S.selId:'new');
+  const opts=[['new','＋ 新增為新病患']].concat(sortedPatients().map(x=>[x.id,`加入：${x.bed||'（未填床號）'} ${x.code||''}`]));
+  $('pastePreview').innerHTML=`<div class="card" style="margin-top:12px"><div class="row"><b>加入到</b>
+    <select id="pasteTargetSel" style="width:auto;min-width:260px">${opts.map(([v,t])=>`<option value="${v}" ${v===def?'selected':''}>${esc(t)}</option>`).join('')}</select></div>
+    <div class="small mute" style="margin-top:6px">判斷為管路紀錄 ${L.length} 筆。管路清單沒有病歷號，請確認上方病人。</div></div>
+    <div class="tblwrap"><table class="tbl"><tbody>${L.map(x=>`<tr><td style="white-space:nowrap">${esc(x.at.slice(5))}</td><td><b>${esc(x.name)}</b> <span class="small mute">${esc(x.site)} ${esc(x.size)}</span></td><td>${esc(x.type)}</td><td>${x.rmAt?'移除 '+esc(x.rmAt.slice(5)):'<span class="tag t-new">留置中</span>'}</td></tr>`).join('')}</tbody></table></div>
+    <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="pri" id="btnDoImport">確認加入</button></div>`;
+  $('btnDoImport').onclick=()=>{
+    const tid=$('pasteTargetSel').value;let p=tid!=='new'?S.data.patients.find(x=>x.id===tid):null;const isNew=!p;
+    if(!p){p=newPatient();S.data.patients.push(p);}ensurePatient(p);
+    const r=mergeLines(p,L);p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab='lines';markDirty();renderList();renderMain();
+    toast(`${isNew?'已新增病患並':'已'}加入管路 ${r.add} 筆${r.upd?`、更新 ${r.upd} 筆`:''}`);};
+}
 
 /* =====================================================================
    總覽
@@ -4586,6 +4580,11 @@ function renderOverview(p){
       R.orgs.length?R.orgs.map(o=>{const cv=C.rows.find(x=>x.o===o);return `${esc(o.name)}${orgFlags(o,R).map(([t,c])=>` <span class="tag ${c==='bad'?'t-abx':'t-warn'}">${t}</span>`).join('')}${cv&&C.act.length&&!cv.flags.some(f=>f[0]==='可能污染菌')?(cv.covered?' <span class="tag t-new">已涵蓋</span>':cv.sdd?' <span class="tag t-warn">僅 SDD</span>':' <span class="tag t-abx">未涵蓋</span>'):''}`;}).join('<br>'):(R.noGrowth?'無菌生長':R.noOrgYet?'尚無菌株報告':'—'))).join('')}
       <div style="margin-top:8px"><button class="small" onclick="S.tab='micro';renderMain()">查看抗微生物圖譜</button></div></div>`;
   }
+  // 管路
+  if(lineStore(p).items.length){const V=linesView(p);
+    h+=`<div class="card" style="margin:0"><h3>管路 <span class="small mute">留置 ${V.act.length} 條</span></h3>${V.act.map(x=>kv(`${esc(lineShort(x))}`,`D${lineDayN(x)}${x.cat.risk?` <span class="small mute">${x.cat.risk}</span>`:''}`)).join('')||'<div class="small mute">無留置管路</div>'}
+      ${V.flags.filter(f=>f[0]==='warn').map(([,t])=>`<div class="small under">⚠ ${esc(t)}</div>`).join('')}
+      <div style="margin-top:8px"><button class="small" onclick="S.tab='lines';renderMain()">查看管路</button></div></div>`;}
   // 檢查／會診
   const EX=examSorted(p).slice(0,3),CO=consSorted(p).filter(c=>c.status!=='結案');
   if(EX.length||CO.length){
@@ -4617,7 +4616,6 @@ function renderOverview(p){
   h+=`<div class="small mute" style="margin-top:12px">${hasLabs(p)?'':'貼上檢驗報告後，關鍵檢驗會顯示於此。'}${V?'':'貼上呼吸治療紀錄後，呼吸器摘要會顯示於此。'}</div>`;
   return h;
 }
-
 
 /* ===================== 範例資料（全部虛構） ===================== */
 const SAMPLE_ORDERS=`病歷號:00000001 姓名:測試甲 年齡:72   MICU03 入院日期:2026/11/05
@@ -4679,7 +4677,6 @@ Colistin                      . S   <=1,
 // 虛構的醫囑列印紀錄（示範起迄判讀）
 const SAMPLE_SHEET=`[00000002 測試] 列印時間:2026/11/05 10:12
 
-
 類別     藥品名稱                               劑量  用法 飯前後 途徑  數量   流速
 NEW   Furosemide 20mg/2mL/amp                   2PC   Q12H        IV    3天
 NEW   Ceftriaxone 1GM/vial                      2PC   QD          IVD   7天
@@ -4687,19 +4684,15 @@ NEW   Ceftriaxone 1GM/vial                      2PC   QD          IVD   7天
 NEW   Dobutamine 250mg/20mL/vial                2PC   IRRE        IVF   7天
   (in D5W 250ml  run as order)
 
-
          醫師:_____(測試醫師)       執行護師:         時間:
 
-
 [00000002 測試] 列印時間:2026/11/07 09:30
-
 
 類別     藥品名稱                               劑量  用法 飯前後 途徑  數量   流速
 DC-C  Furosemide 20mg/2mL/amp                   2PC   Q12H        IV    3天
 CHG   Furosemide 20mg/2mL/amp                   1PC   Q12H        IV    3天
 DC-D  Dobutamine 250mg/20mL/vial                2PC   IRRE        IVF   7天
   (in D5W 250ml  run as order)
-
 
          醫師:_____(測試醫師)       執行護師:         時間:
 `;
