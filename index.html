@@ -410,7 +410,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-10a';
+const APP_VER='2026-11-10b';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -4452,8 +4452,10 @@ function linesView(p){
     if(newer)flags.push(['warn',`${lineShort(x)}（${x.at.slice(5,10).replace('-','/')}）仍是留置中，但之後在 ${newer.at.slice(5,16).replace('-','/')} 又置入 ${lineShort(newer)}，舊管可能已移除但未登錄，請確認`]);
     if(x.cat.risk&&lineDayN(x)>=7)flags.push(['info',`${x.name.split(/[(（]/)[0]}（${x.site}）已留置至第 ${lineDayN(x)} 天，${x.cat.risk} 風險管路，請評估是否仍需要`]);
   });
-  return {items,act,flags};
+  // 依使用者要求暫不顯示管路提醒（規則保留，改 LINE_ALERTS 為 true 即恢復）
+  return {items,act,flags:LINE_ALERTS?flags:[]};
 }
+const LINE_ALERTS=false;
 const lineShort=x=>`${x.name.split(/[(（]/)[0].replace(/-Rubber/i,'')} ${x.size}${x.site?` (${x.site})`:''}`;
 function linesSoapTxt(p){
   if(!lineStore(p).items.length)return '';const V=linesView(p);
