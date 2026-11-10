@@ -410,7 +410,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-10c';
+const APP_VER='2026-11-10d';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -4429,14 +4429,17 @@ function parseLines(t){
   for(let i=0;i<c.length;i++){
     if(!LINE_DT.test(c[i])||!c[i+1]||LINE_DT.test(c[i+1])||/^(插管|置入|日期)/.test(c[i+1]))continue;
     const r=c.slice(i,i+12);while(r.length<12)r.push('');
-    const it={at:lineIso(r[0]),name:r[1],site:r[2],size:r[3],days:r[4],type:r[5],flag:r[6],rmAt:lineIso(r[7]),place:r[8],reason:r[9],rmReason:r[10],nurse:r[11]};
+    const it={at:lineIso(r[0]),name:r[1],site:r[2],size:r[3],days:r[4],type:r[5],flag:r[6],rmAt:lineIso(r[7]),place:r[8],reason:r[9],rmReason:r[10],unit:lineUnit(r[11])};
     if(r[7]&&!it.rmAt){ // 欄位位移時的保守處理：找後面第一個日期當移除時間
       const k=r.slice(6,10).findIndex(x=>LINE_DT.test(x));if(k>=0)it.rmAt=lineIso(r[6+k]);}
     out.push(it);i+=11;
   }
   return out;
 }
-function lineStore(p){if(!p.lines||!Array.isArray(p.lines.items))p.lines={items:[]};return p.lines;}
+// 去識別：護理人員只保留單位代碼（如 N3、AHN），不存姓名
+function lineUnit(t){const m=String(t||'').trim().match(/^([A-Za-z0-9]{1,6})(?=\s|$)/);return m?m[1].toUpperCase():'';}
+function lineStore(p){if(!p.lines||!Array.isArray(p.lines.items))p.lines={items:[]};
+  p.lines.items.forEach(x=>{if('nurse' in x){if(!x.unit)x.unit=lineUnit(x.nurse);delete x.nurse;}});return p.lines;}
 function mergeLines(p,list){
   const L=lineStore(p);let add=0,upd=0;
   list.forEach(x=>{const k=x.at+'|'+x.name+'|'+x.site;const ex=L.items.find(y=>y.key===k);
@@ -4489,10 +4492,10 @@ function renderLines(p,ro){
     ${V.act.length?V.act.map(x=>kv(`<span class="tag ${x.cat.risk?'t-abx':'t-reg'}">${x.cat.zh}</span> <b>${esc(x.name)}</b> <span class="small mute">${esc(x.site)} ${esc(x.size)}</span>`,`${esc(x.at.slice(5).replace('-','/'))} 起・<b>第 ${lineDayN(x)} 天</b>${x.cat.risk?` <span class="small mute">${x.cat.risk}</span>`:''}`)).join(''):'<div class="small mute">目前沒有未移除的管路</div>'}
     ${V.flags.length?`<div style="margin-top:8px">${V.flags.map(([k,t])=>`<div class="small ${k==='warn'?'under':'mute'}">${k==='warn'?'⚠':'ℹ'} ${esc(t)}</div>`).join('')}</div>`:''}</div>`;
   h+=`<div class="card"><h3>管路時間軸</h3>${linesGantt(V)}<div class="small mute">深色＝留置中，淺色＝已移除；紅＝中心靜脈、橘＝人工氣道、紫＝泌尿、綠＝腸胃、藍＝動脈。</div></div>`;
-  h+=`<div class="card"><h3>全部紀錄 <span class="small mute">${V.items.length} 筆</span></h3><div class="tblwrap"><table class="tbl"><thead><tr><th>置入</th><th>管路</th><th>部位／規格</th><th>類別</th><th>移除</th><th>留置</th><th>置放原因</th><th>移除原因</th><th>地點／人員</th>${S.editMode&&!ro?'<th></th>':''}</tr></thead><tbody>
+  h+=`<div class="card"><h3>全部紀錄 <span class="small mute">${V.items.length} 筆</span></h3><div class="tblwrap"><table class="tbl"><thead><tr><th>置入</th><th>管路</th><th>部位／規格</th><th>類別</th><th>移除</th><th>留置</th><th>置放原因</th><th>移除原因</th><th>地點／單位</th>${S.editMode&&!ro?'<th></th>':''}</tr></thead><tbody>
     ${V.items.map(x=>`<tr${x.active?'':' style="opacity:.75"'}><td style="white-space:nowrap">${esc(x.at.slice(5).replace('-','/'))}</td><td><b>${esc(x.name)}</b></td><td>${esc(x.site)} ${esc(x.size)}</td><td>${esc(x.type)}${x.flag?` <span class="small mute">${esc(x.flag)}</span>`:''}</td>
       <td style="white-space:nowrap">${x.rmAt?esc(x.rmAt.slice(5).replace('-','/')):'<span class="tag t-new">留置中</span>'}</td><td>${x.active?'D'+(lineDayN(x)):(x.days!==''?x.days:Math.floor(x.dd))+' 天'}</td>
-      <td class="small">${esc(x.reason)}</td><td class="small">${esc(x.rmReason)}</td><td class="small">${esc(x.place)}${x.place&&x.nurse?'<br>':''}${esc(x.nurse)}</td>${S.editMode&&!ro?`<td><button class="xdel" data-del="line" data-k="${x.id}">✕</button></td>`:''}</tr>`).join('')}
+      <td class="small">${esc(x.reason)}</td><td class="small">${esc(x.rmReason)}</td><td class="small">${esc(x.place)}${x.place&&x.unit?'<br>':''}${esc(x.unit||'')}</td>${S.editMode&&!ro?`<td><button class="xdel" data-del="line" data-k="${x.id}">✕</button></td>`:''}</tr>`).join('')}
     </tbody></table></div><div class="small mute" style="margin-top:6px">留置中管路的天數以今天計算（置入當天＝第 1 天）；已移除者顯示 HIS 記錄的天數。</div></div>`;
   return h;
 }
