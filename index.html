@@ -356,7 +356,7 @@ function ensurePatient(p){
   for(const [k,v] of Object.entries({medList:[],medLog:{},medPasteAt:'',drips:{},dripHistory:[],orderSources:[]}))if(p[k]==null)p[k]=JSON.parse(JSON.stringify(v));
   if(!p.labs||Array.isArray(p.labs))p.labs={cols:{},items:{}};
   RT.ensure(p);
-  microStore(p);examStore(p);consStore(p);issueStore(p);progStore(p);lineStore(p);cloudStore(p);
+  microStore(p);examStore(p);consStore(p);issueStore(p);progStore(p);lineStore(p);cloudStore(p);rrtStore(p);
   return p;
 }
 function newPatient(){
@@ -410,7 +410,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-10g';
+const APP_VER='2026-11-10h';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -651,7 +651,7 @@ function renderMain(){
   if($('btnRestore'))$('btnRestore').onclick=restoreArchive;
   if($('btnCloseArchive'))$('btnCloseArchive').onclick=()=>{S.archive=null;renderList();renderMain();};
   bindForm(p,ro);
-  if(S.tab==='basic')bindPali(p,ro);
+  if(S.tab==='basic'){bindPali(p,ro);bindRRT(p,ro);}
   if(S.tab==='meds'){bindMeds(p,ro);bindCloud(p,ro);}
   if(S.tab==='drip')bindDrip(p,ro);
   if(S.tab==='lab')bindLab(p,ro);
@@ -704,6 +704,7 @@ function calcBody(p){
     if(g!=null)out.push(['GA／PMA',`${wkTxt(g)} 週${dd!=null?`／PMA <b>${pmaTxt(p)}</b> 週`:'（填出生日期可算 PMA）'}`]);
     if(p.birthWt&&wt)out.push(['體重變化（對出生體重）',`${(wt*1000-p.birthWt)>=0?'+':''}${Math.round(wt*1000-p.birthWt)} g（${((wt*1000/p.birthWt-1)*100).toFixed(1)}%）`]);}
   if(p.wtSrc&&wt)out.push(['體重來源',esc(p.wtSrc)]);
+  if(rrtOn(p))out.push(['腎臟替代治療',`<span class="under">${esc(rrtLabel(p.rrt.status))}：下方 CrCl／eGFR 不適用於劑量調整</span>`]);
   if(p.template==='peds'&&wt&&ht)out.push(['BSA (Mosteller)',Math.sqrt(ht*wt/3600).toFixed(2)+' m²']);
   const r=renalCalc(p);
   if(r){
@@ -748,6 +749,7 @@ function renderTab(p,ro){
     // 計算卡放在「基本資料」卡之後
     const i=h.indexOf('<div class="card"><h3>體重換算'),j=h.indexOf('<div class="card"><h3>基本資料');
     const calc=h.slice(i,j);h=h.slice(0,i)+h.slice(j)+calc;
+    h+=renderRRT(p,ro);
     h+=renderPali(p,ro);
     h+=renderAdmission(p,ro);
     return h;
@@ -2498,7 +2500,7 @@ function ordRows(R){
 const ST_CHIP={open:['t-new','使用中'],stopped:['t-abx','停藥'],expired:['t-exp','到期'],once:['t-prn','單次']};
 function epEnd(e){return e.status==='open'?(e.exp?`有效至 ${MT.fmt(e.exp)}`:'使用中'):e.status==='once'?'—':(e.stop?MT.fmt(e.stop):'?');}
 function courseTxt(g){const c=g.course;return `療程 ${c.start?MT.fmtDay(c.start):'?'}–${c.open?'使用中':c.end?MT.fmtDay(c.end):'?'}｜${g.abx&&!g.local?'DOT':'累計'} ${c.dot} 天${c.gaps.length?`｜空窗 ${c.gaps.length} 段`:''}`;}
-function ganttHTML(rows){
+function ganttHTML(rows,hdDays){
   const T=[];rows.forEach(r=>r.eps.forEach(e=>{if(e.start)T.push(+e.start);T.push(e.status==='open'?Date.now():+(e.stop||e.start||Date.now()));}));
   if(!T.length)return '';
   const U=S.ordUI;
@@ -2520,7 +2522,8 @@ function ganttHTML(rows){
     }).join('');
     return `<div class="grow"><div class="gname" title="${esc(r.g.label)}">${esc(r.g.label)}</div><div class="gtrack">${lines}${nowL}${bars}</div></div>`;
   };
-  return `<div class="gantt"><div class="grow gaxis"><div class="gname"></div><div class="gtrack">${ticks}</div></div>${rows.map(row).join('')}</div>`;
+  const hdRow=(hdDays||[]).length?`<div class="grow"><div class="gname" style="color:var(--bad)">透析日</div><div class="gtrack">${lines}${nowL}${hdDays.map(d=>{const t=Date.parse(d+'T00:00:00');if(t+864e5<a||t>b)return '';return `<span class="gbar" style="left:${X(t)}%;width:${Math.max(0.6,X(t+864e5)-X(t))}%;background:var(--bad);opacity:.35" title="透析 ${d.slice(5).replace('-','/')}"></span>`;}).join('')}</div></div>`:'';
+  return `<div class="gantt"><div class="grow gaxis"><div class="gname"></div><div class="gtrack">${ticks}</div></div>${hdRow}${rows.map(row).join('')}</div>`;
 }
 function renderOrders(p,ro){
   const R=ordersOf(p),U=S.ordUI,rows=ordRows(R);
@@ -2547,7 +2550,7 @@ function renderOrders(p,ro){
       ${ro?'':'<button class="small ghost" id="btnClearOrd">清除醫囑紀錄</button>'}
     </div>`;
   if(!rows.length)return h+'<div class="small mute">沒有符合篩選條件的藥品。</div></div>';
-  h+=ganttHTML(rows);
+  h+=ganttHTML(rows,rrtHdDays(p));
   h+=`<div class="tblwrap" style="margin-top:12px"><table class="tbl"><thead><tr><th>處方</th><th>開始</th><th>停止</th><th>狀態</th><th>原因／備註</th></tr></thead><tbody>`;
   rows.forEach(({g,eps})=>{
     h+=`<tr class="ghead"><td colspan="5">${S.editMode&&!ro?`<button class="xdel" data-del="ordgrp" data-k="${esc(g.key)}" data-n="${esc(g.label)}" title="隱藏此藥（誤貼時用）">✕</button> `:''}<b>${esc(g.label)}</b> ${g.abx?`<span class="tag t-abx">${esc(g.abx)}</span>`:''}${g.restricted?'<span class="tag t-warn">需感控審核</span>':''}${g.local&&g.abx?'<span class="tag t-reg">局部，不計 DOT</span>':''}${g.isDrip?'<span class="tag t-drip">輸注</span>':''}
@@ -3185,6 +3188,7 @@ function buildSoap(p){
   const ht=p.ht||'',wt=p.wt||'';const labs=soapLabLines(p).join('\n');const abx=abxDurationTxt(p);
   const ct=microSoapTxt(p),cult=ct?'\n'+ct.split('\n').map(l=>'  - '+l).join('\n'):'no';
   const exT=examSoapTxt(p),coT=consultSoapTxt(p),ind=t=>t?'\n'+t.split('\n').map(l=>'  - '+l).join('\n'):'';
+  const rrT=rrtSoapTxt(p);
   const exL=exT?ind(exT):'',coL=coT?ind(coT):'';const lnT=linesSoapTxt(p),lnL=lnT?ind(lnT.split('; ').join('\n')):'';
   const lastLab=hasLabs(p)?Object.keys(p.labs.cols).sort().reverse()[0]:'';
   const labHead=`Laboratory findings${lastLab?` (${skMD(lastLab)})`:''}:`;
@@ -3202,7 +3206,7 @@ A ${ageTxt} ${sex} had ${ccTxt(p)}. This is a case of ${dx}
 # Vital sign：
 # ${labHead}
 ${labs}
-# Culture：${cult}${lnL?`\n# Lines/tubes：${lnL}`:''}${exL?`\n# Image／Exam：${exL}`:''}${coL?`\n# Consult：${coL}`:''}${tpnSoapTxt(p)?'\n'+tpnSoapTxt(p):''}
+# Culture：${cult}${rrT?`\n# Renal：${rrT}`:''}${lnL?`\n# Lines/tubes：${lnL}`:''}${exL?`\n# Image／Exam：${exL}`:''}${coL?`\n# Consult：${coL}`:''}${tpnSoapTxt(p)?'\n'+tpnSoapTxt(p):''}
 
 <Medications>
 ${meds}
@@ -3265,7 +3269,7 @@ ${labs}
 # BNP -, NT-ProBNP ${soapCtx(p).V(latestLab(p,'72-571'))} pg/mL
 #NYHA functional classification
 #LVEF
-# Culture: ${ct?cult:''}${lnL?`\n# Lines/tubes：${lnL}`:''}${exL?`\n# Image／Exam：${exL}`:''}${coL?`\n# Consult：${coL}`:''}
+# Culture: ${ct?cult:''}${rrT?`\n# Renal：${rrT}`:''}${lnL?`\n# Lines/tubes：${lnL}`:''}${exL?`\n# Image／Exam：${exL}`:''}${coL?`\n# Consult：${coL}`:''}
 # Medications：
 ${meds}
 
@@ -3297,7 +3301,7 @@ A ${age}-year-old ${sex} had ${ccTxt(p)}. This is a case of ${dx}
 * Vital sign：
 * ${labHead}
 ${labs}
-* Culture：${cult}${lnL?`\n* Lines/tubes：${lnL}`:''}${exL?`\n* Image／Exam：${exL}`:''}${coL?`\n* Consult：${coL}`:''}
+* Culture：${cult}${rrT?`\n* Renal：${rrT}`:''}${lnL?`\n* Lines/tubes：${lnL}`:''}${exL?`\n* Image／Exam：${exL}`:''}${coL?`\n* Consult：${coL}`:''}
 
 <Medications>
 ${meds}
@@ -4628,6 +4632,95 @@ function previewCloud(txt){
 }
 
 /* =====================================================================
+   腎臟替代治療（RRT）狀態註記：自動偵測證據＋使用者確認
+   ===================================================================== */
+const RRT_ST=[['','未設定'],['none','無透析'],['ckd','CKD 未透析'],['new','本次住院開始透析'],['hd','長期血液透析（ESRD）'],['pd','長期腹膜透析'],['crrt','CRRT 進行中']];
+const RRT_SUB=[['','—'],['aki','AKI 需透析'],['ckd5','CKD 進入透析'],['tbd','未定']];
+const RRT_MODE=[['','—'],['IHD','IHD'],['CRRT','CRRT（CVVH/CVVHDF）'],['SLED','SLED'],['PD','PD']];
+const rrtOn=p=>['new','hd','pd','crrt'].includes((p.rrt||{}).status);
+const rrtLabel=v=>(RRT_ST.find(x=>x[0]===v)||['',''])[1];
+function rrtStore(p){if(!p.rrt||typeof p.rrt!=='object')p.rrt={status:'',sub:'',mode:'',start:'',schedule:'',access:'',dryWt:'',note:''};return p.rrt;}
+function rrtDates(t,refY){
+  const out=[];const re=/(?:(\d{4})[\/\-]\s*)?(\d{1,2})\s*[\/\-]\s*(\d{1,2})(?!\d)/g;let m;
+  while((m=re.exec(String(t||'').replace(/(\d{4})-\s*\//g,'$1/')))){const y=m[1]?+m[1]:refY,mo=+m[2],d=+m[3];if(mo>=1&&mo<=12&&d>=1&&d<=31)out.push(`${y}-${pad(mo)}-${pad(d)}`);}
+  return [...new Set(out)];
+}
+function rrtEvidence(p){
+  const ev=[],sug={};const refY=(p.admitDate||ymd()).slice(0,4);
+  // 1) 醫囑
+  const seen=new Set(),notes=[];
+  (p.orderSources||[]).forEach(x=>parseOrderNotes(x.text).forEach(n=>{const k=+n.t+'|'+n.cat+'|'+n.text;if(!seen.has(k)){seen.add(k);notes.push(n);}}));
+  notes.sort((a,b)=>a.t-b.t);
+  // 被後續 DC 的醫囑行視為取消
+  const live=[];notes.forEach(n=>{if(/^DC/.test(n.cat)){for(let i=live.length-1;i>=0;i--)if(live[i].text===n.text){live.splice(i,1);break;}}else live.push(n);});
+  const dn=live.filter(n=>/透析|Hemodialysis|H\/D|\bHD\b|CVVH|CRRT|SLED|CAPD|APD|peritoneal/i.test(n.text));
+  const fresh=dn.find(n=>/Fresh\s*Hemo/i.test(n.text));
+  if(fresh){ev.push(['new',`${tFmt(fresh.t)} 醫囑「Fresh Hemodialysis Order」＝首次透析`]);sug.status='new';sug.mode='IHD';sug.start=ymdOf(fresh.t);}
+  const crrt=dn.find(n=>/CVVH|CRRT|CVVHDF|continuous\s+veno/i.test(n.text));
+  if(crrt){ev.push(['crrt',`${tFmt(crrt.t)} 醫囑：${crrt.text.slice(0,60)}`]);sug.status='crrt';sug.mode='CRRT';sug.start=sug.start||ymdOf(crrt.t);}
+  const pdN=dn.find(n=>/CAPD|APD|peritoneal/i.test(n.text));if(pdN){ev.push(['pd',`${tFmt(pdN.t)} 醫囑：${pdN.text.slice(0,60)}`]);if(!sug.status)sug.status='pd';sug.mode=sug.mode||'PD';}
+  const ind=[...dn].reverse().find(n=>/Indication\s*[:：]/i.test(n.text));if(ind){const v=ind.text.match(/Indication\s*[:：]\s*([^)]*)/i)[1].trim();ev.push(['info',`透析適應症：${v}`]);if(/AKI/i.test(v)&&!/CKD/i.test(v))sug.sub='aki';else if(/CKD/i.test(v))sug.sub='ckd5';}
+  const freq=[...dn].reverse().find(n=>/Frequency\s*[:：]/i.test(n.text));if(freq){const ds=rrtDates(freq.text.split(/Frequency\s*[:：]/i)[1],refY);if(ds.length){sug.schedule=ds.map(d=>d.slice(5).replace('-','/')).join(', ');ev.push(['info',`透析排程：${ds.map(d=>d.slice(5).replace('-','/')).join('、')}`]);}}
+  const acc=[...dn].reverse().find(n=>/Vascular access\s*[:：]/i.test(n.text));if(acc){sug.access=acc.text.match(/Vascular access\s*[:：]\s*([^)]*)/i)[1].trim();ev.push(['info',`血管通路：${sug.access}`]);}
+  if(/2\.5\s*hr\s*x\s*I\b|150\s*x\s*III|Mannitol/i.test(dn.map(n=>n.text).join(' ')))ev.push(['new','漸進式處方（短時間、低血流、Mannitol），符合新病人首次透析']);
+  const regular=dn.find(n=>/regular|maintenance|TIW|routine\s+H\/?D/i.test(n.text));if(regular&&!fresh){ev.push(['hd',`${tFmt(regular.t)} 醫囑：${regular.text.slice(0,60)}`]);if(!sug.status)sug.status='hd';}
+  if(dn.length&&!sug.status){sug.status='new';sug.sub='tbd';ev.push(['info',`有透析醫囑 ${dn.length} 行，未見 Fresh／Regular 字樣，請確認是新開始或長期透析`]);sug.mode=sug.mode||'IHD';}
+  // 2) 管路
+  lineStore(p).items.filter(x=>!x.rmAt&&/double\s*lumen|\bDL\b|perm-?cath|hemodialysis|透析/i.test(x.name+' '+x.reason)).forEach(x=>{ev.push(['info',`管路：${x.name} ${x.site}（${x.at.slice(5,10).replace('-','/')} 起）`]);if(!sug.access)sug.access=`${x.name} ${x.site}`;});
+  const lineDL=live.filter(n=>/double\s*lumen|perm-?cath/i.test(n.text)).pop();if(lineDL)ev.push(['info',`醫囑：${lineDL.text.replace(/^\.+/,'').slice(0,60)}`]);
+  // 3) 診斷／病程／入院紀錄
+  const hay=[p.dx,...progStore(p).map(r=>r.A),...((p.adm&&p.adm.sections)||[]).map(x=>x.text)].join('\n');
+  if(/\b(ESRD|end[- ]stage renal)\b|regular\s+(hemo)?dialysis|on\s+(regular\s+)?H\/?D\b|maintenance\s+(hemo)?dialysis|\bAVF\b|\bAVG\b|perm-?cath/i.test(hay)){ev.push(['hd','診斷／病程提到 ESRD、規律透析或 AVF/AVG/Permcath']);if(!sug.status)sug.status='hd';}
+  if(/\bCAPD\b|peritoneal dialysis/i.test(hay)){ev.push(['pd','診斷／病程提到腹膜透析']);if(!sug.status)sug.status='pd';}
+  if(/\bCKD\b|chronic kidney|AoCKD|Acute on chronic kidney/i.test(hay))ev.push(['ckd','診斷提到 CKD／AoCKD']);
+  // 4) 雲端藥歷
+  const C=cloudStore(p).items;const epo=C.filter(x=>/epoetin|darbepoetin|mircera|methoxy polyethylene/i.test(x.ing+' '+x.drug));const n186=C.some(x=>/^N18[56]/.test(x.icd));
+  if(epo.length)ev.push(['ckd',`雲端：門診 ESA ${epo.length} 次（最近 ${epo.map(x=>x.date).sort().pop().slice(5).replace('-','/')}，${[...new Set(epo.map(x=>x.src))].join('、')}）${n186?'，診斷 N18.5/N18.6':''}——ESA 本身不代表已透析`]);
+  if(!sug.status&&(epo.length||/\bCKD\b|chronic kidney/i.test(hay)))sug.status='ckd';
+  return {ev,sug};
+}
+function rrtSoapTxt(p){
+  const R=rrtStore(p);if(!R.status||R.status==='none')return '';
+  if(R.status==='ckd')return `CKD, not on dialysis`;
+  const sched=rrtDates(rrtSched(p),(p.admitDate||ymd()).slice(0,4));
+  return `${{new:'Dialysis initiated this admission',hd:'ESRD on maintenance HD',pd:'ESRD on PD',crrt:'On CRRT'}[R.status]}${R.sub==='aki'?' (AKI-RRT)':R.sub==='ckd5'?' (CKD progressing to dialysis)':''}${R.mode?', '+R.mode:''}${R.start?`, since ${R.start.slice(5).replace('-','/')}`:''}${sched.length?`; schedule ${sched.map(d=>d.slice(5).replace('-','/')).join(', ')}`:''}${R.access?`; access ${R.access}`:''}${R.dryWt?`; dry weight ${R.dryWt} kg`:''}`;
+}
+function rrtSched(p){const R=rrtStore(p);return R.schedule||rrtEvidence(p).sug.schedule||'';}
+function rrtHdDays(p){const R=rrtStore(p);if(!rrtOn(p)||R.status==='crrt'||R.status==='pd')return [];return rrtDates(rrtSched(p),(p.admitDate||ymd()).slice(0,4));}
+function rrtNext(p){const d=rrtHdDays(p).filter(x=>x>=ymd()).sort();return d[0]||'';}
+function renderRRT(p,ro){
+  const R=rrtStore(p),E=rrtEvidence(p),dis=ro?'disabled':'';
+  const sel=(k,opts)=>`<select data-rrt="${k}" ${dis}>${opts.map(([v,t])=>`<option value="${v}" ${R[k]===v?'selected':''}>${t}</option>`).join('')}</select>`;
+  const inp=(k,ph,type)=>`<input data-rrt="${k}" ${type?`type="${type}"`:''} value="${esc(R[k]||'')}" placeholder="${ph||''}" ${dis}>`;
+  const icon={new:'🆕',hd:'🔁',pd:'💧',crrt:'⏱',ckd:'🩺',info:'·'};
+  const diff=E.sug.status&&E.sug.status!==R.status;
+  return `<div class="card" id="rrtCard"><h3>腎臟替代治療（RRT）</h3>
+    <div class="grid">
+      <div class="fld"><label>狀態</label>${sel('status',RRT_ST)}</div>
+      ${R.status==='new'?`<div class="fld"><label>類型</label>${sel('sub',RRT_SUB)}</div>`:''}
+      ${rrtOn(p)?`<div class="fld"><label>模式</label>${sel('mode',RRT_MODE)}</div><div class="fld"><label>開始日</label>${inp('start','','date')}</div>
+      <div class="fld wide"><label>透析排程（日期，逗號分隔）</label>${inp('schedule',rrtEvidence(p).sug.schedule?'空白＝自動取醫囑：'+rrtEvidence(p).sug.schedule:'例：11/5, 11/7, 11/10')}</div>
+      <div class="fld wide"><label>血管通路</label>${inp('access','例：R femoral DL／L AVF')}</div>
+      <div class="fld"><label>乾體重 (kg)</label>${inp('dryWt','','number')}</div>`:''}
+      <div class="fld wide"><label>備註</label>${inp('note','例：UF 0–1 kg；透析中 Levophed 3 ml/hr')}</div>
+    </div>
+    ${rrtOn(p)?`<div class="small" style="margin-top:6px">${rrtNext(p)?`下次透析：<b>${rrtNext(p).slice(5).replace('-','/')}</b>${rrtNext(p)===ymd()?'（今天）':''}　`:''}<span class="under">透析中：Cockcroft-Gault CrCl／eGFR 不適用於劑量調整，請依透析劑量（HD 日於透析後給藥）。</span></div>`:''}
+    <details style="margin-top:8px" ${R.status?'':'open'}><summary class="small" style="cursor:pointer;font-weight:700">自動偵測的證據（${E.ev.length}）${E.sug.status?`・建議：${rrtLabel(E.sug.status)}${diff?' <span class="tag t-warn">與目前設定不同</span>':''}`:''}</summary>
+      ${E.ev.length?E.ev.map(([k,t])=>`<div class="small" style="margin-top:3px">${icon[k]||'·'} ${esc(t)}</div>`).join(''):'<div class="small mute">醫囑、管路、診斷、雲端藥歷都沒有透析相關資料。</div>'}
+      ${E.sug.status&&!ro?`<div style="margin-top:8px"><button class="small pri" id="btnRrtApply">套用建議（${esc(rrtLabel(E.sug.status))}${E.sug.schedule?'、排程':''}${E.sug.access?'、通路':''}）</button> <span class="small mute">只填入空白欄位與狀態，可再手動修改</span></div>`:''}
+    </details>
+    <div class="small mute" style="margin-top:6px">狀態由妳確認。設定「長期透析」時 AKI 判讀不分期；「本次住院開始透析」會判為 AKI stage 3（RRT）。</div></div>`;
+}
+function bindRRT(p,ro){
+  if(ro||!$('rrtCard'))return;
+  const R=rrtStore(p);
+  document.querySelectorAll('[data-rrt]').forEach(el=>{const k=el.dataset.rrt;
+    el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>{R[k]=el.value;R.setAt=new Date().toISOString();p.updatedAt=R.setAt;markDirty();if(el.tagName==='SELECT')renderMain();});});
+  if($('btnRrtApply'))$('btnRrtApply').onclick=()=>{const s=rrtEvidence(p).sug;snapshot(p,'套用 RRT 建議');
+    R.status=s.status;['sub','mode','start','schedule','access'].forEach(k=>{if(s[k]&&!R[k])R[k]=s[k];});R.setAt=new Date().toISOString();p.updatedAt=R.setAt;markDirty();renderMain();toast('已套用：'+rrtLabel(s.status));};
+}
+
+/* =====================================================================
    總覽
    ===================================================================== */
 function renderOverview(p){
@@ -4645,6 +4738,7 @@ function renderOverview(p){
     ${kv('身高／體重',`${esc(p.ht||'—')} cm／${esc(p.wt||'—')} kg`)}
     ${(()=>{const b=bodyW(p);return (b.bmi?kv('BMI',`${b.bmi.toFixed(1)} <span class="small ${b.catCls}">${b.cat}</span>`):'')+(b.ibw?kv('IBW／AdjBW',`${b.ibw.toFixed(1)}／${b.adj!=null?b.adj.toFixed(1):'—'} kg`):'')+(b.dose?kv('給藥體重',`${b.dose.w.toFixed(1)} kg <span class="small mute">${b.dose.t.split('（')[0]}</span>`):'');})()}
     ${kv('入院',p.admitDate?`${esc(p.admitDate)}（第 ${hd} 天）`:'—')}
+    ${p.rrt&&p.rrt.status&&p.rrt.status!=='none'?kv('腎臟替代治療',`${esc(rrtLabel(p.rrt.status))}${rrtNext(p)?` <span class="small mute">下次 ${rrtNext(p).slice(5).replace('-','/')}${rrtNext(p)===ymd()?'（今天）':''}</span>`:''}`):''}
     ${kv('過敏',esc(p.allergy||'—'))}
     ${p.dx?`<div class="small" style="margin-top:6px;white-space:pre-wrap">${esc(p.dx)}</div>`:''}</div>`;
   if(p.template==='peds'){const pr=paliEval(p);if(pr&&(pr.eligible||pr.flags.length>1||pr.inOrder))h+=renderPali(p,true,true);
