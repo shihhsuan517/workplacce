@@ -356,7 +356,7 @@ function ensurePatient(p){
   for(const [k,v] of Object.entries({medList:[],medLog:{},medPasteAt:'',drips:{},dripHistory:[],orderSources:[]}))if(p[k]==null)p[k]=JSON.parse(JSON.stringify(v));
   if(!p.labs||Array.isArray(p.labs))p.labs={cols:{},items:{}};
   RT.ensure(p);
-  microStore(p);examStore(p);consStore(p);issueStore(p);progStore(p);lineStore(p);
+  microStore(p);examStore(p);consStore(p);issueStore(p);progStore(p);lineStore(p);cloudStore(p);
   return p;
 }
 function newPatient(){
@@ -410,7 +410,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-10d';
+const APP_VER='2026-11-10e';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -652,7 +652,7 @@ function renderMain(){
   if($('btnCloseArchive'))$('btnCloseArchive').onclick=()=>{S.archive=null;renderList();renderMain();};
   bindForm(p,ro);
   if(S.tab==='basic')bindPali(p,ro);
-  if(S.tab==='meds')bindMeds(p,ro);
+  if(S.tab==='meds'){bindMeds(p,ro);bindCloud(p,ro);}
   if(S.tab==='drip')bindDrip(p,ro);
   if(S.tab==='lab')bindLab(p,ro);
   if(S.tab==='soap')bindSoap(p,ro);
@@ -753,7 +753,7 @@ function renderTab(p,ro){
     return h;
   }
   if(S.tab==='overview')return renderOverview(p);
-  if(S.tab==='meds')return renderMeds(p,ro);
+  if(S.tab==='meds')return renderMeds(p,ro)+renderCloud(p,ro);
   if(S.tab==='drip')return renderDrip(p,ro);
   if(S.tab==='lab')return renderLab(p,ro);
   if(S.tab==='soap')return renderSoap(p,ro);
@@ -892,6 +892,7 @@ async function doDelete(p,kind,k,n){
     snapshot(p,'刪除培養 '+(R.acc||''));delete M.reports[k];}
   else if(kind==='org'){const R=M.reports[k];const o=R&&R.orgs.find(x=>String(x.no)===String(n));if(!o||!await ask('刪除菌株',`刪除「${esc(o.name)}」及其藥敏？`))return;
     snapshot(p,'刪除菌株');R.orgs=R.orgs.filter(x=>x!==o);}
+  else if(kind==='cloud'){if(!await ask('清除雲端藥歷',`清除這位病人的雲端藥歷（${cloudStore(p).items.length} 筆）？`))return;snapshot(p,'清除雲端藥歷');p.cloud={items:[]};}
   else if(kind==='line'){const x=lineStore(p).items.find(y=>y.id===k);if(!x||!await ask('刪除管路',`刪除 ${esc(x.at)} ${esc(x.name)} 這筆管路紀錄？`))return;
     snapshot(p,'刪除管路');p.lines.items=p.lines.items.filter(y=>y!==x);}
   else if(kind==='prog'){const x=progStore(p).find(y=>y.id===k);if(!x||!await ask('刪除病程',`刪除 ${esc(x.at)} 這份病程紀錄？`))return;
@@ -2240,6 +2241,7 @@ $('btnPaste').onclick=()=>openPaste(null);
 $('btnClosePaste').onclick=closePaste;
 const CLS_TAG={pn:['t-new','靜脈營養'],fluid:['t-reg','稀釋液'],drip:['t-drip','輸注'],abx:['t-abx','抗生素'],reg:['t-reg','常規'],prn:['t-prn','PRN'],once:['t-reg','單次'],exp:['t-exp','已到期']};
 $('btnParsePaste').onclick=()=>{
+  if(isCloudMed($('pasteText').value)){previewCloud($('pasteText').value);return;}
   if(isOrderSheet($('pasteText').value)){previewOrders($('pasteText').value);return;}
   if(isLabReport($('pasteText').value)){previewLab($('pasteText').value);return;}
   if(isMicro($('pasteText').value)){previewMicro($('pasteText').value);return;}
@@ -4519,6 +4521,110 @@ function previewLines(txt){
     if(!p){p=newPatient();S.data.patients.push(p);}ensurePatient(p);
     const r=mergeLines(p,L);p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab='lines';markDirty();renderList();renderMain();
     toast(`${isNew?'已新增病患並':'已'}加入管路 ${r.add} 筆${r.upd?`、更新 ${r.upd} 筆`:''}`);};
+}
+
+/* =====================================================================
+   雲端藥歷（健保醫療資訊雲端查詢：西醫用藥）
+   去識別：不存身分證號、院所代碼與原文，只存每筆用藥的必要欄位
+   ===================================================================== */
+const CLOUD_START=/^\s*(\d{1,4})\t(\d{3})\/(\d{1,2})\/(\d{1,2})\t/;
+function isCloudMed(t){t=String(t||'');return /ATC3名稱|單筆餘藥日數|雲端查詢系統|MediCloud/i.test(t)||t.split(/\r?\n/).filter(l=>CLOUD_START.test(l)).length>=2;}
+function parseCloudMed(t){
+  const lines=String(t||'').replace(/\r/g,'').split('\n');const recs=[];let cur=null;
+  lines.forEach(l=>{
+    if(CLOUD_START.test(l)){if(cur)recs.push(cur);cur=[l];return;}
+    if(!cur)return;
+    if(/^Showing\s+\d|^項次\t/.test(l)){recs.push(cur);cur=null;return;}
+    if(l.trim())cur.push(l);
+  });
+  if(cur)recs.push(cur);
+  return recs.map(r=>{
+    const c=r.join('\t').split('\t').map(x=>x.trim());
+    const m=c[1].match(/(\d{3})\/(\d{1,2})\/(\d{1,2})/);const date=`${+m[1]+1911}-${pad(+m[2])}-${pad(+m[3])}`;
+    // 欄位：項次 日期 院所 類別 院所代碼 主診斷 ICD ATC3 複方 成分 藥名 用法 藥量 日數 餘藥
+    const n=c.length,tail=c.slice(n-8);
+    return {date,src:c[2]||'',kind:c[3]||'',dx:c[5]||'',icd:c[6]||'',atc3:tail[0]||'',combo:tail[1]==='Y',ing:tail[2]||'',drug:tail[3]||'',sig:tail[4]||'',qty:tail[5]||'',days:+tail[6]||0,remain:tail[7]===''?null:+tail[7]};
+  }).filter(x=>x.drug||x.ing);
+}
+function cloudStore(p){if(!p.cloud||!Array.isArray(p.cloud.items))p.cloud={items:[]};return p.cloud;}
+function mergeCloud(p,list){
+  const C=cloudStore(p);let add=0,upd=0;
+  list.forEach(x=>{const k=[x.date,x.src,x.drug,x.sig,x.qty].join('|');const ex=C.items.find(y=>y.key===k);
+    if(ex){Object.assign(ex,x);upd++;}else{C.items.push(Object.assign({key:k},x));add++;}});
+  C.at=new Date().toISOString();return {add,upd};
+}
+const ingKey=s=>String(s||'').toLowerCase().split(/[；;]/).map(x=>x.replace(/\(.*?\)|（.*?）/g,'').replace(/\b(hcl|hydrochloride|sodium|calcium|potassium|fumarate|sulfate|sesquihydrate|trihydrate|citrate|dihydrate|tromethamine|methylsulfate|hbr|bromide|dihydrochloride|chloride|maleate|besylate|mesylate|tartrate)\b/g,'').replace(/\s+/g,' ').trim()).filter(Boolean);
+function cloudView(p){
+  const C=cloudStore(p),admit=p.admitDate||ymd();
+  const inHay=(p.medList||[]).filter(m=>!m.expired).map(m=>[m.name,m.generic,m.display,m.raw].join(' ').toLowerCase()).join(' | ');
+  const R=ordersOf(p);const ordHay=R?R.groups.map(g=>g.name).join(' | ').toLowerCase():'';
+  const groups={};
+  C.items.forEach(x=>{const k=ingKey(x.ing||x.drug).join('+')||x.drug.toLowerCase();(groups[k]=groups[k]||[]).push(x);});
+  const rows=Object.entries(groups).map(([k,list])=>{
+    list.sort((a,b)=>b.date.localeCompare(a.date));const last=list[0];
+    const end=new Date(last.date+'T00:00:00');end.setDate(end.getDate()+Math.max(last.days,1)-1);const endS=ymdOf(end);
+    const gap=Math.round((Date.parse(admit)-Date.parse(endS))/864e5);
+    const status=endS>=admit?'act':gap<=30?'recent':'old';
+    const GEN=/^(insulin|extract|acid|vitamin|human|recombinant|alfa|beta|regular|long|acting|tablets?|capsules?|injection|=.*)$/;
+    const toks=ingKey(last.ing||last.drug).map(t=>{const w=t.replace(/[=()（）]/g,' ').split(/\s+/).filter(x=>x.length>=4&&!GEN.test(x));return w.length?w.join(' '):t.split(' ')[0];}).filter(t=>t.length>=4);
+    const hit=h=>toks.length&&toks.some(t=>t.split(' ').every(w=>h.includes(w)));
+    const inNow=hit(inHay);const inOrd=!inNow&&hit(ordHay);
+    const srcs=[...new Set(list.map(x=>x.src))];
+    return {k,last,list,endS,gap,status,inNow,inOrd,srcs,n:list.length};
+  }).sort((a,b)=>({act:0,recent:1,old:2}[a.status]-{act:0,recent:1,old:2}[b.status])||b.last.date.localeCompare(a.last.date));
+  return {rows,admit};
+}
+function cloudText(p){
+  const V=cloudView(p),act=V.rows.filter(r=>r.status!=='old');
+  return `Home medications (NHI MediCloud, admission ${V.admit}):\n`+act.map(r=>`- ${r.last.ing||r.last.drug} (${r.last.drug}) ${r.last.sig}, last ${r.last.date.slice(5).replace('-','/')} ${r.last.src} x${r.last.days}d${r.status==='act'?'':' [ended '+r.endS.slice(5).replace('-','/')+']'}${r.inNow?' - continued':' - not ordered now'}`).join('\n');
+}
+function renderCloud(p,ro){
+  const C=cloudStore(p);const open=S.cloudOpen!==false;
+  let h=`<details class="card" id="cloudDet" ${open?'open':''}><summary style="cursor:pointer"><h3 style="margin:0;display:inline">雲端藥歷（入院前用藥）</h3> <span class="small mute">${C.items.length?`${C.items.length} 筆・貼上於 ${esc(locTs(C.at))}`:'尚未貼上'}</span></summary>`;
+  if(!ro)h+=`<div style="margin-top:8px"><textarea id="cloudText" rows="3" placeholder="健保雲端「西醫用藥」頁整頁複製貼上；有分頁時每頁各貼一次會自動合併。身分證號與院所代碼不會存入。"></textarea>
+    <div class="row" style="margin-top:6px;justify-content:flex-end">${C.items.length?'<button class="small" id="btnCloudCopy">複製入院前用藥（含是否續用）</button>':''}<button class="small pri" id="btnCloudAdd">解析並加入</button></div></div>`;
+  if(!C.items.length)return h+'</details>';
+  const V=cloudView(p),f=S.cloudF||'recent';
+  const shown=V.rows.filter(r=>f==='all'||(f==='recent'&&r.status!=='old')||(f==='notnow'&&r.status!=='old'&&!r.inNow));
+  const stTag={act:['t-new','入院時應仍在用'],recent:['t-warn','入院前 30 天內用完'],old:['t-reg','較早']};
+  h+=`<div class="row small" style="margin-top:10px">${[['recent','入院前仍在用／30 天內'],['notnow','其中住院未開立'],['all','全部成分']].map(([k,t])=>`<button class="small ${k===f?'pri':''}" data-cloudf="${k}">${t}</button>`).join('')}<span class="mute">依入院日 ${esc(V.admit)}；結束日＝最後一次領藥日＋給藥日數</span></div>
+    <div class="tblwrap" style="margin-top:6px"><table class="tbl"><thead><tr><th>成分／藥品</th><th>用法</th><th>最後領藥</th><th>給藥至</th><th>入院時</th><th>住院中</th><th>來源・次數</th></tr></thead><tbody>
+    ${shown.map(r=>`<tr><td><b>${esc(r.last.ing||r.last.drug)}</b>${r.last.combo?' <span class="tag t-reg">複方</span>':''}<br><span class="small mute">${esc(r.last.drug)}・${esc(r.last.atc3.replace(/（.*$|\(.*$/,''))}</span></td>
+      <td>${esc(r.last.sig)}<br><span class="small mute">${esc(r.last.qty)}／${r.last.days} 天</span></td>
+      <td style="white-space:nowrap">${esc(r.last.date.slice(5).replace('-','/'))}</td><td style="white-space:nowrap">${esc(r.endS.slice(5).replace('-','/'))}</td>
+      <td><span class="tag ${stTag[r.status][0]}">${stTag[r.status][1]}</span></td>
+      <td>${r.inNow?'<span class="tag t-new">續用</span>':r.inOrd?'<span class="tag t-reg">曾開立</span>':'<span class="tag t-abx">未開立</span>'}</td>
+      <td class="small">${esc(r.srcs.join('、'))}<br><span class="mute">${r.n} 次・${esc(r.last.dx)}</span></td></tr>`).join('')||'<tr><td colspan="7" class="small mute">沒有符合的項目</td></tr>'}
+    </tbody></table></div>
+    <div class="small mute" style="margin-top:6px">「住院中」以成分名比對目前用藥：續用＝目前用藥中有；曾開立＝醫囑起迄中出現過但已停；未開立＝住院後沒有相同成分。複方以任一成分比對，請再確認。</div>
+    <details style="margin-top:8px"><summary class="small" style="cursor:pointer">逐筆紀錄（${C.items.length} 筆）</summary><div class="tblwrap"><table class="tbl"><thead><tr><th>日期</th><th>來源</th><th>主診斷</th><th>藥品</th><th>用法</th><th>藥量</th><th>日數</th></tr></thead><tbody>
+      ${[...C.items].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>`<tr><td style="white-space:nowrap">${esc(x.date.slice(5).replace('-','/'))}</td><td class="small">${esc(x.src)} ${esc(x.kind)}</td><td class="small">${esc(x.dx)} <span class="mute">${esc(x.icd)}</span></td><td><b>${esc(x.ing||x.drug)}</b><br><span class="small mute">${esc(x.drug)}</span></td><td>${esc(x.sig)}</td><td>${esc(x.qty)}</td><td>${x.days}</td></tr>`).join('')}
+    </tbody></table></div></details>
+    ${!ro&&S.editMode?'<div style="margin-top:8px"><button class="small danger" data-del="cloud" data-k="all">清除雲端藥歷</button></div>':''}`;
+  return h+'</details>';
+}
+function bindCloud(p,ro){
+  const d=$('cloudDet');if(d)d.addEventListener('toggle',()=>{S.cloudOpen=d.open;});
+  document.querySelectorAll('[data-cloudf]').forEach(b=>b.onclick=()=>{S.cloudF=b.dataset.cloudf;renderMain();});
+  if($('btnCloudCopy'))$('btnCloudCopy').onclick=()=>copyMsg(cloudText(p),'已複製入院前用藥');
+  if(ro)return;
+  if($('btnCloudAdd'))$('btnCloudAdd').onclick=()=>{const L=parseCloudMed($('cloudText').value);if(!L.length){toast('沒有解析到雲端藥歷');return;}
+    snapshot(p,'加入雲端藥歷');const r=mergeCloud(p,L);p.updatedAt=new Date().toISOString();S.cloudOpen=true;markDirty();renderMain();toast(`雲端藥歷：新增 ${r.add} 筆${r.upd?`、更新 ${r.upd} 筆`:''}`);};
+}
+function previewCloud(txt){
+  const L=parseCloudMed(txt);
+  if(!L.length){$('pastePreview').innerHTML='<div class="notice bad">看起來是雲端藥歷，但沒有解析到用藥資料列。請從「項次」那一行開始整頁複製。</div>';return;}
+  let def=pasteTarget||(S.selId&&!S.archive?S.selId:'new');
+  const opts=[['new','＋ 新增為新病患']].concat(sortedPatients().map(x=>[x.id,`加入：${x.bed||'（未填床號）'} ${x.code||''}`]));
+  $('pastePreview').innerHTML=`<div class="card" style="margin-top:12px"><div class="row"><b>加入到</b>
+    <select id="pasteTargetSel" style="width:auto;min-width:260px">${opts.map(([v,t])=>`<option value="${v}" ${v===def?'selected':''}>${esc(t)}</option>`).join('')}</select></div>
+    <div class="small mute" style="margin-top:6px">雲端藥歷 ${L.length} 筆（${L[L.length-1].date} – ${L[0].date}）。身分證號、院所代碼不會存入；有分頁請每頁各貼一次。</div></div>
+    <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="pri" id="btnDoImport">確認加入</button></div>`;
+  $('btnDoImport').onclick=()=>{
+    const tid=$('pasteTargetSel').value;let p=tid!=='new'?S.data.patients.find(x=>x.id===tid):null;const isNew=!p;
+    if(!p){p=newPatient();S.data.patients.push(p);}ensurePatient(p);
+    const r=mergeCloud(p,L);p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab='meds';S.cloudOpen=true;markDirty();renderList();renderMain();
+    toast(`${isNew?'已新增病患並':'已'}加入雲端藥歷 ${r.add} 筆${r.upd?`、更新 ${r.upd} 筆`:''}`);};
 }
 
 /* =====================================================================
