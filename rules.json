@@ -1,5 +1,5 @@
 {
- "version": "2026-11-11d",
+ "version": "2026-11-11f",
  "updated": "2026-11-11",
  "rules": [
   {
@@ -510,13 +510,13 @@
    "source": [
     {
      "ref": "Lexicomp (UpToDate Lexidrug) — Fentanyl",
-     "sections": "Dosing: Adult（適應症細項未展開）; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity",
+     "sections": "Dosing: Adult（含 ICU analgesia and sedation）; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity",
      "addedAt": "2026-11-11",
      "by": "JC"
     }
    ],
    "usual": {
-    "text": "依適應症與病人因素（疼痛程度、共病、鴉片類耐受）個別化，用最低有效劑量、最短時間；先盡量使用非鴉片類止痛。ICU 鎮痛鎮靜的輸注範圍：本次貼上的資料未展開該適應症，尚未建立。"
+    "text": "依適應症與病人因素個別化，用最低有效劑量、最短時間；多模式止痛，先盡量使用非鴉片類。ICU 鎮痛鎮靜（off-label）：Loading 25–100 mcg 或 1–2 mcg/kg，約 5 分鐘後評估可重複；間歇維持 25–50 mcg 或 0.35–0.5 mcg/kg q30–60min PRN；連續輸注起始 25–50 mcg/hr，每 30–60 分鐘依效果調整，加速前可先給小 bolus（如 25 mcg）。以 BPS 或 CPOT 評估無法自述者的疼痛。"
    },
    "weight": {
     "basis": "TBW",
@@ -566,7 +566,209 @@
    ],
    "notes": [
     "過量風險因子（過量或物質使用疾患病史、睡眠呼吸障礙、口服 ≥50 MME/day、併用 benzodiazepine）：考慮開立 naloxone／nalmefene。",
-    "用最低有效劑量、最短時間；多模式止痛，先盡量使用非鴉片類。"
+    "用最低有效劑量、最短時間；多模式止痛，先盡量使用非鴉片類。",
+    "長時間使用會蓄積於脂肪，可能造成鎮靜延長、脫離呼吸器困難。"
+   ],
+   "infusion": {
+    "unit": "mcg/hr",
+    "ranges": [
+     {
+      "ind": "ICU 鎮痛鎮靜",
+      "min": 25,
+      "max": 300,
+      "text": "起始 25–50 mcg/hr；常用範圍 50–300 mcg/hr。"
+     }
+    ],
+    "primary": 0,
+    "alt": {
+     "unit": "mcg/kg/hr",
+     "min": 0.7,
+     "max": 10,
+     "text": "體重基準範圍 0.7–10 mcg/kg/hr"
+    },
+    "alerts": [],
+    "loading": "Loading 25–100 mcg 或 1–2 mcg/kg；間歇維持 25–50 mcg 或 0.35–0.5 mcg/kg q30–60min PRN。"
+   }
+  },
+  {
+   "id": "amoxicillin-clavulanate",
+   "label": "Amoxicillin/Clavulanate",
+   "names": [
+    "clavulan",
+    "augmentin",
+    "curam",
+    "amoclav",
+    "amoxicillin-clav",
+    "amoxicillin/clav"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) — Amoxicillin and Clavulanate",
+     "sections": "Dosing: Adult（適應症細項未展開）; Older Adult; Altered Kidney Function; Altered Liver Function",
+     "addedAt": "2026-11-11",
+     "by": "JC"
+    }
+   ],
+   "doseUnit": "g",
+   "component": {
+    "re": "amoxicillin(?:\\s*trihydrate)?\\s*([\\d.]+)\\s*(mg|g)|\\b([\\d.]+)\\s*(mg|g)?\\s*\\/\\s*[\\d.]+\\s*(mg|g)",
+    "text": "劑量以 amoxicillin 成分計。"
+   },
+   "doseNote": "劑量以 amoxicillin 成分計；各劑型劑量與頻次不可互換。",
+   "usual": {
+    "text": "口服 IR：500 mg q8–12h 或 875 mg q12h；ER：2 g q12h。IV（加拿大產品）：1 g q8h 或 2 g q8–12h；手術預防 1–2 g 麻醉誘導時，>1 h 手術 24 h 內最多再 2 劑，24 h 不超過 3 g。"
+   },
+   "renal": {
+    "method": "CG",
+    "text": "雖部分仿單用 GFR 分界，PK 研究使用 CrCl。口服調整依 250/125、500/125 錠的 amoxicillin 成分。",
+    "byRoute": {
+     "PO": {
+      "bands": [
+       {
+        "min": 30,
+        "max": 9999,
+        "text": "不需調整。"
+       },
+       {
+        "min": 10,
+        "max": 30,
+        "text": "250–500 mg q12h。",
+        "regimens": [
+         {
+          "gMin": 0.25,
+          "gMax": 0.5,
+          "q": [
+           12
+          ]
+         }
+        ]
+       },
+       {
+        "min": 0,
+        "max": 10,
+        "text": "250–500 mg q12–24h。",
+        "regimens": [
+         {
+          "gMin": 0.25,
+          "gMax": 0.5,
+          "q": [
+           12,
+           24
+          ]
+         }
+        ]
+       }
+      ],
+      "HD": {
+       "text": "可被透析（amoxicillin 30–47%、clavulanate 34%，low-flux）。250–500 mg q12–24h；若 q24h，透析日於透析後給，或透析後加一劑。",
+       "regimens": [
+        {
+         "gMin": 0.25,
+         "gMax": 0.5,
+         "q": [
+          12,
+          24
+         ]
+        }
+       ],
+       "afterHD": true
+      },
+      "PD": {
+       "text": "250–500 mg q12h。",
+       "regimens": [
+        {
+         "gMin": 0.25,
+         "gMax": 0.5,
+         "q": [
+          12
+         ]
+        }
+       ]
+      }
+     },
+     "IV": {
+      "bands": [
+       {
+        "min": 30,
+        "max": 9999,
+        "text": "不需調整。"
+       },
+       {
+        "min": 10,
+        "max": 30,
+        "maxIn": true,
+        "text": "起始 1 g，之後 500 mg q12h。",
+        "regimens": [
+         {
+          "g": 0.5,
+          "q": 12
+         },
+         {
+          "g": 1,
+          "q": 12,
+          "note": "loading"
+         }
+        ]
+       },
+       {
+        "min": 0,
+        "max": 10,
+        "text": "起始 1 g，之後 500 mg q12–24h。",
+        "regimens": [
+         {
+          "g": 0.5,
+          "q": [
+           12,
+           24
+          ]
+         }
+        ]
+       }
+      ],
+      "HD": {
+       "text": "可被透析（amoxicillin 30–47%，low-flux）。起始 1 g，之後 500 mg q12–24h；若 q24h，透析日於透析後給，或透析後加 500 mg。",
+       "regimens": [
+        {
+         "g": 0.5,
+         "q": [
+          12,
+          24
+         ]
+        }
+       ],
+       "afterHD": true
+      },
+      "PD": {
+       "text": "起始 1 g，之後 500 mg q12h。",
+       "regimens": [
+        {
+         "g": 0.5,
+         "q": 12
+        }
+       ]
+      }
+     }
+    },
+    "avoid": {
+     "lt": 30,
+     "re": "875|\\bER\\b|\\bXR\\b|extended|1000\\s*mg\\s*\\/\\s*62\\.5",
+     "text": "CrCl <30（含透析）應避免 IR 875 mg 錠與 ER 錠。"
+    }
+   },
+   "hepatic": {
+    "none": true,
+    "text": "CTP A–C（含治療中惡化）不需調整；疑似本藥引起肝損傷時停藥。曾因本藥發生肝損傷（如膽汁鬱積）者禁用。肝硬化合併腹水時大量分布至腹水、半衰期延長。",
+    "trigger": "cholestasis|膽汁鬱積|drug.induced liver|DILI",
+    "triggerText": "診斷提到膽汁鬱積或藥物性肝損傷：曾因 amoxicillin/clavulanate 引起肝損傷者禁用；治療中疑似本藥肝損傷應停藥。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "依成人劑量（Older Adult：Refer to adult dosing）。"
+   },
+   "notes": [
+    "劑量以 amoxicillin 成分計；不同產品劑量與頻次不可互換。",
+    "IV 劑型為加拿大產品（Lexicomp 標示）。"
    ]
   }
  ]
