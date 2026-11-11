@@ -413,7 +413,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-11i';
+const APP_VER='2026-11-11j';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -579,7 +579,7 @@ window.addEventListener('beforeunload',e=>{if(S.data&&S.dirty&&S.mode!=='sample'
    Google Drive 連線（Google Identity Services + Drive REST，scope: drive.file）
    檔案加密後才上傳；只看得到本平台建立的檔案與資料夾
    ===================================================================== */
-const GD_CLIENT_ID='';   // 取得 OAuth 用戶端 ID 後填入；也可在平台「Google Drive 設定」輸入（存在這台裝置）
+const GD_CLIENT_ID='313714780390-8v6ev9j91v2c11shhiuihddeicf86jb4.apps.googleusercontent.com';   // 取得 OAuth 用戶端 ID 後填入；也可在平台「Google Drive 設定」輸入（存在這台裝置）
 const GD_SCOPE='https://www.googleapis.com/auth/drive.file';
 const GD_ROOT='病患工作平台',GD_ARCH='舊病患';
 const GD={token:null,exp:0,tc:null,folders:{}};
