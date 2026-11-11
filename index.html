@@ -410,7 +410,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-11b';
+const APP_VER='2026-11-11c';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -624,7 +624,7 @@ $('btnAddPt').onclick=()=>{
 };
 
 const TPL={adult:'成人一般',peds:'兒科',ami:'AMI',hf:'HF'};
-const TABS=[['overview','總覽'],['basic','基本資料'],['prog','病程'],['lines','管路'],['meds','用藥'],['drip','輸注速算'],['tpn','TPN'],['lab','檢驗'],['micro','抗微生物圖譜'],['exam','檢查報告'],['consult','會診'],['rt','呼吸治療'],['soap','SOAP'],['ai','AI 判讀']];
+const TABS=[['overview','總覽'],['basic','基本資料'],['prog','病程'],['lines','管路'],['meds','用藥'],['drip','輸注速算'],['tpn','TPN'],['lab','檢驗'],['micro','抗微生物圖譜'],['exam','檢查報告'],['consult','會診'],['rt','呼吸治療'],['soap','SOAP'],['rules','劑量規則'],['ai','AI 判讀']];
 
 function curPatient(){return S.archive?S.archive.patient:S.data.patients.find(p=>p.id===S.selId)||null;}
 
@@ -664,6 +664,7 @@ function renderMain(){
   if(S.tab==='exam')bindExam(p,ro);
   if(S.tab==='prog')bindProg(p,ro);
   if(S.tab==='ai')bindAI(p,ro);
+  if(S.tab==='rules')bindRules(p,ro);
   if(S.tab==='lines')bindLines(p,ro);
   if(S.tab==='tpn')bindTPN(p,ro);
   if(S.tab==='lab')bindLabNotes(p,ro);
@@ -768,6 +769,7 @@ function renderTab(p,ro){
   if(S.tab==='exam')return renderExam(p,ro);
   if(S.tab==='prog')return renderProg(p,ro);
   if(S.tab==='ai')return renderAI(p,ro);
+  if(S.tab==='rules')return renderRules(p,ro);
   if(S.tab==='lines')return renderLines(p,ro);
   if(S.tab==='tpn')return renderTPN(p,ro);
   if(S.tab==='consult')return renderConsult(p,ro);
@@ -2639,13 +2641,15 @@ function medRow(m,p){
   if(m.isDrip){const c=matchDrip(m),d=c&&p.drips[c.id];
     if(c&&d){const r=computeResult(c,+d.amp,+d.dose,+d.vol,+d.flow,parseFloat(p.wt));extra+=r.stage==='done'?`<span class="tag t-drip">${esc(doseSummary(c,r))}</span>`:'<span class="tag t-warn">未填流速</span>';}}
   if(m.expAt)extra+=`<span class="tag t-reg">有效至 ${esc(m.expAt)}</span>`;
+  const rres=!m.expired&&m.cls!=='fluid'?ruleCheck(p,m):null;if(rres)extra+=ruleBadge(rres);
+  const rwarn=rres?rres.out.filter(x=>x.lv==='warn'):[];
   const del=S.editMode&&!S.archive?`<button class="xdel" data-del="med" data-k="${esc(m.ordKey||'')}" data-n="${(p.medList||[]).indexOf(m)}" title="${m.ordKey?'從醫囑起迄隱藏此藥':'刪除此筆'}">✕</button> `:'';
   let st='';
   if(!m.expired&&m.cls!=='fluid'){
     if(m.fromOrders&&m.startAt){st=`起 ${m.startMaybeEarlier?'≤ ':''}${m.startAt}${m.dot!=null&&!m.abx?`・累計 ${m.dot} 天`:''}${m.segAt&&m.segAt!==m.startAt?`・目前處方自 ${m.segAt}`:''}`;}
     else{const L=p.medLog&&p.medLog[m.key];if(L&&(L.start||L.first))st=`起 ${L.start?'':'≤ '}${(L.start||L.first).slice(5).replace('-','/')}`;}
   }
-  return `<div class="medrow ${m.cls==='exp'?'old':''}"><div><div class="mn">${del}${esc(m.display)}</div><div class="md">${esc(sub+notes)}</div>${st?`<div class="md" style="color:var(--navy2)">${esc(st)}</div>`:''}</div>
+  return `<div class="medrow ${m.cls==='exp'?'old':''}"><div><div class="mn">${del}${esc(m.display)}</div><div class="md">${esc(sub+notes)}</div>${st?`<div class="md" style="color:var(--navy2)">${esc(st)}</div>`:''}${rwarn.length?`<div class="md">${rwarn.map(x=>`<div class="under">⚠ ${esc(x.k)}：${esc(x.t)}</div>`).join('')}<a class="small" href="#" onclick="S.tab='rules';renderMain();return false">詳見劑量規則</a></div>`:''}</div>
     <div class="right"><b>${esc(m.dose)}</b> ${esc(m.freq)}<br><span class="tag ${cls}">${lab}</span>${extra}</div></div>`;
 }
 function renderMeds(p,ro){
@@ -3902,7 +3906,7 @@ function isConsultText(t){return /(會診科別|照會科別|受會診科|被會
 /* =====================================================================
    待與醫師討論（各分頁的藥師筆記）
    ===================================================================== */
-const ISSUE_SEC={overview:'整體',basic:'基本資料',prog:'病程',lines:'管路',ai:'AI 判讀',tpn:'TPN',meds:'用藥',drip:'輸注',lab:'檢驗',micro:'抗微生物',exam:'檢查',consult:'會診',rt:'呼吸治療',soap:'SOAP'};
+const ISSUE_SEC={overview:'整體',basic:'基本資料',prog:'病程',lines:'管路',ai:'AI 判讀',rules:'劑量規則',tpn:'TPN',meds:'用藥',drip:'輸注',lab:'檢驗',micro:'抗微生物',exam:'檢查',consult:'會診',rt:'呼吸治療',soap:'SOAP'};
 const locTs=iso=>{const d=new Date(iso);return isNaN(d)?'':`${pad(d.getMonth()+1)}/${pad(d.getDate())} ${hm(d)}`;};
 const ISSUE_ST=['待討論','已討論','已採納','未採納'];
 function issueStore(p){if(!Array.isArray(p.issues))p.issues=[];return p.issues;}
@@ -4727,10 +4731,135 @@ function bindRRT(p,ro){
 }
 
 /* =====================================================================
+   劑量規則庫：rules.json（GitHub）＋內建備份；依病人體重、腎功能、RRT 巡查目前用藥
+   ===================================================================== */
+const RULES_EMBED=/*RULES-START*/{"version": "2026-11-11b", "updated": "2026-11-11", "rules": [{"id": "dexmedetomidine", "label": "Dexmedetomidine", "names": ["dexmedetomidine", "precedex", "dexmedine"], "status": "verified", "source": [{"ref": "Lexicomp (UpToDate Lexidrug) — Dexmedetomidine", "sections": "Dosing: Adult; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity", "addedAt": "2026-11-11", "by": "JC"}], "weight": {"basis": "TBW", "obese": {"def": "BMI>=30", "basis": "AdjBW", "text": "BMI ≥30（第 1–3 級肥胖）：初始以 AdjBW 計算體重基準劑量，再依臨床效果調整；治療中不要更換體重基準（例如 AdjBW 與 TBW 互換）。"}}, "infusion": {"unit": "mcg/kg/hr", "ranges": [{"ind": "ICU 鎮靜", "min": 0.2, "max": 1.5, "text": "每 30 分鐘調整 0.2 mcg/kg/hr，目標 RASS 0 至 -2 或呼吸器同步。"}, {"ind": "程序性鎮靜／MAC", "min": 0.2, "max": 1, "text": "Loading 0.5–1 mcg/kg over 10 min 後持續輸注。"}, {"ind": "全身麻醉輔助（off-label）", "min": 0.1, "max": 0.8}], "primary": 0, "alerts": [{"gt": 1.5, "level": "warn", "text": "超過 1.5 mcg/kg/hr 不會增加療效（文獻最高用到 2.5）。"}, {"gt": 0.8, "level": "info", "text": "高於 0.8 mcg/kg/hr 屬較高峰值：停藥時應逐步減量，並監測戒斷（高血壓、心搏過速、譫妄、躁動）。"}], "cumulative": {"gt": 12, "unit": "mcg/kg/day", "text": "以目前速率估算每日累積量超過 12 mcg/kg/day，戒斷風險較高，停藥時應逐步減量。"}, "loading": "Loading 1 mcg/kg over 10 min 為選擇性；因血行動力學不穩（高血壓、低血壓、心搏過緩）不建議常規使用。"}, "renal": {"none": true, "text": "任何程度腎功能不全皆不需調整。", "HD": "不易被透析（高蛋白結合），不需補充劑量或調整。", "PD": "不需調整。", "CRRT": "不需調整。", "PIRRT": "不需調整。"}, "hepatic": {"trigger": "cirrhosis|child|ctp|liver failure|hepatic failure|肝硬化", "text": "CTP A/B 不需調整。CTP C：ICU 鎮靜用劑量範圍最低端並依效果調整；程序性鎮靜維持輸注降為 0.1–0.5 mcg/kg/hr。嚴重肝功能不全時清除率約降 50%，可能蓄積。"}, "elderly": {"age": 65, "text": "ICU 鎮靜：考慮減量，從劑量範圍低端開始，緩慢調整並留足時間評估反應。"}, "notes": ["無法提供可靠的遺忘作用，必要時併用 benzodiazepine 或 propofol。", "單用無法達到深度鎮靜。", "仿單建議輸注不超過 24 小時；RCT 顯示可安全使用至約 14 天。", "長時間、高累積劑量或高峰值使用後避免驟停。", "維持劑量單位是 mcg/kg/hour，曾發生單位誤解造成的錯誤。"]}, {"id": "piperacillin-tazobactam", "label": "Piperacillin/Tazobactam", "names": ["piperacillin", "tazocin", "betamycin", "pipetaz", "tapimycin"], "status": "verified", "source": [{"ref": "Lexicomp (UpToDate Lexidrug) — Piperacillin and Tazobactam", "sections": "Dosing: Adult; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity", "addedAt": "2026-11-11", "by": "JC"}], "doseUnit": "g", "doseNote": "劑量以 piperacillin＋tazobactam 合計表示（例：4.5 g＝4 g＋0.5 g）。", "usual": {"text": "傳統輸注（30 分鐘）：輕中度 3.375 g q6h；重度或 P. aeruginosa 4.5 g q6h（部分適應症可 4.5 g q8h）。延長輸注（off-label）：4.5 g q6h 跑 3 小時，或 3.375／4.5 g q8h 跑 4 小時。連續輸注（off-label）：18 g/24 h，可先給 4.5 g loading。", "maxDaily": 18}, "renal": {"method": "CG", "text": "依 CrCl 先選定適應症的常用劑量欄，再對照該 CrCl 區間的調整劑量。", "bands": [{"min": 100, "max": 130, "text": "建議改延長輸注（CrCl >100 時延長輸注較能達到 PK/PD 目標）；P. aeruginosa MIC 16（SDD）FDA 建議 4.5 g q6h 跑 3 小時。", "regimens": [{"g": 4.5, "q": 6, "inf": "ext"}, {"g": 4.5, "q": 8, "inf": "ext"}, {"g": 3.375, "q": 8, "inf": "ext"}, {"g": 3.375, "q": 6}, {"g": 4.5, "q": 6}]}, {"min": 40, "max": 100, "text": "傳統：常用 3.375 g q6h 者維持 3.375 g q6h；常用 4.5 g q6h 者維持 4.5 g q6h。延長：3.375 g q8h（4 h）、4.5 g q8h（4 h）、4.5 g q6h（3 h）。", "regimens": [{"g": 3.375, "q": 6}, {"g": 4.5, "q": 6}, {"g": 3.375, "q": 8, "inf": "ext"}, {"g": 4.5, "q": 8, "inf": "ext"}, {"g": 4.5, "q": 6, "inf": "ext"}]}, {"min": 20, "max": 40, "text": "傳統：常用 3.375 g q6h → 2.25 g q6h；常用 4.5 g q6h → 4.5 g q8h 或 3.375 g q6h。延長：3.375 g q8h（4 h）、4.5 g q8h（4 h 或 3 h）。", "regimens": [{"g": 2.25, "q": 6}, {"g": 4.5, "q": 8}, {"g": 3.375, "q": 6}, {"g": 3.375, "q": 8, "inf": "ext"}, {"g": 4.5, "q": 8, "inf": "ext"}]}, {"min": 0, "max": 20, "text": "傳統：常用 3.375 g q6h → 2.25 g q8h；常用 4.5 g q6h → 4.5 g q12h 或 2.25 g q6h。延長：3.375 g q12h（4 h）、4.5 g q12h（4 h 或 3 h）。", "regimens": [{"g": 2.25, "q": 8}, {"g": 4.5, "q": 12}, {"g": 2.25, "q": 6}, {"g": 3.375, "q": 12, "inf": "ext"}, {"g": 4.5, "q": 12, "inf": "ext"}]}], "ARC": "Augmented renal clearance（測得尿液 CrCl ≥130 mL/min/1.73m²，需 8–24 h 收尿）：130–<170 → 4.5 g q6h 跑 3 h，或 4.5 g loading 後 18 g/24 h 連續輸注；≥170 → 建議連續輸注，4.5 g loading 後 22.5 g/24 h。", "HD": {"text": "可被透析（30–40%）。傳統：4.5 g q12h 或 2.25 g q8h；透析日排定劑量建議（非必要）在透析後給。延長：4.5 g q12h 跑 3 h，或 3.375 g q12h 跑 4 h。", "regimens": [{"g": 4.5, "q": 12}, {"g": 2.25, "q": 8}, {"g": 3.375, "q": 12, "inf": "ext"}], "afterHD": true}, "PD": {"text": "可被透析（piperacillin 6%、tazobactam 21%）。傳統：4.5 g q12h 或 2.25 g q8h。延長：4.5 g q12h 跑 3 h，或 3.375 g q12h 跑 4 h。", "regimens": [{"g": 4.5, "q": 12}, {"g": 2.25, "q": 8}, {"g": 3.375, "q": 12, "inf": "ext"}]}, "CRRT": {"text": "依流出液流速、濾器而定（假設 high-flux、20–25 mL/kg/h）。傳統：4.5 g q8h，或 4.5 g loading 後 2.25 g q6h。連續輸注：4.5 g loading 後 9 g/24 h。CRRT 中斷時要調整劑量避免蓄積。重症可考慮較高起始劑量。", "regimens": [{"g": 4.5, "q": 8}, {"g": 2.25, "q": 6}]}, "PIRRT": {"text": "SLED（每日 8 h、BFR 200、effluent 300 mL/min）：3.375 g q8h。Extended high-volume hemofiltration（10 h、effluent >500 mL/min）：4.5 g q8h。"}}, "hepatic": {"none": true, "text": "CTP A–C 皆不需調整（piperacillin 幾乎不經肝代謝，tazobactam <30%）。"}, "obesity": {"def": "BMI>=30", "text": "BMI ≥30：傳統輸注 4.5 g q6h；延長／連續輸注（off-label）較易達到目標濃度，需快速達標時先給 4.5 g loading（30 min）。", "severeDef": "BMI>=50", "severeText": "BMI ≥50，或威脅生命且病原 MIC 偏高（如 16 mg/L）、感染部位穿透受限：4.5 g q6h 跑 3 小時。", "expectG": 4.5, "expectQ": 6}, "elderly": {"age": 65, "text": "依成人劑量（Older Adult：Refer to adult dosing）。"}, "notes": ["延長或連續輸注為 off-label，主要依據 PK/PD 模擬，臨床療效資料有限。", "延長輸注時，需要快速達到治療濃度（例如 sepsis）可先給 3.375–4.5 g loading（30 分鐘）。"]}]}/*RULES-END*/;
+S.rules=RULES_EMBED;S.rulesSrc='內建';
+(async()=>{try{if(location.protocol==='file:')return;const r=await fetch('rules.json?'+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
+  if(j&&Array.isArray(j.rules)){S.rules=j;S.rulesSrc='線上';if(S.data&&typeof renderMain==='function')renderMain();}}catch(e){}})();
+const RULE_FREQ={QD:24,QAM:24,QPM:24,HS:24,QN:24,BID:12,TID:8,QID:6,Q4H:4,Q6H:6,Q8H:8,Q12H:12,Q24H:24,Q36H:36,Q48H:48,QOD:48,Q72H:72,QW:168,Q3H:3,Q2H:2,Q1H:1};
+const freqH=f=>{f=String(f||'').toUpperCase().replace(/\s/g,'');if(RULE_FREQ[f])return RULE_FREQ[f];const m=f.match(/^Q(\d+)H$/);return m?+m[1]:null;};
+function rulesList(){return (S.rules&&S.rules.rules)||[];}
+function ruleFor(m){const hay=[m.name,m.generic,m.display,m.raw].join(' ').toLowerCase();return rulesList().find(r=>r.names.some(n=>hay.includes(n.toLowerCase())))||null;}
+// 病人條件
+function ruleCtx(p){
+  const b=bodyW(p),wt=parseFloat(p.wt)||null,r=renalCalc(p),age=ageYears(p);
+  const obeseBy=def=>{if(!def)return false;let m=def.match(/BMI\s*>=\s*([\d.]+)/i);if(m)return b.bmi!=null&&b.bmi>=+m[1];m=def.match(/TBW\s*>\s*([\d.]+)\s*IBW/i);if(m)return b.ibw&&wt&&wt>b.ibw*+m[1];return false;};
+  const wtOf=k=>k==='IBW'?b.ibw:k==='AdjBW'?(b.adj!=null?b.adj:wt):k==='LBW'?null:wt;
+  const rrt=(p.rrt&&rrtOn(p))?p.rrt.status:'';
+  return {b,wt,r,age,obeseBy,wtOf,rrt,crcl:r&&r.crcl!=null?r.crcl:null,crclAdj:r&&r.adj!=null?r.adj:null,peds:p.template==='peds'};
+}
+function medGrams(m){
+  const u=String(m.unit||'').toLowerCase();let v=null;
+  if(m.amount!=null&&m.qty!=null&&/^(g|gm|mg)$/.test(u))v=m.amount*(+m.qty||1)/(u==='mg'?1000:1);
+  if(v==null){const d=String(m.dose||'').match(/^([\d.]+)\s*(g|mg)$/);if(d)v=+d[1]/(d[2]==='mg'?1000:1);}
+  // 名稱寫明每支 g 數（例：Betamycin 2.25gm／vial）
+  if(v==null){const n=String(m.raw||m.name||'').match(/([\d.]+)\s*g(?:m)?\b[^/]*\/\s*(?:vial|bot|bag|amp)/i);if(n&&/pc/i.test(m.qunit||'PC'))v=+n[1]*(+m.qty||1);}
+  return v;
+}
+const near=(a,b)=>Math.abs(a-b)/b<0.06;
+// 主檢查：回傳 [{lv:'warn'|'info'|'ok', t, k}]
+function ruleCheck(p,m,ctx){
+  const R=ruleFor(m);if(!R)return null;ctx=ctx||ruleCtx(p);const out=[];const push=(lv,k,t)=>out.push({lv,k,t});
+  if(R.status!=='verified')push('info','狀態','此規則尚未確認，只供參考');
+  // 體重
+  let dw=ctx.wt,dwLab='TBW';
+  if(R.weight){dwLab=R.weight.basis||'TBW';dw=ctx.wtOf(dwLab);
+    if(R.weight.obese&&ctx.obeseBy(R.weight.obese.def)){dwLab=R.weight.obese.basis;dw=ctx.wtOf(dwLab);push('info','體重',`BMI ${ctx.b.bmi.toFixed(1)}：${R.weight.obese.text}　→ 計算體重 ${dwLab} ${dw?dw.toFixed(1)+' kg':'?'}`);}
+    if(!ctx.wt)push('info','體重','未填體重，無法計算體重基準劑量');}
+  if(R.obesity&&ctx.b.bmi!=null&&ctx.obeseBy(R.obesity.def)){
+    const sev=R.obesity.severeDef&&ctx.obeseBy(R.obesity.severeDef);
+    const g=medGrams(m),q=freqH(m.freq);const low=g&&q&&R.obesity.expectG&&(g<R.obesity.expectG*0.95||q>R.obesity.expectQ);
+    push(low?'warn':'info','肥胖',`BMI ${ctx.b.bmi.toFixed(1)}：${sev?R.obesity.severeText:R.obesity.text}${low?`　目前 ${fmtN(g)} g q${q}h`:''}`);}
+  // 輸注速率
+  if(R.infusion&&m.isDrip){const c=matchDrip(m),d=c&&p.drips[c.id];
+    if(c&&d&&d.flow){const res=computeResult(c,+d.amp,+d.dose,+d.vol,+d.flow,dw||0);
+      if(res.stage==='done'){
+        const perHrUg=(c.timeDiv===60?res.final*60:res.final)*(c.outUnit==='mg'?1000:1);
+        const U=R.infusion.unit.match(/^(mcg|mg|units?)(\/kg)?\/(hr|min)$/i);
+        if(U){let v=perHrUg/(U[1].toLowerCase()==='mg'?1000:1)/(U[3]==='min'?60:1);
+          if(U[2]){if(!dw){push('info','輸注','需體重才能換算 '+R.infusion.unit);v=null;}else v=v/dw;}
+          if(v!=null){const pr=R.infusion.ranges[R.infusion.primary||0];
+            const lv=v>pr.max?'warn':v<pr.min?'info':'ok';
+            push(lv,'輸注',`${fmtN(+v.toPrecision(3))} ${R.infusion.unit}${U[2]?`（${dwLab} ${dw.toFixed(1)} kg）`:''}；${pr.ind}常用 ${pr.min}–${pr.max}${v>pr.max?'，高於範圍':v<pr.min?'，低於範圍':'，在範圍內'}`);
+            let hit=false;(R.infusion.alerts||[]).sort((a,b)=>b.gt-a.gt).forEach(a=>{if(!hit&&v>a.gt){push(a.level,'輸注',a.text);hit=true;}});
+            if(R.infusion.cumulative&&U[2]&&U[3]==='hr'&&v*24>R.infusion.cumulative.gt)push('info','輸注',`以目前速率估 ${fmtN(+(v*24).toFixed(1))} ${R.infusion.cumulative.unit}：${R.infusion.cumulative.text}`);}}}}
+    else push('info','輸注','尚未填流速，無法檢查輸注劑量');}
+  // 每日上限
+  const g=medGrams(m),q=freqH(m.freq);
+  if(R.usual&&R.usual.maxDaily&&g&&q){const day=g*24/q;if(day>R.usual.maxDaily*1.02)push('warn','劑量',`每日 ${fmtN(+day.toFixed(2))} g，超過常用上限 ${R.usual.maxDaily} g/day`);}
+  // 腎功能／透析
+  if(R.renal){const rn=R.renal;
+    if(rn.none){if(ctx.rrt||(ctx.crcl!=null&&ctx.crcl<60))push('ok','腎功能',rn.text+(ctx.rrt&&rn[{new:'HD',hd:'HD',pd:'PD',crrt:'CRRT'}[ctx.rrt]]?' '+rn[{new:'HD',hd:'HD',pd:'PD',crrt:'CRRT'}[ctx.rrt]]:''));}
+    else{
+      const key=ctx.rrt?({new:'HD',hd:'HD',pd:'PD',crrt:'CRRT'}[ctx.rrt]):'';
+      const match=(regs)=>g&&q?regs.some(x=>near(g,x.g)&&x.q===q):null;
+      if(key&&rn[key]){const RR=rn[key];const ok=RR.regimens?match(RR.regimens):null;
+        push(ok===false?'warn':'ok','腎功能',`${rrtLabel(ctx.rrt)}（依 ${key} 建議）：${RR.text}${g&&q?`　目前 ${fmtN(g)} g q${q}h${ok===false?'，與建議不符':ok?'，符合':''}`:''}`);
+        if(RR.afterHD&&key==='HD'){const nx=rrtNext(p);push('info','腎功能',`透析日排定劑量建議在透析後給${nx?`（下次透析 ${nx.slice(5).replace('-','/')}${nx===ymd()?'，今天':''}）`:''}`);}}
+      else if(rn.bands&&ctx.crcl!=null){
+        const band=v=>rn.bands.find(b=>v>=b.min&&v<b.max)||(v>=130?null:null);
+        const b1=band(ctx.crcl),b2=ctx.crclAdj!=null?band(ctx.crclAdj):null;
+        if(ctx.crcl>=130&&rn.ARC)push('info','腎功能',`CrCl ${ctx.crcl.toFixed(0)}：${rn.ARC}`);
+        if(b1){const ok=b1.regimens?match(b1.regimens):null;
+          push(ok===false?'warn':'ok','腎功能',`CrCl ${ctx.crcl.toFixed(0)} mL/min（C-G，實際體重）落在 ${b1.min}–<${b1.max}：${b1.text}${g&&q?`　目前 ${fmtN(g)} g q${q}h${ok===false?'，與此區間建議不符':ok?'，符合':''}`:''}`);}
+        if(b2&&b2!==b1)push('info','腎功能',`以 AdjBW 計算 CrCl ${ctx.crclAdj.toFixed(0)}，落在 ${b2.min}–<${b2.max} 區間：${b2.text}`);
+        const rc=renalCalc(p);if(rc&&rc.crSk){const prev=latestLab(p,'72-333','B',1);if(prev&&Math.abs(labNum(prev)-rc.scr)>=0.3)push('info','腎功能',`Cr 近期變動 ${labNum(prev)}→${rc.scr}，非穩定狀態，C-G CrCl 可能不準`);}
+      }else if(rn.bands&&ctx.crcl==null)push('info','腎功能','缺少年齡、性別、體重或 Cr，無法計算 CrCl 對照劑量');}}
+  // 肝
+  if(R.hepatic&&!R.hepatic.none&&R.hepatic.trigger){const hay=[p.dx,...progStore(p).map(x=>x.A)].join(' ').toLowerCase();if(new RegExp(R.hepatic.trigger,'i').test(hay))push('info','肝功能',`診斷提到肝病：${R.hepatic.text}（請確認 CTP 分級）`);}
+  // 年長
+  if(R.elderly&&ctx.age!=null&&ctx.age>=R.elderly.age&&!ctx.peds)push('info','年長',R.elderly.text);
+  return {R,out};
+}
+function ruleBadge(res){
+  if(!res)return '';const w=res.out.filter(x=>x.lv==='warn').length,i=res.out.filter(x=>x.lv==='info').length;
+  return `<span class="tag ${w?'t-warn':'t-reg'}" title="劑量規則庫">📘 ${w?`注意 ${w}`:i?`參考 ${i}`:'✓'}</span>`;
+}
+function ruleLines(res){
+  if(!res||!res.out.length)return '';
+  return `<div class="md" style="margin-top:2px">${res.out.map(x=>`<div class="${x.lv==='warn'?'under':x.lv==='ok'?'ok':'mute'}">${x.lv==='warn'?'⚠':x.lv==='ok'?'✓':'ℹ'} <b>${esc(x.k)}</b> ${esc(x.t)}</div>`).join('')}<div class="mute">出處：${esc(res.R.source.map(s=>s.ref).join('；'))}</div></div>`;
+}
+function rulePatrol(p){
+  const ctx=ruleCtx(p);return (p.medList||[]).filter(m=>!m.expired&&m.cls!=='fluid').map(m=>({m,res:ruleCheck(p,m,ctx)})).filter(x=>x.res);
+}
+function rulePatrolText(p){
+  return rulePatrol(p).map(({m,res})=>`- ${m.display} ${m.dose}${m.route?' '+m.route:''} ${m.freq}：`+res.out.filter(x=>x.lv!=='ok'||x.k==='腎功能').map(x=>`[${x.lv==='warn'?'注意':x.lv==='ok'?'符合':'參考'}] ${x.k} ${x.t}`).join('；')).join('\n');
+}
+// 規則庫頁
+function renderRules(p,ro){
+  const ctx=ruleCtx(p),q=(S.ruleQ||'').toLowerCase().trim(),RS=rulesList();
+  const b=ctx.b,kv=(k,v)=>`<div class="kv"><span class="k">${k}</span><span style="text-align:right">${v}</span></div>`;
+  let h=`<div class="card"><h3>這位病人的劑量條件</h3><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:2px 18px">
+    ${kv('TBW',ctx.wt?ctx.wt+' kg':'未填')}${kv('BMI',b.bmi!=null?b.bmi.toFixed(1)+(b.bmi>=30?' <span class="tag t-warn">≥30</span>':b.bmi<18.5?' <span class="tag t-warn">&lt;18.5</span>':''):'—')}
+    ${kv('IBW／AdjBW',b.ibw?`${b.ibw.toFixed(1)}／${b.adj!=null?b.adj.toFixed(1):'—'} kg${b.pct?` <span class="small mute">TBW ${b.pct.toFixed(0)}% IBW</span>`:''}`:'—')}
+    ${kv('CrCl (C-G)',ctx.crcl!=null?`${ctx.crcl.toFixed(1)} mL/min${ctx.crclAdj!=null?`；AdjBW ${ctx.crclAdj.toFixed(1)}`:''}`:'—')}
+    ${kv('RRT',ctx.rrt?rrtLabel(ctx.rrt):'無／未設定')}${kv('年齡',ageDisp(p)||'—')}</div></div>`;
+  const pat=rulePatrol(p);
+  h+=`<div class="card"><h3>目前用藥巡查 <span class="small mute">${pat.length} 個藥有規則</span></h3>${pat.length?pat.map(({m,res})=>`<div class="medrow"><div><div class="mn">${esc(m.display)} <span class="small mute">${esc(m.dose)} ${esc(m.route||'')} ${esc(m.freq)}</span> ${ruleBadge(res)}</div>${ruleLines(res)}</div></div>`).join(''):'<div class="small mute">目前用藥中沒有已建立規則的藥品。</div>'}</div>`;
+  h+=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">規則庫 <span class="small mute">${RS.length} 條・版本 ${esc((S.rules&&S.rules.version)||'—')}・${S.rulesSrc}</span></h3><input id="ruleQ" class="sm" style="width:200px" placeholder="搜尋藥名" value="${esc(S.ruleQ||'')}"></div>
+    ${RS.filter(r=>!q||[r.label,...r.names].join(' ').toLowerCase().includes(q)).map(r=>ruleCard(r)).join('')||'<div class="small mute" style="margin-top:8px">沒有符合的規則。遇到個案時把資料貼給 Claude，確認後就會加進來。</div>'}</div>`;
+  return h;
+}
+function ruleCard(r){
+  const sec=(t,x)=>x?`<div style="margin-top:6px"><b class="small">${t}</b><div class="small" style="white-space:pre-wrap">${x}</div></div>`:'';
+  const rn=r.renal||{};
+  return `<details class="lgroup" style="margin-top:8px"><summary><span>${esc(r.label)} <span class="small mute">${esc(r.names.join('、'))}</span></span><span class="tag ${r.status==='verified'?'t-new':'t-warn'}">${r.status==='verified'?'已確認':'草稿'}</span></summary><div style="padding:8px 14px">
+    ${sec('常用劑量',r.usual?esc(r.usual.text)+(r.usual.maxDaily?`\n上限 ${r.usual.maxDaily} ${r.doseUnit||''}/day`:''):'')}
+    ${sec('體重',r.weight?esc(`基準 ${r.weight.basis||'TBW'}`+(r.weight.obese?`；${r.weight.obese.text}`:'')):'')}${sec('肥胖',r.obesity?esc(r.obesity.text+(r.obesity.severeText?'\n'+r.obesity.severeText:'')):'')}
+    ${sec('輸注',r.infusion?esc(r.infusion.ranges.map(x=>`${x.ind}：${x.min}–${x.max} ${r.infusion.unit}${x.text?'，'+x.text:''}`).join('\n')+((r.infusion.alerts||[]).map(a=>'\n・'+a.text).join(''))+(r.infusion.loading?'\n・'+r.infusion.loading:'')):'')}
+    ${sec('腎功能',r.renal?esc([rn.text,...(rn.bands||[]).map(b=>`CrCl ${b.min}–<${b.max}：${b.text}`),rn.ARC?'ARC：'+rn.ARC:'',...['HD','PD','CRRT','PIRRT'].filter(k=>rn[k]).map(k=>`${k}：${typeof rn[k]==='string'?rn[k]:rn[k].text}`)].filter(Boolean).join('\n')):'')}
+    ${sec('肝功能',r.hepatic?esc(r.hepatic.text):'')}${sec('年長',r.elderly?esc(r.elderly.text):'')}
+    ${sec('其他',r.notes&&r.notes.length?esc(r.notes.map(n=>'・'+n).join('\n')):'')}
+    <div class="small mute" style="margin-top:6px">出處：${esc(r.source.map(s=>`${s.ref}（${s.sections||''}；${s.by||''} ${s.addedAt||''}）`).join('；'))}</div></div></details>`;
+}
+function bindRules(p,ro){const i=$('ruleQ');if(i)i.addEventListener('input',()=>{S.ruleQ=i.value;const pos=i.selectionStart;renderMain();const j=$('ruleQ');if(j){j.focus();j.setSelectionRange(pos,pos);}});}
+
+/* =====================================================================
    AI 判讀包：去識別化匯出（床號為代號、相對日期 HD），以及 AI 回覆存檔
    ===================================================================== */
-S.aiUI={detail:'brief',mods:{base:1,dx:1,renal:1,meds:1,stopped:1,home:1,labs:1,micro:1,rt:1,lines:1,exam:1,consult:1,tpn:1,issues:1},free:{adm:0,progSO:0,progP:0},mark:true};
-const AI_MODS=[['base','病人基本'],['dx','診斷與醫師評估'],['renal','腎功能／RRT'],['meds','目前用藥'],['stopped','已停用藥'],['home','入院前用藥（雲端）'],['labs','檢驗'],['micro','微生物'],['rt','呼吸器'],['tpn','TPN'],['lines','管路'],['exam','檢查報告'],['consult','會診'],['issues','藥師待討論']];
+S.aiUI={detail:'brief',mods:{base:1,dx:1,renal:1,meds:1,stopped:1,home:1,labs:1,micro:1,rt:1,lines:1,exam:1,consult:1,tpn:1,issues:1,rules:1},free:{adm:0,progSO:0,progP:0},mark:true};
+const AI_MODS=[['base','病人基本'],['dx','診斷與醫師評估'],['renal','腎功能／RRT'],['meds','目前用藥'],['stopped','已停用藥'],['home','入院前用藥（雲端）'],['labs','檢驗'],['micro','微生物'],['rt','呼吸器'],['tpn','TPN'],['lines','管路'],['exam','檢查報告'],['consult','會診'],['rules','劑量規則巡查'],['issues','藥師待討論']];
 function aiAdmit(p){const d=p.admitDate||ymd();return new Date(d+'T00:00:00');}
 function hdN(p,dt){const a=aiAdmit(p),d=new Date(dt);d.setHours(0,0,0,0);return Math.round((d-a)/864e5)+1;}
 function relD(p,dt,withTime){const d=new Date(dt);if(isNaN(d))return '';return `HD${hdN(p,d)}${withTime&&(d.getHours()||d.getMinutes())?' '+hm(d):''}`;}
@@ -4822,6 +4951,7 @@ function aiPack(p,mark){
   if(m.lines&&lineStore(p).items.length){const V=linesView(p);if(V.act.length){H('管路（留置中）');V.act.forEach(x=>L.push(`- ${lineShort(x)}：${relIso(p,x.at)} 起，第 ${lineDayN(x)} 天`));}}
   if(m.exam&&examStore(p).length){H('檢查報告');examSorted(p).slice(0,full?8:4).forEach(x=>L.push(`- ${x.date?relIso(p,x.date):'?'} ${x.type} ${x.title}：${sc(oneLine(x.imp||'（無 Impression）',full?600:250))}`));}
   if(m.consult&&consStore(p).length){H('會診');consSorted(p).slice(0,full?8:4).forEach(c=>L.push(`- ${c.reqDate?relIso(p,c.reqDate):'?'} ${c.dept||'會診'}（${c.status}）：${sc(oneLine(c.reply||c.reason||'',full?600:250))}`));}
+  if(m.rules){const t=rulePatrolText(p);if(t){H('平台劑量規則巡查（依 Lexicomp 等規則庫）');L.push(relTxt(p,t));}}
   if(m.issues){const o=issueStore(p).filter(x=>x.status==='待討論');if(o.length){H('藥師待討論事項');o.forEach(x=>L.push(`- [${ISSUE_SEC[x.sec]||x.sec}] ${x.ref?sc(x.ref)+'：':''}${sc(x.text.replace(/\n/g,' '))}`));}}
   // 自由文字（勾選才帶）
   const F=U.free;
@@ -4956,6 +5086,10 @@ function renderOverview(p){
       R.orgs.length?R.orgs.map(o=>{const cv=C.rows.find(x=>x.o===o);return `${esc(o.name)}${orgFlags(o,R).map(([t,c])=>` <span class="tag ${c==='bad'?'t-abx':'t-warn'}">${t}</span>`).join('')}${cv&&C.act.length&&!cv.flags.some(f=>f[0]==='可能污染菌')?(cv.covered?' <span class="tag t-new">已涵蓋</span>':cv.sdd?' <span class="tag t-warn">僅 SDD</span>':' <span class="tag t-abx">未涵蓋</span>'):''}`;}).join('<br>'):(R.noGrowth?'無菌生長':R.noOrgYet?'尚無菌株報告':'—'))).join('')}
       <div style="margin-top:8px"><button class="small" onclick="S.tab='micro';renderMain()">查看抗微生物圖譜</button></div></div>`;
   }
+  // 劑量巡查
+  {const pat=rulePatrol(p).filter(x=>x.res.out.some(y=>y.lv==='warn'));
+   if(pat.length)h+=`<div class="card" style="margin:0"><h3>劑量巡查 <span class="small mute">規則庫</span></h3>${pat.map(({m,res})=>`<div class="small" style="margin-top:4px"><b>${esc(m.display)}</b> ${res.out.filter(y=>y.lv==='warn').map(y=>`<div class="under">⚠ ${esc(y.k)}：${esc(y.t)}</div>`).join('')}</div>`).join('')}
+     <div style="margin-top:8px"><button class="small" onclick="S.tab='rules';renderMain()">查看劑量規則</button></div></div>`;}
   // 管路
   if(lineStore(p).items.length){const V=linesView(p);
     h+=`<div class="card" style="margin:0"><h3>管路 <span class="small mute">留置 ${V.act.length} 條</span></h3>${V.act.map(x=>kv(`${esc(lineShort(x))}`,`D${lineDayN(x)}${x.cat.risk?` <span class="small mute">${x.cat.risk}</span>`:''}`)).join('')||'<div class="small mute">無留置管路</div>'}

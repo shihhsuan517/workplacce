@@ -1,0 +1,320 @@
+{
+ "version": "2026-11-11b",
+ "updated": "2026-11-11",
+ "rules": [
+  {
+   "id": "dexmedetomidine",
+   "label": "Dexmedetomidine",
+   "names": [
+    "dexmedetomidine",
+    "precedex",
+    "dexmedine"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) — Dexmedetomidine",
+     "sections": "Dosing: Adult; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity",
+     "addedAt": "2026-11-11",
+     "by": "JC"
+    }
+   ],
+   "weight": {
+    "basis": "TBW",
+    "obese": {
+     "def": "BMI>=30",
+     "basis": "AdjBW",
+     "text": "BMI ≥30（第 1–3 級肥胖）：初始以 AdjBW 計算體重基準劑量，再依臨床效果調整；治療中不要更換體重基準（例如 AdjBW 與 TBW 互換）。"
+    }
+   },
+   "infusion": {
+    "unit": "mcg/kg/hr",
+    "ranges": [
+     {
+      "ind": "ICU 鎮靜",
+      "min": 0.2,
+      "max": 1.5,
+      "text": "每 30 分鐘調整 0.2 mcg/kg/hr，目標 RASS 0 至 -2 或呼吸器同步。"
+     },
+     {
+      "ind": "程序性鎮靜／MAC",
+      "min": 0.2,
+      "max": 1,
+      "text": "Loading 0.5–1 mcg/kg over 10 min 後持續輸注。"
+     },
+     {
+      "ind": "全身麻醉輔助（off-label）",
+      "min": 0.1,
+      "max": 0.8
+     }
+    ],
+    "primary": 0,
+    "alerts": [
+     {
+      "gt": 1.5,
+      "level": "warn",
+      "text": "超過 1.5 mcg/kg/hr 不會增加療效（文獻最高用到 2.5）。"
+     },
+     {
+      "gt": 0.8,
+      "level": "info",
+      "text": "高於 0.8 mcg/kg/hr 屬較高峰值：停藥時應逐步減量，並監測戒斷（高血壓、心搏過速、譫妄、躁動）。"
+     }
+    ],
+    "cumulative": {
+     "gt": 12,
+     "unit": "mcg/kg/day",
+     "text": "以目前速率估算每日累積量超過 12 mcg/kg/day，戒斷風險較高，停藥時應逐步減量。"
+    },
+    "loading": "Loading 1 mcg/kg over 10 min 為選擇性；因血行動力學不穩（高血壓、低血壓、心搏過緩）不建議常規使用。"
+   },
+   "renal": {
+    "none": true,
+    "text": "任何程度腎功能不全皆不需調整。",
+    "HD": "不易被透析（高蛋白結合），不需補充劑量或調整。",
+    "PD": "不需調整。",
+    "CRRT": "不需調整。",
+    "PIRRT": "不需調整。"
+   },
+   "hepatic": {
+    "trigger": "cirrhosis|child|ctp|liver failure|hepatic failure|肝硬化",
+    "text": "CTP A/B 不需調整。CTP C：ICU 鎮靜用劑量範圍最低端並依效果調整；程序性鎮靜維持輸注降為 0.1–0.5 mcg/kg/hr。嚴重肝功能不全時清除率約降 50%，可能蓄積。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "ICU 鎮靜：考慮減量，從劑量範圍低端開始，緩慢調整並留足時間評估反應。"
+   },
+   "notes": [
+    "無法提供可靠的遺忘作用，必要時併用 benzodiazepine 或 propofol。",
+    "單用無法達到深度鎮靜。",
+    "仿單建議輸注不超過 24 小時；RCT 顯示可安全使用至約 14 天。",
+    "長時間、高累積劑量或高峰值使用後避免驟停。",
+    "維持劑量單位是 mcg/kg/hour，曾發生單位誤解造成的錯誤。"
+   ]
+  },
+  {
+   "id": "piperacillin-tazobactam",
+   "label": "Piperacillin/Tazobactam",
+   "names": [
+    "piperacillin",
+    "tazocin",
+    "betamycin",
+    "pipetaz",
+    "tapimycin"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) — Piperacillin and Tazobactam",
+     "sections": "Dosing: Adult; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity",
+     "addedAt": "2026-11-11",
+     "by": "JC"
+    }
+   ],
+   "doseUnit": "g",
+   "doseNote": "劑量以 piperacillin＋tazobactam 合計表示（例：4.5 g＝4 g＋0.5 g）。",
+   "usual": {
+    "text": "傳統輸注（30 分鐘）：輕中度 3.375 g q6h；重度或 P. aeruginosa 4.5 g q6h（部分適應症可 4.5 g q8h）。延長輸注（off-label）：4.5 g q6h 跑 3 小時，或 3.375／4.5 g q8h 跑 4 小時。連續輸注（off-label）：18 g/24 h，可先給 4.5 g loading。",
+    "maxDaily": 18
+   },
+   "renal": {
+    "method": "CG",
+    "text": "依 CrCl 先選定適應症的常用劑量欄，再對照該 CrCl 區間的調整劑量。",
+    "bands": [
+     {
+      "min": 100,
+      "max": 130,
+      "text": "建議改延長輸注（CrCl >100 時延長輸注較能達到 PK/PD 目標）；P. aeruginosa MIC 16（SDD）FDA 建議 4.5 g q6h 跑 3 小時。",
+      "regimens": [
+       {
+        "g": 4.5,
+        "q": 6,
+        "inf": "ext"
+       },
+       {
+        "g": 4.5,
+        "q": 8,
+        "inf": "ext"
+       },
+       {
+        "g": 3.375,
+        "q": 8,
+        "inf": "ext"
+       },
+       {
+        "g": 3.375,
+        "q": 6
+       },
+       {
+        "g": 4.5,
+        "q": 6
+       }
+      ]
+     },
+     {
+      "min": 40,
+      "max": 100,
+      "text": "傳統：常用 3.375 g q6h 者維持 3.375 g q6h；常用 4.5 g q6h 者維持 4.5 g q6h。延長：3.375 g q8h（4 h）、4.5 g q8h（4 h）、4.5 g q6h（3 h）。",
+      "regimens": [
+       {
+        "g": 3.375,
+        "q": 6
+       },
+       {
+        "g": 4.5,
+        "q": 6
+       },
+       {
+        "g": 3.375,
+        "q": 8,
+        "inf": "ext"
+       },
+       {
+        "g": 4.5,
+        "q": 8,
+        "inf": "ext"
+       },
+       {
+        "g": 4.5,
+        "q": 6,
+        "inf": "ext"
+       }
+      ]
+     },
+     {
+      "min": 20,
+      "max": 40,
+      "text": "傳統：常用 3.375 g q6h → 2.25 g q6h；常用 4.5 g q6h → 4.5 g q8h 或 3.375 g q6h。延長：3.375 g q8h（4 h）、4.5 g q8h（4 h 或 3 h）。",
+      "regimens": [
+       {
+        "g": 2.25,
+        "q": 6
+       },
+       {
+        "g": 4.5,
+        "q": 8
+       },
+       {
+        "g": 3.375,
+        "q": 6
+       },
+       {
+        "g": 3.375,
+        "q": 8,
+        "inf": "ext"
+       },
+       {
+        "g": 4.5,
+        "q": 8,
+        "inf": "ext"
+       }
+      ]
+     },
+     {
+      "min": 0,
+      "max": 20,
+      "text": "傳統：常用 3.375 g q6h → 2.25 g q8h；常用 4.5 g q6h → 4.5 g q12h 或 2.25 g q6h。延長：3.375 g q12h（4 h）、4.5 g q12h（4 h 或 3 h）。",
+      "regimens": [
+       {
+        "g": 2.25,
+        "q": 8
+       },
+       {
+        "g": 4.5,
+        "q": 12
+       },
+       {
+        "g": 2.25,
+        "q": 6
+       },
+       {
+        "g": 3.375,
+        "q": 12,
+        "inf": "ext"
+       },
+       {
+        "g": 4.5,
+        "q": 12,
+        "inf": "ext"
+       }
+      ]
+     }
+    ],
+    "ARC": "Augmented renal clearance（測得尿液 CrCl ≥130 mL/min/1.73m²，需 8–24 h 收尿）：130–<170 → 4.5 g q6h 跑 3 h，或 4.5 g loading 後 18 g/24 h 連續輸注；≥170 → 建議連續輸注，4.5 g loading 後 22.5 g/24 h。",
+    "HD": {
+     "text": "可被透析（30–40%）。傳統：4.5 g q12h 或 2.25 g q8h；透析日排定劑量建議（非必要）在透析後給。延長：4.5 g q12h 跑 3 h，或 3.375 g q12h 跑 4 h。",
+     "regimens": [
+      {
+       "g": 4.5,
+       "q": 12
+      },
+      {
+       "g": 2.25,
+       "q": 8
+      },
+      {
+       "g": 3.375,
+       "q": 12,
+       "inf": "ext"
+      }
+     ],
+     "afterHD": true
+    },
+    "PD": {
+     "text": "可被透析（piperacillin 6%、tazobactam 21%）。傳統：4.5 g q12h 或 2.25 g q8h。延長：4.5 g q12h 跑 3 h，或 3.375 g q12h 跑 4 h。",
+     "regimens": [
+      {
+       "g": 4.5,
+       "q": 12
+      },
+      {
+       "g": 2.25,
+       "q": 8
+      },
+      {
+       "g": 3.375,
+       "q": 12,
+       "inf": "ext"
+      }
+     ]
+    },
+    "CRRT": {
+     "text": "依流出液流速、濾器而定（假設 high-flux、20–25 mL/kg/h）。傳統：4.5 g q8h，或 4.5 g loading 後 2.25 g q6h。連續輸注：4.5 g loading 後 9 g/24 h。CRRT 中斷時要調整劑量避免蓄積。重症可考慮較高起始劑量。",
+     "regimens": [
+      {
+       "g": 4.5,
+       "q": 8
+      },
+      {
+       "g": 2.25,
+       "q": 6
+      }
+     ]
+    },
+    "PIRRT": {
+     "text": "SLED（每日 8 h、BFR 200、effluent 300 mL/min）：3.375 g q8h。Extended high-volume hemofiltration（10 h、effluent >500 mL/min）：4.5 g q8h。"
+    }
+   },
+   "hepatic": {
+    "none": true,
+    "text": "CTP A–C 皆不需調整（piperacillin 幾乎不經肝代謝，tazobactam <30%）。"
+   },
+   "obesity": {
+    "def": "BMI>=30",
+    "text": "BMI ≥30：傳統輸注 4.5 g q6h；延長／連續輸注（off-label）較易達到目標濃度，需快速達標時先給 4.5 g loading（30 min）。",
+    "severeDef": "BMI>=50",
+    "severeText": "BMI ≥50，或威脅生命且病原 MIC 偏高（如 16 mg/L）、感染部位穿透受限：4.5 g q6h 跑 3 小時。",
+    "expectG": 4.5,
+    "expectQ": 6
+   },
+   "elderly": {
+    "age": 65,
+    "text": "依成人劑量（Older Adult：Refer to adult dosing）。"
+   },
+   "notes": [
+    "延長或連續輸注為 off-label，主要依據 PK/PD 模擬，臨床療效資料有限。",
+    "延長輸注時，需要快速達到治療濃度（例如 sepsis）可先給 3.375–4.5 g loading（30 分鐘）。"
+   ]
+  }
+ ]
+}
