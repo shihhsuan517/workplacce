@@ -1,5 +1,5 @@
 {
- "version": "2026-11-11c",
+ "version": "2026-11-11d",
  "updated": "2026-11-11",
  "rules": [
   {
@@ -496,6 +496,77 @@
    },
    "notes": [
     "延長或連續輸注為 off-label。"
+   ]
+  },
+  {
+   "id": "fentanyl",
+   "label": "Fentanyl",
+   "names": [
+    "fentanyl",
+    "durogesic",
+    "fentanyl citrate"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) — Fentanyl",
+     "sections": "Dosing: Adult（適應症細項未展開）; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity",
+     "addedAt": "2026-11-11",
+     "by": "JC"
+    }
+   ],
+   "usual": {
+    "text": "依適應症與病人因素（疼痛程度、共病、鴉片類耐受）個別化，用最低有效劑量、最短時間；先盡量使用非鴉片類止痛。ICU 鎮痛鎮靜的輸注範圍：本次貼上的資料未展開該適應症，尚未建立。"
+   },
+   "weight": {
+    "basis": "TBW",
+    "obese": {
+     "def": "BMI>=30",
+     "basis": "AdjBW",
+     "text": "BMI ≥30：IV 多數情況（疼痛、ICU 鎮痛鎮靜）用固定、非體重基準劑量再依效果調整；若用體重基準，初始以 AdjBW 計算，治療中不要更換體重基準。非 IV 途徑一律用固定劑量。"
+    }
+   },
+   "renal": {
+    "method": "CG",
+    "text": "原形排出 <7–10%，代謝物無活性；腎功能不全一般可安全使用，從低劑量開始並監測蓄積。貼片：CrCl >50 不需調整；10–50 起始 75%；<10 起始 50%（仿單建議重度不全避免，但小心監測下可用）。經黏膜／鼻噴：無調整建議，依效果小心調整。",
+    "bands": [
+     {
+      "min": 0,
+      "max": 50,
+      "level": "info",
+      "text": "注射劑：單次或不頻繁推注（短時間處置）不需調整；較頻繁給藥時用小劑量逐步調整；為避免蓄積可能需要減量，連續輸注尤其要注意。"
+     }
+    ],
+    "HD": {
+     "text": "不可被透析。貼片：起始 50%。其他劑型：用最低有效劑量，逐步調整並密切監測療效與副作用。",
+     "level": "info"
+    },
+    "PD": {
+     "text": "貼片：起始 50%。其他劑型：用最低有效劑量，逐步調整並密切監測。",
+     "level": "info"
+    },
+    "CRRT": {
+     "text": "所有劑型：用最低有效劑量，逐步調整並密切監測。",
+     "level": "info"
+    }
+   },
+   "hepatic": {
+    "trigger": "cirrhosis|child|ctp|liver failure|hepatic failure|肝硬化",
+    "text": "高首渡肝萃取，肝血流下降時清除率降低。注射劑：CTP A/B 不需調整；CTP C：避免 IM、連續 IV 輸注與 SC；起始與維持劑量用 50%，間隔可延長 1.5–2 倍，優先 PRN。貼片：肝硬化合併惡病質、肌少症或發燒時避免；CTP A/B 起始 50%；CTP C 最多 12.5 mcg/hr 一片、至少 72 小時才換。經黏膜／鼻噴：從最低劑量開始；CTP C 間隔延長 1.5–2 倍。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "老年人對 fentanyl 的敏感度約為年輕人 2 倍；除嚴重急性疼痛外盡量少用鴉片類（跌倒、譫妄風險）。"
+   },
+   "concomitant": [
+    {
+     "re": "midazolam|lorazepam|diazepam|alprazolam|clonazepam|oxazolam|estazolam|triazolam",
+     "text": "併用 benzodiazepine：鴉片類過量風險增加，考慮備妥 naloxone 等反轉劑。"
+    }
+   ],
+   "notes": [
+    "過量風險因子（過量或物質使用疾患病史、睡眠呼吸障礙、口服 ≥50 MME/day、併用 benzodiazepine）：考慮開立 naloxone／nalmefene。",
+    "用最低有效劑量、最短時間；多模式止痛，先盡量使用非鴉片類。"
    ]
   }
  ]
