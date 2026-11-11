@@ -356,7 +356,7 @@ function ensurePatient(p){
   for(const [k,v] of Object.entries({medList:[],medLog:{},medPasteAt:'',drips:{},dripHistory:[],orderSources:[]}))if(p[k]==null)p[k]=JSON.parse(JSON.stringify(v));
   if(!p.labs||Array.isArray(p.labs))p.labs={cols:{},items:{}};
   RT.ensure(p);
-  microStore(p);examStore(p);consStore(p);issueStore(p);progStore(p);lineStore(p);cloudStore(p);rrtStore(p);
+  microStore(p);examStore(p);consStore(p);issueStore(p);progStore(p);lineStore(p);cloudStore(p);rrtStore(p);aiStore(p);
   return p;
 }
 function newPatient(){
@@ -410,7 +410,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-10h';
+const APP_VER='2026-11-11a';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -621,7 +621,7 @@ $('btnAddPt').onclick=()=>{
 };
 
 const TPL={adult:'成人一般',peds:'兒科',ami:'AMI',hf:'HF'};
-const TABS=[['overview','總覽'],['basic','基本資料'],['prog','病程'],['lines','管路'],['meds','用藥'],['drip','輸注速算'],['tpn','TPN'],['lab','檢驗'],['micro','抗微生物圖譜'],['exam','檢查報告'],['consult','會診'],['rt','呼吸治療'],['soap','SOAP']];
+const TABS=[['overview','總覽'],['basic','基本資料'],['prog','病程'],['lines','管路'],['meds','用藥'],['drip','輸注速算'],['tpn','TPN'],['lab','檢驗'],['micro','抗微生物圖譜'],['exam','檢查報告'],['consult','會診'],['rt','呼吸治療'],['soap','SOAP'],['ai','AI 判讀']];
 
 function curPatient(){return S.archive?S.archive.patient:S.data.patients.find(p=>p.id===S.selId)||null;}
 
@@ -660,6 +660,7 @@ function renderMain(){
   if(S.tab==='micro')bindMicro(p,ro);
   if(S.tab==='exam')bindExam(p,ro);
   if(S.tab==='prog')bindProg(p,ro);
+  if(S.tab==='ai')bindAI(p,ro);
   if(S.tab==='lines')bindLines(p,ro);
   if(S.tab==='tpn')bindTPN(p,ro);
   if(S.tab==='lab')bindLabNotes(p,ro);
@@ -763,6 +764,7 @@ function renderTab(p,ro){
   if(S.tab==='micro')return renderMicro(p,ro);
   if(S.tab==='exam')return renderExam(p,ro);
   if(S.tab==='prog')return renderProg(p,ro);
+  if(S.tab==='ai')return renderAI(p,ro);
   if(S.tab==='lines')return renderLines(p,ro);
   if(S.tab==='tpn')return renderTPN(p,ro);
   if(S.tab==='consult')return renderConsult(p,ro);
@@ -894,6 +896,7 @@ async function doDelete(p,kind,k,n){
     snapshot(p,'刪除培養 '+(R.acc||''));delete M.reports[k];}
   else if(kind==='org'){const R=M.reports[k];const o=R&&R.orgs.find(x=>String(x.no)===String(n));if(!o||!await ask('刪除菌株',`刪除「${esc(o.name)}」及其藥敏？`))return;
     snapshot(p,'刪除菌株');R.orgs=R.orgs.filter(x=>x!==o);}
+  else if(kind==='ainote'){const x=aiStore(p).find(y=>y.id===k);if(!x||!await ask('刪除 AI 判讀',`刪除 ${esc(locTs(x.at))} 這份 AI 判讀紀錄？`))return;snapshot(p,'刪除 AI 判讀');p.aiNotes=p.aiNotes.filter(y=>y!==x);}
   else if(kind==='cloud'){if(!await ask('清除雲端藥歷',`清除這位病人的雲端藥歷（${cloudStore(p).items.length} 筆）？`))return;snapshot(p,'清除雲端藥歷');p.cloud={items:[]};}
   else if(kind==='line'){const x=lineStore(p).items.find(y=>y.id===k);if(!x||!await ask('刪除管路',`刪除 ${esc(x.at)} ${esc(x.name)} 這筆管路紀錄？`))return;
     snapshot(p,'刪除管路');p.lines.items=p.lines.items.filter(y=>y!==x);}
@@ -3896,7 +3899,7 @@ function isConsultText(t){return /(會診科別|照會科別|受會診科|被會
 /* =====================================================================
    待與醫師討論（各分頁的藥師筆記）
    ===================================================================== */
-const ISSUE_SEC={overview:'整體',basic:'基本資料',prog:'病程',lines:'管路',tpn:'TPN',meds:'用藥',drip:'輸注',lab:'檢驗',micro:'抗微生物',exam:'檢查',consult:'會診',rt:'呼吸治療',soap:'SOAP'};
+const ISSUE_SEC={overview:'整體',basic:'基本資料',prog:'病程',lines:'管路',ai:'AI 判讀',tpn:'TPN',meds:'用藥',drip:'輸注',lab:'檢驗',micro:'抗微生物',exam:'檢查',consult:'會診',rt:'呼吸治療',soap:'SOAP'};
 const locTs=iso=>{const d=new Date(iso);return isNaN(d)?'':`${pad(d.getMonth()+1)}/${pad(d.getDate())} ${hm(d)}`;};
 const ISSUE_ST=['待討論','已討論','已採納','未採納'];
 function issueStore(p){if(!Array.isArray(p.issues))p.issues=[];return p.issues;}
@@ -4718,6 +4721,165 @@ function bindRRT(p,ro){
     el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>{R[k]=el.value;R.setAt=new Date().toISOString();p.updatedAt=R.setAt;markDirty();if(el.tagName==='SELECT')renderMain();});});
   if($('btnRrtApply'))$('btnRrtApply').onclick=()=>{const s=rrtEvidence(p).sug;snapshot(p,'套用 RRT 建議');
     R.status=s.status;['sub','mode','start','schedule','access'].forEach(k=>{if(s[k]&&!R[k])R[k]=s[k];});R.setAt=new Date().toISOString();p.updatedAt=R.setAt;markDirty();renderMain();toast('已套用：'+rrtLabel(s.status));};
+}
+
+/* =====================================================================
+   AI 判讀包：去識別化匯出（床號為代號、相對日期 HD），以及 AI 回覆存檔
+   ===================================================================== */
+S.aiUI={detail:'brief',mods:{base:1,dx:1,renal:1,meds:1,stopped:1,home:1,labs:1,micro:1,rt:1,lines:1,exam:1,consult:1,tpn:1,issues:1},free:{adm:0,progSO:0,progP:0},mark:true};
+const AI_MODS=[['base','病人基本'],['dx','診斷與醫師評估'],['renal','腎功能／RRT'],['meds','目前用藥'],['stopped','已停用藥'],['home','入院前用藥（雲端）'],['labs','檢驗'],['micro','微生物'],['rt','呼吸器'],['tpn','TPN'],['lines','管路'],['exam','檢查報告'],['consult','會診'],['issues','藥師待討論']];
+function aiAdmit(p){const d=p.admitDate||ymd();return new Date(d+'T00:00:00');}
+function hdN(p,dt){const a=aiAdmit(p),d=new Date(dt);d.setHours(0,0,0,0);return Math.round((d-a)/864e5)+1;}
+function relD(p,dt,withTime){const d=new Date(dt);if(isNaN(d))return '';return `HD${hdN(p,d)}${withTime&&(d.getHours()||d.getMinutes())?' '+hm(d):''}`;}
+const relIso=(p,s,t)=>s?relD(p,new Date(String(s).replace(' ','T').length<=10?s+'T00:00:00':String(s).replace(' ','T')),t):'';
+const relSk=(p,sk,t)=>relD(p,new Date(`${sk.slice(0,4)}-${sk.slice(4,6)}-${sk.slice(6,8)}T${sk.slice(8,10)||'00'}:${sk.slice(10,12)||'00'}:00`),t);
+// 文字中的日期轉相對日：yyyy/mm/dd、民國 yyy/mm/dd、以及住院期間附近的 m/d
+function relTxt(p,t){
+  const a=+aiAdmit(p),lo=a-60*864e5,hi=Date.now()+14*864e5,refY=aiAdmit(p).getFullYear();
+  const cv=(y,m,d,hh,mm)=>{const dt=new Date(y,m-1,d,hh||0,mm||0);return `HD${hdN(p,dt)}${hh!=null?' '+pad(hh)+':'+pad(mm):''}`;};
+  t=String(t||'').replace(/\b(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::\d{2})?)?/g,(x,y,m,d,hh,mm)=>cv(+y,+m,+d,hh!=null?+hh:null,+mm));
+  t=t.replace(/(^|[^\d\/])(1\d{2})\/(\d{1,2})\/(\d{1,2})(?![\d\/])/g,(x,pre,y,m,d)=>pre+cv(+y+1911,+m,+d));
+  t=t.replace(/(^|[^\d\/.:A-Za-z])(\d{1,2})\/(\d{1,2})(?:\s+(\d{1,2}):(\d{2}))?(?![\d\/])/g,(x,pre,m,d,hh,mm)=>{
+    m=+m;d=+d;if(m<1||m>12||d<1||d>31)return x;let y=refY;let dt=+new Date(y,m-1,d);if(dt>hi)dt=+new Date(--y,m-1,d);if(dt<lo||dt>hi)return x;
+    return pre+cv(y,m,d,hh!=null?+hh:null,+mm);});
+  return t;
+}
+// 去識別：姓名、病歷號、身分證、員工代號、醫師姓名、院所、電話、長數字
+function scrub(p,t,mark){
+  const M=s=>mark?`\u0001${s}\u0002`:s;
+  t=relTxt(p,t);
+  if(p.name&&p.name.trim().length>=2){p.name.trim().split(/\s+/).filter(x=>x.length>=2).forEach(n=>{t=t.split(n).join(M('[姓名]'));});}
+  if(p.chartNo)t=t.split(p.chartNo).join(M('[病歷號]'));
+  t=t.replace(/\b[A-Z][12]\d{8}\b|\b[A-Z]\d{3}\*{2,}\d{2,4}\b/g,M('[身分證]'));
+  t=t.replace(/\b(?:Dr|DR|dr)\.?\s*[一-鿿]{2,4}/g,M('Dr.[醫師]'));
+  t=t.replace(/([（(]\s*)(?:MA|MR[A-Z]?|[A-Z]{1,3})?\s*[一-鿿]{2,4}\s*[,，、]?\s*([A-Z]{1,3}\d{3,6})?(\s*[）)])/g,(x,a,c,b)=>/[A-Z]{1,3}\d{3,6}|MA\s/.test(x)?a+M('[醫護人員]')+b:x);
+  t=t.replace(/\b[A-Z]{1,3}\d{4,6}\b/g,M('[代號]'));
+  t=t.replace(/[一-鿿]{2,4}(?=\s*(?:醫師|護理師|專科護理師|藥師|主任))/g,M('[人員]'));
+  t=t.replace(/[一-鿿]{2,8}(?:醫院|醫學中心|紀念醫院|診所|藥局|藥師)(?![一-鿿]{0,2}(?:醫囑|處方))/g,M('[院所]'));
+  t=t.replace(/(林口|土城|基隆|高雄|嘉義|桃園)?長庚(?:醫院)?/g,M('[院所]'));
+  t=t.replace(/\b0\d{1,2}-?\d{3,4}-?\d{3,4}\b/g,M('[電話]'));
+  t=t.replace(/\b\d{8,}\b/g,M('[號碼]'));
+  return t;
+}
+const AI_KEYLABS=[['Na','72-355'],['K','72-356'],['Cl','72-357'],['BUN','72-307'],['Cr','72-333'],['Ca','72-327'],['P','72-329'],['Mg','72-343'],['Glu','72-314'],['AST','72-360'],['ALT','72-361'],['T-Bil','72-365'],['D-Bil','72-366'],['Albumin','72-303'],['WBC','72A001'],['Seg','72A015'],['Hb','72C001'],['PLT','72I001'],['INR','72C037'],['aPTT','72A038'],['CRP','72-112'],['PCT','72-570'],['Lactate','72-419'],['TG','72-310'],['NT-proBNP','72-571'],['Troponin-T','72-576'],['Digoxin','72-435'],['pH','72C530'],['pCO2','72D530'],['pO2','72E530'],['HCO3','72F530'],['BE','72I530']];
+function aiLabSeries(p,code,st,n){
+  const its=Object.values(p.labs.items).filter(it=>it.code===code&&(!st||it.sampleType===st));const all=[];
+  its.forEach(it=>Object.entries(it.vals).forEach(([sk,v])=>all.push({sk,v,unit:it.unit,name:it.name})));
+  all.sort((a,b)=>b.sk.localeCompare(a.sk));return all.slice(0,n);
+}
+function aiPack(p,mark){
+  const U=S.aiUI,m=U.mods,full=U.detail==='full',L=[],H=t=>L.push('',`## ${t}`),sc=t=>scrub(p,t,mark);
+  const bed=p.bed||'未填床號';const today=hdN(p,new Date());
+  L.push(`# 病人 ${bed}｜AI 判讀包`,`> 已去識別：以床號為代號；日期以入院日為 HD1（今天 HD${today}）；不含姓名、病歷號與醫護人員資料。`);
+  if(m.base){H('病人基本');const b=bodyW(p);
+    L.push(`- ${p.template==='peds'?ageDisp(p):(p.age?p.age+' 歲':ageDisp(p)||'年齡未填')}，${p.sex==='M'?'男':p.sex==='F'?'女':'性別未填'}；身高 ${p.ht||'?'} cm，體重 ${p.wt||'?'} kg${b.bmi?`，BMI ${b.bmi.toFixed(1)}`:''}${b.ibw?`，IBW ${b.ibw.toFixed(1)} kg`:''}${b.adj!=null&&b.pct>120?`，AdjBW ${b.adj.toFixed(1)} kg`:''}`);
+    if(p.template==='peds'&&(p.ga||p.birthWt))L.push(`- GA ${p.ga||'?'} 週${pmaTxt(p)?`，PMA ${pmaTxt(p)} 週`:''}，出生體重 ${p.birthWt||'?'} g${dobDays(p)!=null?`，生後第 ${dobDays(p)} 天`:''}`);
+    L.push(`- 入院 HD1，今天 HD${today}；過敏：${sc(p.allergy||'未填')}`);
+  }
+  if(m.dx){H('診斷與醫師評估');
+    if(p.cc)L.push(`- 主訴：${sc(p.cc)}`);
+    if(p.dx)L.push(`- 診斷：`,...sc(p.dx).split('\n').map(x=>'  '+x.trim()).filter(x=>x.trim()));
+    const g=progSorted(p)[0];if(g&&g.A)L.push(`- 最新醫師評估（${relIso(p,g.at,true)}）：`,...sc(g.A).split('\n').filter(x=>x.trim()).map(x=>'  '+x.trim()));
+  }
+  if(m.renal){H('腎功能／腎臟替代治療');
+    if(hasLabs(p)){const cr=aiLabSeries(p,'72-333','B',full?8:5);if(cr.length)L.push(`- Cr（mg/dL，新→舊）：${cr.map(x=>`${String(x.v.value).replace(/\s*\(.*?\)/g,'')}${x.v.flag?' '+x.v.flag:''} (${relSk(p,x.sk,true)})`).join(' ← ')}`);}
+    const r=renalCalc(p);if(r){if(r.peds)L.push(`- eGFR (Brion, k=${r.peds.k})：${r.peds.egfr.toFixed(1)} mL/min/1.73m²`);else if(r.crcl!=null)L.push(`- CrCl (Cockcroft-Gault, 實際體重)：${r.crcl.toFixed(1)} mL/min${r.adj!=null?`；AdjBW：${r.adj.toFixed(1)}`:''}`);}
+    const rr=rrtSoapTxt(p);L.push(`- RRT：${rr?relTxt(p,rr):'未設定／無'}`);
+  }
+  if(m.meds){H('目前用藥');const list=(p.medList||[]).filter(x=>!x.expired&&x.cls!=='fluid');
+    if(!list.length)L.push('- （無）');
+    list.forEach(x=>{let s=`- [${(CLS_TAG[x.cls]||['',''])[1]}] ${x.display} ${x.dose}${x.route?' '+x.route:''} ${x.freq}`;
+      if(x.isDrip){const c=matchDrip(x),d=c&&p.drips[c.id];s=`- [輸注] ${x.display} ${fmtN(x.qty)} amp${x.dilVol?` in ${x.dilName} ${x.dilVol} mL`:''}`;if(c&&d&&d.flow){const r=computeResult(c,+d.amp,+d.dose,+d.vol,+d.flow,parseFloat(p.wt));s+=`, ${d.flow} mL/hr`+(r.stage==='done'?` = ${doseSummary(c,r)}`:'');}else s+=', run as order';}
+      if(x.cls==='pn'){const pc=pnComp(x);if(pc)s+=` [${pc}]`;}
+      if(x.startAt)s+=`｜起 ${x.startMaybeEarlier?'≤':''}${relTxt(p,x.startAt)}`;if(x.segAt&&x.segAt!==x.startAt)s+=`，現處方自 ${relTxt(p,x.segAt)}`;
+      if(x.abx&&x.dot)s+=`｜DOT ${x.dot}`;
+      const pk=p.template==='peds'?pedsDoseTag(x,p).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim():'';if(pk)s+=`｜${pk}`;
+      const nt=(x.notes||[]).filter(n=>!/[一-鿿]{6,}/.test(n)).join('; ');if(nt&&full)s+=`｜${sc(nt)}`;
+      L.push(s);});
+  }
+  if(m.stopped){const R=ordersOf(p);if(R){const st=R.groups.filter(g=>!g.open&&(full||g.abx));if(st.length){H(full?'已停用藥（醫囑起迄）':'已停用的抗微生物製劑');
+    st.forEach(g=>{const c=g.course;L.push(`- ${g.label}：${c.start?relD(p,c.start,true):'?'} – ${c.end?relD(p,c.end,true):'?'}${g.abx&&c.dot?`（DOT ${c.dot}）`:''}`);});}}}
+  if(m.tpn&&typeof hasTPN==='function'&&hasTPN(p)){H('TPN');const R=tpnOf(p),rows=R.rows.slice(full?-6:-2);rows.forEach(r=>L.push(`- ${relD(p,r.t,true)}：${relTxt(p,tpnLine(r))}`));
+    const fl=R.rows[R.rows.length-1].calc.flags.map(f=>f[1]);if(fl.length)L.push(...fl.map(f=>`  - 注意：${f}`));}
+  if(m.home&&cloudStore(p).items.length){const V=cloudView(p),rows=V.rows.filter(r=>r.status!=='old');if(rows.length){H('入院前用藥（健保雲端）');
+    rows.forEach(r=>{const ago=Math.round((+aiAdmit(p)-Date.parse(r.last.date))/864e5);L.push(`- ${r.last.ing||r.last.drug} ${r.last.sig}，最後領藥入院前 ${ago} 天、給 ${r.last.days} 天（${r.status==='act'?'入院時應仍在用':'入院前 30 天內用完'}）；住院：${r.inNow?'續用':r.inOrd?'曾開立已停':'未開立'}${full?`；處方診斷 ${r.last.dx}`:''}`);});}}
+  if(m.labs&&hasLabs(p)){H('檢驗（新→舊）');const n=full?5:3;
+    AI_KEYLABS.forEach(([lab,code])=>{if(code==='72-333'&&m.renal)return;const st=/^72[C-I]530$|^72[A-Z]530$/.test(code)?'':'B';const ser=aiLabSeries(p,code,st,n);if(!ser.length)return;
+      L.push(`- ${lab}${ser[0].unit?` (${ser[0].unit})`:''}：${ser.map(x=>`${String(x.v.value).replace(/\s*\(.*?\)/g,'')}${x.v.flag?' '+x.v.flag:''} ${relSk(p,x.sk,full)}`).join(' ← ')}`);});
+    if(full){const used=new Set(AI_KEYLABS.map(x=>x[1]));const other=Object.values(p.labs.items).filter(it=>!used.has(it.code)&&Object.keys(it.vals).length);
+      if(other.length){L.push('- 其他最新值：'+other.map(it=>{const k=Object.keys(it.vals).sort().pop();const v=it.vals[k];return `${it.name}${it.sampleType!=='B'?'('+it.sampleType+')':''} ${String(v.value).replace(/\s*\(.*?\)/g,'')}${v.flag?' '+v.flag:''} ${relSk(p,k)}`;}).join('；'));}}
+  }
+  if(m.micro&&hasMicro(p)){H('微生物');const C=coverage(p);
+    microList(p).slice(0,full?12:6).forEach(R=>{L.push(`- ${R.collected?relIso(p,R.collected,true):'?'} ${specName(R.spec)}：${R.orgs.length?R.orgs.map(o=>`${o.name}${o.growth?' '+o.growth:''}${orgFlags(o,R).length?' ['+orgFlags(o,R).map(f=>f[0]).join(',')+']':''}`).join('；'):(R.noGrowth?'無菌生長':R.noOrgYet?'尚無菌株報告':'—')}${R.status?`（${R.status}）`:''}`);
+      R.orgs.forEach(o=>{const a=Object.entries(o.ast||{});if(!a.length)return;const g={};a.forEach(([d,v])=>(g[sirTxt(v.sir)]=g[sirTxt(v.sir)]||[]).push(d));L.push(`  - ${o.name} 藥敏：${['R','I','SDD','S'].filter(k=>g[k]).map(k=>`${k}: ${g[k].join(', ')}`).join('｜')}`);});});
+    if(C.act.length&&C.rows.length)L.push(`- 目前抗生素（${C.act.map(a=>a.label).join('、')}）涵蓋：${C.rows.map(r=>`${r.o.name}（${specName(r.R.spec)}）${r.covered?'已涵蓋':r.sdd?'僅 SDD':'未涵蓋'}`).join('；')}`);
+  }
+  if(m.rt){const V=RT.summary(p,rtCtx(p));if(V){H('呼吸器');L.push(`- ${relTxt(p,V.time||'')}：${[V.mode,V.ps!=null?'PS '+V.ps:null,V.pinsp!=null?'PC '+V.pinsp:null,V.peep!=null?'PEEP '+V.peep:null,V.fio2!=null?'FiO2 '+V.fio2+'%':null,V.vt!=null?'Vte '+V.vt+' mL'+(V.vtkg!=null?` (${V.vtkg.toFixed(1)} mL/kg PBW)`:''):null,V.rr!=null?'RR '+V.rr:null,V.pf!=null?'P/F '+V.pf.toFixed(0):null,V.rsbi!=null&&V.spont?'RSBI '+V.rsbi.toFixed(0):null,V.dp!=null?'DP '+V.dp.toFixed(0):null,V.mvday!=null?'MV '+V.mvday:null].filter(Boolean).join('，')}`);
+    if(p.rt&&p.rt.rass)L.push(`- RASS ${p.rt.rass}`);}}
+  if(m.lines&&lineStore(p).items.length){const V=linesView(p);if(V.act.length){H('管路（留置中）');V.act.forEach(x=>L.push(`- ${lineShort(x)}：${relIso(p,x.at)} 起，第 ${lineDayN(x)} 天`));}}
+  if(m.exam&&examStore(p).length){H('檢查報告');examSorted(p).slice(0,full?8:4).forEach(x=>L.push(`- ${x.date?relIso(p,x.date):'?'} ${x.type} ${x.title}：${sc(oneLine(x.imp||'（無 Impression）',full?600:250))}`));}
+  if(m.consult&&consStore(p).length){H('會診');consSorted(p).slice(0,full?8:4).forEach(c=>L.push(`- ${c.reqDate?relIso(p,c.reqDate):'?'} ${c.dept||'會診'}（${c.status}）：${sc(oneLine(c.reply||c.reason||'',full?600:250))}`));}
+  if(m.issues){const o=issueStore(p).filter(x=>x.status==='待討論');if(o.length){H('藥師待討論事項');o.forEach(x=>L.push(`- [${ISSUE_SEC[x.sec]||x.sec}] ${x.ref?sc(x.ref)+'：':''}${sc(x.text.replace(/\n/g,' '))}`));}}
+  // 自由文字（勾選才帶）
+  const F=U.free;
+  if(F.adm&&p.adm&&p.adm.sections.length){H('入院紀錄（節錄）');p.adm.sections.filter(x=>!/一般資料|General Data|家族史|Family|個人病史|Personal/i.test(x.zh+x.en)).forEach(x=>L.push(`### ${x.zh}`,sc(x.text)));}
+  const g=progSorted(p)[0];
+  if(g&&(F.progSO||F.progP)){H(`最新病程（${relIso(p,g.at,true)}）`);if(F.progSO){L.push('### S',sc(g.S),'### O',sc(g.O));}if(F.progP){L.push('### P',sc(g.P));if(g.vsc)L.push('### 主治醫師意見',sc(g.vsc));}}
+  // 提問
+  L.push('','---','## 請協助判讀',
+`你是加護病房的臨床藥師，並綜合重症、感染、腎臟${p.template==='peds'?'、兒科／新生兒':''}等專科觀點。請只根據上面的資料判讀，資料不足時明確說缺什麼，不要推測未提供的數值。依下列順序檢查：
+1. 適應症對應：有問題未治療、或有用藥但找不到適應症
+2. 劑量與頻次：依腎功能／透析、肝功能、體重${p.template==='peds'?'（mg/kg、GA/PMA）':''}評估，說明你採用的體重與腎功能估算方式，並注意 Cr 是否處於穩定狀態
+3. 重要交互作用與重複用藥（同類或同機轉）
+4. 抗微生物治療：與培養／藥敏是否相符、能否降階、療程長度、TDM 時機
+5. 入院前用藥：哪些應恢復、哪些應維持停用
+6. 監測缺口：該追蹤但尚未安排的檢驗或 TDM
+7. 疾病狀態解讀：目前主要問題（例如腎功能、感染／休克、呼吸、營養）的狀態與趨勢
+
+請用繁體中文，依優先順序列出：
+「問題」→「依據（引用上面的數據與 HD）」→「建議（具體藥名、劑量、監測）」→「把握程度（高／中／低）」。
+引用指引時寫出名稱與年份；不確定的內容請標明「需查證」。最後列出需要向醫師確認的問題。`);
+  return L.join('\n');
+}
+function aiStore(p){if(!Array.isArray(p.aiNotes))p.aiNotes=[];return p.aiNotes;}
+function renderAI(p,ro){
+  const U=S.aiUI;
+  const cb=(grp,k,t)=>`<label class="small" style="display:inline-flex;align-items:center;gap:4px;margin:3px 10px 3px 0"><input type="checkbox" style="width:auto" data-aiopt="${grp}.${k}" ${(grp==='mods'?U.mods:U.free)[k]?'checked':''}> ${t}</label>`;
+  const pv=aiPack(p,true);
+  const nRed=(pv.match(/\u0001/g)||[]).length;
+  const html=esc(pv).replace(/\u0001/g,'<mark>').replace(/\u0002/g,'</mark>');
+  let h=`<div class="card"><h3>AI 判讀包 <span class="small mute">去識別化匯出，複製後貼到 Claude</span></h3>
+    <div class="small"><b>內容</b></div><div>${AI_MODS.map(([k,t])=>cb('mods',k,t)).join('')}</div>
+    <div class="small" style="margin-top:6px"><b>自由文字</b>（預設不帶；勾選後會自動遮蔽姓名、代號、院所與日期）</div><div>${cb('free','adm','入院紀錄（不含一般資料、家族史、個人史）')}${cb('free','progSO','最新病程 S／O')}${cb('free','progP','最新病程 P＋主治意見')}</div>
+    <div class="row" style="margin-top:8px"><select id="aiDetail" style="width:auto"><option value="brief" ${U.detail==='brief'?'selected':''}>精簡（查房用）</option><option value="full" ${U.detail==='full'?'selected':''}>完整</option></select>
+      <span style="flex:1"></span><span class="small mute">約 ${pv.length.toLocaleString()} 字・自由文字遮蔽 ${nRed} 處</span>
+      <button id="btnAiDl">下載 .md</button><button class="pri" id="btnAiCopy">複製判讀包</button></div>
+    <details style="margin-top:10px" open><summary class="small" style="cursor:pointer;font-weight:700">預覽（<mark>標色</mark>為自動遮蔽處；送出前請再看一次）</summary>
+      <pre style="white-space:pre-wrap;font-size:12.5px;max-height:520px;overflow:auto;background:var(--bg);padding:10px;border-radius:8px;border:1px solid var(--line)">${html}</pre></details></div>`;
+  const A=aiStore(p).slice().sort((a,b)=>b.at.localeCompare(a.at));
+  h+=`<div class="card"><h3>AI 判讀紀錄 <span class="small mute">${A.length} 份</span></h3>
+    ${ro?'':`<textarea id="aiReply" rows="5" placeholder="把 AI 的回覆貼回這裡存檔；存檔後可以把其中幾條轉成「待與醫師討論」。"></textarea>
+    <div class="row" style="margin-top:6px;justify-content:flex-end"><button class="pri" id="btnAiSave">存檔</button></div>`}
+    ${A.map((x,i)=>{const items=x.text.split('\n').map(s=>s.trim()).filter(s=>/^(\d+[.、)）]|[-•*#]|問題|【)/.test(s)&&s.replace(/^[#\-•*\d.、)）\s]+/,'').length>6);
+      return `<details class="lgroup" style="margin-top:8px" ${i===0?'open':''}><summary><span>${esc(locTs(x.at))} AI 判讀</span>${S.editMode&&!ro?`<button class="xdel" data-del="ainote" data-k="${x.id}">✕</button>`:''}</summary><div style="padding:10px 14px">
+        ${items.length&&!ro?`<div class="small mute" style="margin-bottom:4px">點「→ 待討論」把該條加入藥師待討論事項</div>${items.map((s,j)=>`<div class="row" style="align-items:flex-start;gap:6px;margin:3px 0"><span class="small" style="flex:1;white-space:pre-wrap">${esc(s)}</span><button class="small" data-ai2issue="${x.id}|${j}">→ 待討論</button></div>`).join('')}<details style="margin-top:6px"><summary class="small mute" style="cursor:pointer">全文</summary>`:''}
+        <div style="white-space:pre-wrap;font-size:13.5px">${esc(x.text)}</div>${items.length&&!ro?'</details>':''}</div></details>`;}).join('')}</div>`;
+  return h;
+}
+function bindAI(p,ro){
+  document.querySelectorAll('[data-aiopt]').forEach(el=>el.onchange=()=>{const [g,k]=el.dataset.aiopt.split('.');S.aiUI[g][k]=el.checked?1:0;renderMain();});
+  if($('aiDetail'))$('aiDetail').onchange=e=>{S.aiUI.detail=e.target.value;renderMain();};
+  if($('btnAiCopy'))$('btnAiCopy').onclick=()=>copyMsg(aiPack(p,false),'已複製 AI 判讀包');
+  if($('btnAiDl'))$('btnAiDl').onclick=()=>{const t=aiPack(p,false),n=`AI判讀包_${safeName(p.bed||'patient')}_HD${hdN(p,new Date())}.md`;
+    if(IS_IOS){downloadText(t,n);return;}const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/markdown'}));a.download=n;document.body.appendChild(a);a.click();a.remove();};
+  if(ro)return;
+  if($('btnAiSave'))$('btnAiSave').onclick=()=>{const t=$('aiReply').value.trim();if(!t){toast('請先貼上 AI 回覆');return;}
+    snapshot(p,'存 AI 判讀');aiStore(p).push({id:'a'+uid().slice(1),at:new Date().toISOString(),text:t});p.updatedAt=new Date().toISOString();markDirty();renderMain();toast('已存檔');};
+  document.querySelectorAll('[data-ai2issue]').forEach(b=>b.onclick=()=>{const [id,j]=b.dataset.ai2issue.split('|');const x=aiStore(p).find(y=>y.id===id);if(!x)return;
+    const items=x.text.split('\n').map(s=>s.trim()).filter(s=>/^(\d+[.、)）]|[-•*#]|問題|【)/.test(s)&&s.replace(/^[#\-•*\d.、)）\s]+/,'').length>6);
+    const s=(items[+j]||'').replace(/^[#\-•*\s]+/,'');if(!s)return;snapshot(p,'AI→待討論');
+    issueStore(p).push({id:'i'+uid().slice(1),sec:'ai',ref:'AI 建議',text:s,status:'待討論',result:'',createdAt:new Date().toISOString()});
+    p.updatedAt=new Date().toISOString();markDirty();renderList();b.disabled=true;b.textContent='已加入';toast('已加入待討論');});
 }
 
 /* =====================================================================
