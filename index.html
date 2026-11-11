@@ -229,9 +229,11 @@ tr.old td{opacity:.5;text-decoration:line-through}
     <div id="lkHome" class="stack">
       <button class="pri" id="btnOpen">開啟工作檔</button>
       <button id="btnNew">建立新工作檔</button>
+      <button id="btnGdOpen">☁ 從 Google Drive 開啟</button>
       <button class="ghost" id="btnSample">試用範例資料（虛構病人，不存檔）</button>
       <div id="fsNotice"></div>
       <div id="envCheck" class="small mute"></div>
+      <a href="#" id="lnkGdSetup" class="small mute" style="text-align:center">Google Drive 設定</a>
     </div>
 
     <!-- 解鎖 -->
@@ -263,6 +265,7 @@ tr.old td{opacity:.5;text-decoration:line-through}
     <span class="file" id="hdFile"></span>
     <span class="status" id="hdStatus"></span>
     <span class="sp"></span>
+    <button id="btnGdUp" class="hidden" title="把目前工作檔上傳到 Google Drive，之後自動同步">☁ 存到 Google Drive</button>
     <button id="btnDownload" title="下載一份加密備份">下載備份</button>
     <button id="btnOpenArchive">開啟舊病患檔</button>
     <button id="btnUndo" class="hidden">↶ 復原</button>
@@ -410,7 +413,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-11h';
+const APP_VER='2026-11-11i';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -421,6 +424,10 @@ function envProblem(){
   return '';
 }
 (function(){const pr=envProblem();$('envCheck').innerHTML=(pr?`<div class="notice bad">${esc(pr)}</div>`:'')+`平台版本 ${APP_VER}${IS_TABLET?'・平板模式':''}${window.isSecureContext?'・https ✓':'・非 https ✗'}${window.crypto&&crypto.subtle?'・加密 ✓':'・加密 ✗'}`;})();
+$('btnGdOpen').onclick=()=>gdOpenWork();
+$('lnkGdSetup').onclick=e=>{e.preventDefault();gdSetup();};
+$('btnGdUp').onclick=()=>gdUploadCurrent();
+$('hdStatus').onclick=()=>{if(S.mode==='gd'&&(S.gdNeedAuth||S.saveErr))gdReconnect();};
 $('fileInput').onchange=async e=>{
   const f=e.target.files[0];e.target.value='';if(!f)return;
   let txt='';
@@ -445,18 +452,19 @@ $('btnUnlock').onclick=async()=>{
       try{canWrite=(await S.handle.requestPermission({mode:'readwrite'}))==='granted';}catch(e){canWrite=false;}
     }
     const pr=envProblem();if(pr)throw new Error(pr);
+    if(S.mode==='gd'&&!pendingFileText){await gdAuth();const m=await gdMeta(S.gdFile.id);pendingFileText=await gdGet(S.gdFile.id);S.gdFile.version=m.version;S.gdFile.modified=m.modified;}
     const text=S.mode==='fs'?await readFileText(await S.handle.getFile()):pendingFileText;
     if(!text)throw new Error('尚未選擇檔案，請按「改開其他檔案」重新選取');
     const r=await decryptText(text,pw);
     if(r.kind==='archive'){$('unlockMsg').innerHTML='<div class="notice warn">這是舊病患檔，不是工作檔。請進入工作檔後用「開啟舊病患檔」查看。</div>';return;}
-    S.data=r.obj;S.km=r.km;S.pw=pw;S.canWrite=S.mode==='fs'?canWrite:false;
+    S.data=r.obj;S.km=r.km;S.pw=pw;S.canWrite=S.mode==='fs'?canWrite:S.mode==='gd';pendingFileText=S.mode==='gd'?null:pendingFileText;
     S.dirty=false;S.saveErr=false;S.lastSaved=null;S.archive=null;
     if(!S.data.settings)S.data.settings={hideNames:false};
     if(S.mode==='fs'&&!canWrite)toast('未取得寫入權限：本次為唯讀，修改不會存檔');
     enterApp();
     const mt=metaTxt(S.data);if(mt)setTimeout(()=>toast('此工作檔最後更新：'+mt),2700);
   }catch(e){
-    $('unlockMsg').innerHTML=`<div class="notice bad">${e.message==='PASSWORD'?'密碼錯誤。':e.message==='FORMAT'?'這不是有效的工作檔。':'無法讀取檔案：'+esc(e.message)}</div>`;
+    $('unlockMsg').innerHTML=`<div class="notice bad">${e.message==='PASSWORD'?'密碼錯誤。':e.message==='FORMAT'?'這不是有效的工作檔。':'無法讀取檔案：'+esc(gdErr(e))}</div>`;
   }finally{btn.disabled=false;btn.textContent='解鎖';}
 };
 
@@ -512,9 +520,10 @@ let saveTimer=null;
 function markDirty(){
   S.dirty=true;renderStatus();
   const cp=S.data&&!S.archive?S.data.patients.find(x=>x.id===S.selId):null;if(cp)cp.updatedAt=new Date().toISOString();
-  if(S.mode==='fs'&&S.canWrite){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,700);}
+  if((S.mode==='fs'||S.mode==='gd')&&S.canWrite){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,S.mode==='gd'?2500:700);}
 }
 async function saveNow(){
+  if(S.mode==='gd')return gdSave();
   if(S.mode!=='fs'||!S.canWrite||!S.handle)return;
   if(S.saving){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,400);return;}
   S.saving=true;S.dirty=false;renderStatus();
@@ -526,16 +535,18 @@ async function saveNow(){
   }catch(e){S.saveErr=true;S.dirty=true;console.error(e);toast('存檔失敗：'+e.message+'（請確認隨身碟仍插著，或按「下載備份」）');}
   finally{S.saving=false;renderStatus();}
 }
-async function flushSave(){clearTimeout(saveTimer);if(S.dirty&&S.mode==='fs'&&S.canWrite)await saveNow();}
+async function flushSave(){clearTimeout(saveTimer);if(S.dirty&&(S.mode==='fs'||S.mode==='gd')&&S.canWrite&&!S.gdNeedAuth)await saveNow();}
 function renderStatus(){
   const st=$('hdStatus');st.className='status';
   if(S.mode==='sample'){st.textContent='範例模式・不存檔';return;}
   if(S.mode==='fs'&&!S.canWrite){st.textContent='唯讀';st.classList.add('err');return;}
-  if(S.saveErr){st.textContent='存檔失敗';st.classList.add('err');return;}
+  if(S.mode==='gd'&&S.gdNeedAuth){st.textContent='⚠ Google 連線過期，點此重新連線';st.classList.add('err');st.style.cursor='pointer';return;}
+  st.style.cursor='';
+  if(S.saveErr){st.textContent=S.mode==='gd'?'同步失敗（點此重試）':'存檔失敗';st.classList.add('err');if(S.mode==='gd')st.style.cursor='pointer';return;}
   if(S.saving){st.textContent='儲存中…';return;}
   if(S.mode==='download'){st.textContent=S.dirty?'有未下載的變更':'已下載';if(S.dirty)st.classList.add('dirty');return;}
   if(S.dirty){st.textContent='尚未儲存';st.classList.add('dirty');return;}
-  st.textContent=S.lastSaved?'已自動儲存 '+hm(S.lastSaved):'已開啟';
+  st.textContent=S.lastSaved?(S.mode==='gd'?'☁ 已同步 Google Drive ':'已自動儲存 ')+hm(S.lastSaved):(S.mode==='gd'?'☁ Google Drive':'已開啟');
 }
 const IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 function downloadText(text,name){
@@ -564,6 +575,130 @@ $('btnDownload').onclick=async()=>{
 };
 window.addEventListener('beforeunload',e=>{if(S.data&&S.dirty&&S.mode!=='sample'){e.preventDefault();e.returnValue='';}});
 
+/* =====================================================================
+   Google Drive 連線（Google Identity Services + Drive REST，scope: drive.file）
+   檔案加密後才上傳；只看得到本平台建立的檔案與資料夾
+   ===================================================================== */
+const GD_CLIENT_ID='';   // 取得 OAuth 用戶端 ID 後填入；也可在平台「Google Drive 設定」輸入（存在這台裝置）
+const GD_SCOPE='https://www.googleapis.com/auth/drive.file';
+const GD_ROOT='病患工作平台',GD_ARCH='舊病患';
+const GD={token:null,exp:0,tc:null,folders:{}};
+const gdCid=()=>{let v='';try{v=localStorage.getItem('gd_cid')||'';}catch(e){}return v||GD_CLIENT_ID;};
+const gdReady=()=>!!(window.google&&google.accounts&&google.accounts.oauth2);
+function gdLoad(){return new Promise((res,rej)=>{if(gdReady())return res();const old=document.getElementById('gsiScript');
+  const s=old||document.createElement('script');s.id='gsiScript';s.src='https://accounts.google.com/gsi/client';s.async=true;
+  s.addEventListener('load',()=>res());s.addEventListener('error',()=>rej(new Error('無法載入 Google 登入元件（網路或院內防火牆可能擋住 accounts.google.com）')));if(!old)document.head.appendChild(s);});}
+if(gdCid())gdLoad().catch(()=>{});
+// 取得存取權杖；必須在點擊事件中呼叫（會跳出 Google 視窗）
+function gdAuth(){
+  if(GD.token&&Date.now()<GD.exp-120000)return Promise.resolve(GD.token);
+  const cid=gdCid();if(!cid)return Promise.reject(new Error('NO_CID'));
+  const go=()=>new Promise((res,rej)=>{
+    GD.tc=google.accounts.oauth2.initTokenClient({client_id:cid,scope:GD_SCOPE,
+      callback:r=>{if(r.error)return rej(new Error(r.error_description||r.error));GD.token=r.access_token;GD.exp=Date.now()+(+r.expires_in||3600)*1000;try{localStorage.setItem('gd_ok','1');}catch(e){}res(GD.token);},
+      error_callback:e=>rej(new Error(e&&e.type==='popup_closed'?'已關閉 Google 登入視窗':'Google 登入失敗：'+(e&&e.type||'')))});
+    let ok='';try{ok=localStorage.getItem('gd_ok')||'';}catch(e){}
+    GD.tc.requestAccessToken({prompt:ok?'':'consent'});});
+  return gdReady()?go():gdLoad().then(go);
+}
+// 權杖快過期時，趁使用者點擊時無感續期
+document.addEventListener('click',()=>{if(S.mode==='gd'&&GD.tc&&GD.token&&Date.now()>GD.exp-600000){try{GD.tc.requestAccessToken({prompt:''});}catch(e){}}},true);
+async function gdF(url,opt={}){
+  if(!GD.token||Date.now()>GD.exp-30000)throw new Error('AUTH');
+  const r=await fetch(url,Object.assign({},opt,{headers:Object.assign({Authorization:'Bearer '+GD.token},opt.headers||{})}));
+  if(r.status===401){GD.token=null;throw new Error('AUTH');}
+  if(!r.ok){let m='';try{m=(await r.json()).error.message;}catch(e){}throw new Error(`Google Drive ${r.status} ${m}`);}
+  return r;
+}
+const GDA='https://www.googleapis.com/drive/v3/files',GDU='https://www.googleapis.com/upload/drive/v3/files';
+async function gdFolder(sub){
+  const key=sub||'_';if(GD.folders[key])return GD.folders[key];
+  const find=async(name,parent)=>{const q=`mimeType='application/vnd.google-apps.folder' and name='${name}' and trashed=false`+(parent?` and '${parent}' in parents`:'');
+    const j=await (await gdF(`${GDA}?q=${encodeURIComponent(q)}&fields=files(id,name)&spaces=drive`)).json();return j.files&&j.files[0]?j.files[0].id:null;};
+  const make=async(name,parent)=>{const j=await (await gdF(GDA+'?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,mimeType:'application/vnd.google-apps.folder',parents:parent?[parent]:undefined})})).json();return j.id;};
+  let root=GD.folders._||await find(GD_ROOT)||await make(GD_ROOT);GD.folders._=root;
+  if(!sub)return root;
+  const id=await find(sub,root)||await make(sub,root);GD.folders[key]=id;return id;
+}
+async function gdList(sub){
+  const fid=await gdFolder(sub);const q=`'${fid}' in parents and trashed=false and name contains '.jcpw'`;
+  const j=await (await gdF(`${GDA}?q=${encodeURIComponent(q)}&orderBy=modifiedTime desc&fields=files(id,name,modifiedTime,size,version)&pageSize=100`)).json();
+  return (j.files||[]).map(f=>({id:f.id,name:f.name,modified:Date.parse(f.modifiedTime),size:+f.size||0,version:f.version}));
+}
+const gdGet=async id=>(await gdF(`${GDA}/${id}?alt=media`)).text();
+const gdMeta=async id=>{const j=await (await gdF(`${GDA}/${id}?fields=id,name,modifiedTime,version`)).json();return {id:j.id,name:j.name,modified:Date.parse(j.modifiedTime),version:j.version};};
+async function gdUpdate(id,text){const j=await (await gdF(`${GDU}/${id}?uploadType=media&fields=id,name,modifiedTime,version`,{method:'PATCH',headers:{'Content-Type':'application/octet-stream'},body:text})).json();return {id:j.id,name:j.name,modified:Date.parse(j.modifiedTime),version:j.version};}
+async function gdCreate(name,text,sub){
+  const fid=await gdFolder(sub);const b='jcpw'+Math.random().toString(36).slice(2);
+  const body=`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({name,parents:[fid],mimeType:'application/octet-stream'})}\r\n--${b}\r\nContent-Type: application/octet-stream\r\n\r\n${text}\r\n--${b}--`;
+  const j=await (await gdF(`${GDU}?uploadType=multipart&fields=id,name,modifiedTime,version`,{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body})).json();
+  return {id:j.id,name:j.name,modified:Date.parse(j.modifiedTime),version:j.version};
+}
+function gdPick(title,files,emptyMsg){
+  return new Promise(res=>{
+    const ft=ms=>{const d=new Date(ms);return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${hm(d)}`;};
+    modal(title,files.length?`<div class="small mute" style="margin-bottom:6px">Google Drive「${GD_ROOT}」資料夾，新到舊</div>${files.map((f,i)=>`<button type="button" data-gf="${i}" style="display:block;width:100%;text-align:left;margin:4px 0"><b>${esc(f.name)}</b><br><span class="small mute">${ft(f.modified)}・${Math.max(1,Math.round(f.size/1024))} KB</span></button>`).join('')}`:`<div class="small">${emptyMsg||'沒有檔案'}</div>`,[{t:'取消',v:false}]).then(()=>res(null));
+    setTimeout(()=>document.querySelectorAll('[data-gf]').forEach(b=>b.onclick=()=>{$('modal').classList.add('hidden');res(files[+b.dataset.gf]);}),0);
+  });
+}
+async function gdSetup(){
+  const r=await modal('Google Drive 設定',`<div class="small">貼上 Google Cloud Console 建立的「OAuth 用戶端 ID」（結尾是 .apps.googleusercontent.com）。只存在這台裝置。</div><input value="${esc(gdCid())}" placeholder="xxxx.apps.googleusercontent.com">`,[{t:'取消',v:false},{t:'儲存',v:true,cls:'pri'}]);
+  if(!r.v)return false;const v=(r.inputs[0]||'').trim();
+  if(v&&!/\.apps\.googleusercontent\.com$/.test(v)){toast('格式不對，應以 .apps.googleusercontent.com 結尾');return false;}
+  try{if(v)localStorage.setItem('gd_cid',v);else localStorage.removeItem('gd_cid');}catch(e){}
+  if(v)gdLoad().catch(()=>{});toast(v?'已儲存，請再按一次「從 Google Drive 開啟」':'已清除');return !!v;
+}
+const gdErr=e=>e.message==='NO_CID'?'尚未設定 Google 用戶端 ID':e.message==='AUTH'?'Google 連線已過期，請重新連線':e.message;
+// 存檔（含衝突合併）
+async function gdSave(){
+  if(!S.gdFile||!S.data)return;
+  if(S.saving){clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,800);return;}
+  S.saving=true;S.dirty=false;renderStatus();
+  try{
+    const m=await gdMeta(S.gdFile.id);
+    if(m.version!==S.gdFile.version){await gdPullMerge('存檔前發現其他裝置的較新版本');S.dirty=false;}
+    S.data.updated=new Date().toISOString();stampMeta();
+    const r=await gdUpdate(S.gdFile.id,await encryptObj(S.data,S.km,'work'));
+    S.gdFile.version=r.version;S.gdFile.modified=r.modified;S.saveErr=false;S.gdNeedAuth=false;S.lastSaved=new Date();
+  }catch(e){S.dirty=true;S.saveErr=true;S.gdNeedAuth=e.message==='AUTH';console.error(e);
+    if(!S.gdNeedAuth){toast('同步到 Google Drive 失敗：'+gdErr(e)+'（稍後自動重試）');clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,20000);}}
+  finally{S.saving=false;renderStatus();}
+}
+async function gdPullMerge(why){
+  const text=await gdGet(S.gdFile.id),m=await gdMeta(S.gdFile.id);
+  let d;try{d=await decryptText(text,S.pw);}catch(e){toast('雲端檔案無法用目前密碼解開，未合併');S.gdFile.version=m.version;return;}
+  const n=mergeCore(d.obj);S.gdFile.version=m.version;S.gdFile.modified=m.modified;
+  if(n.add||n.upd){renderList();renderMain();toast(`${why}：已合併 ${n.add+n.upd} 位病人的更新`);}
+}
+async function gdCheckRemote(){
+  if(S.mode!=='gd'||!S.data||!S.gdFile||S.saving)return;
+  try{const m=await gdMeta(S.gdFile.id);if(m.version!==S.gdFile.version){await flushSave();const m2=await gdMeta(S.gdFile.id);if(m2.version!==S.gdFile.version){await gdPullMerge('其他裝置有更新');if(S.dirty)saveNow();}}}catch(e){if(e.message==='AUTH'){S.gdNeedAuth=true;renderStatus();}}
+}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')gdCheckRemote();});
+async function gdReconnect(){try{await gdAuth();S.gdNeedAuth=false;S.saveErr=false;if(S.dirty)await saveNow();else gdCheckRemote();renderStatus();toast('已重新連線 Google Drive');}catch(e){toast(gdErr(e));}}
+// 開啟
+async function gdOpenWork(){
+  if(!gdCid()){await gdSetup();return;}
+  try{await gdAuth();}catch(e){toast(gdErr(e));return;}
+  let list;try{list=await gdList('');}catch(e){toast('讀取 Google Drive 失敗：'+gdErr(e));return;}
+  const f=await gdPick('從 Google Drive 開啟',list,`「${GD_ROOT}」資料夾還沒有工作檔。<br><br>先用「開啟工作檔」開本機的檔案，進入後按上方「☁ 存到 Google Drive」上傳；或「建立新工作檔」後再上傳。<br><br><span class="mute">註：基於隱私，平台只看得到自己建立的雲端檔案，自行拖進 Drive 的檔案不會出現在這裡。</span>`);
+  if(!f)return;
+  try{const text=await gdGet(f.id);pendingFileText=text;S.gdFile={id:f.id,name:f.name,version:f.version,modified:f.modified};S.handle=null;S.fileName=f.name;S.mode='gd';showLock('lkUnlock');}
+  catch(e){toast('下載失敗：'+gdErr(e));}
+}
+// 目前工作檔上傳到 Drive（之後改為雲端模式）
+async function gdUploadCurrent(){
+  if(S.mode==='sample'){toast('範例模式不提供');return;}
+  try{await gdAuth();}catch(e){if(e.message==='NO_CID')await gdSetup();else toast(gdErr(e));return;}
+  const base=(S.fileName||'病患工作檔').replace(/\.jcpw$/,'').replace(/_\d{4}-\d{4}$/,'')+'.jcpw';
+  const r=await modal('存到 Google Drive',`在 Google Drive「${GD_ROOT}」資料夾建立雲端工作檔：<input value="${esc(base)}">`,[{t:'取消',v:false},{t:'上傳',v:true,cls:'pri'}]);if(!r.v)return;
+  let name=(r.inputs[0]||base).trim();if(!/\.jcpw$/i.test(name))name+='.jcpw';
+  try{stampMeta();const f=await gdCreate(name,await encryptObj(S.data,S.km,'work'),'');
+    S.gdFile=f;S.mode='gd';S.handle=null;S.canWrite=true;S.fileName=f.name;S.dirty=false;S.saveErr=false;S.lastSaved=new Date();enterApp();
+    toast('已上傳，之後修改會自動同步到 Google Drive');}
+  catch(e){toast('上傳失敗：'+gdErr(e));}
+}
+
 /* ===================== 鎖定 / 閒置 ===================== */
 async function lockNow(reason){
   if(!S.data)return;
@@ -575,7 +710,8 @@ async function lockNow(reason){
   closePaste();$('modal').classList.add('hidden');
   S.undo=[];renderUndo();S.editMode=false;
   S.data=null;S.km=null;S.pw=null;S.archive=null;S.dirty=false;$('main').innerHTML='';$('ptList').innerHTML='';
-  if(S.mode==='sample'||(!S.handle&&S.mode!=='download')){showLock('lkHome');}
+  if(S.mode==='gd'){pendingFileText=null;showLock('lkUnlock');}
+  else if(S.mode==='sample'||(!S.handle&&S.mode!=='download')){showLock('lkHome');}
   else if(S.mode==='download'){showLock('lkHome');}
   else showLock('lkUnlock');
   if(reason)$('unlockMsg').innerHTML=`<div class="notice info">${reason}</div>`;
@@ -589,7 +725,8 @@ function resetIdle(){clearTimeout(idleTimer);if(S.data)idleTimer=setTimeout(()=>
 function enterApp(){
   $('lock').classList.add('hidden');$('app').classList.remove('hidden');
   $('hdFile').textContent=S.fileName;
-  $('btnDownload').textContent=S.mode==='download'?'下載工作檔（存回）':'匯出給平板／其他裝置';
+  $('btnDownload').textContent=S.mode==='download'?'下載工作檔（存回）':S.mode==='gd'?'下載備份':'匯出給平板／其他裝置';
+  $('btnGdUp').classList.toggle('hidden',S.mode==='gd'||S.mode==='sample');
   $('btnMerge').classList.toggle('hidden',S.mode==='sample');
   const mt=metaTxt(S.data);if(mt)$('hdFile').textContent=S.fileName+'　最後更新 '+mt;
   $('btnChangePw').classList.toggle('hidden',S.mode==='sample');
@@ -812,14 +949,16 @@ async function discharge(p){
   const fname=`${safeName(p.bed)}_${safeName(p.code)}_${ymd().replace(/-/g,'')}.jcpw`;
   const copy=JSON.parse(JSON.stringify(p));copy.dischargedAt=new Date().toISOString();
   let handle=null;
-  if(FS){
+  if(S.mode==='gd'){try{await gdAuth();}catch(e){toast(gdErr(e));return;}}
+  else if(FS){
     try{const opt={suggestedName:fname,types:FTYPES};if(S.lastArchiveHandle)opt.startIn=S.lastArchiveHandle;
       handle=await window.showSaveFilePicker(opt);}catch(e){return;}
   }
   try{
     const km=await newKeyMaterial(S.pw);
     const txt=await encryptObj({version:1,kind:'archive',patients:[copy]},km,'archive');
-    if(handle){const w=await handle.createWritable();await w.write(txt);await w.close();S.lastArchiveHandle=handle;}
+    if(S.mode==='gd')await gdCreate(fname,txt,GD_ARCH);
+    else if(handle){const w=await handle.createWritable();await w.write(txt);await w.close();S.lastArchiveHandle=handle;}
     else downloadText(txt,fname);
   }catch(e){toast('舊病患檔儲存失敗，病患仍保留在工作檔：'+e.message);return;}
   S.data.archivedIds=(S.data.archivedIds||[]).concat(p.id);
@@ -830,6 +969,7 @@ async function discharge(p){
 
 $('btnOpenArchive').onclick=async()=>{
   if(S.mode==='sample'){toast('範例模式不提供此功能');return;}
+  if(S.mode==='gd'){try{await gdAuth();const list=await gdList(GD_ARCH);const f=await gdPick('開啟舊病患檔（雲端）',list,'雲端「舊病患」資料夾目前沒有檔案。');if(!f)return;openArchiveText(await gdGet(f.id),f.name);}catch(e){toast(gdErr(e));}return;}
   if(FS){
     try{const opt={types:FTYPES,multiple:false};if(S.lastArchiveHandle)opt.startIn=S.lastArchiveHandle;
       const [h]=await window.showOpenFilePicker(opt);S.lastArchiveHandle=h;
@@ -926,7 +1066,12 @@ async function mergeWorkText(text,fileName){
     if(!res.v)return;try{r=await decryptText(text,res.inputs[0]);}catch(e2){toast('密碼錯誤');return;}
   }
   if(r.kind!=='work'){toast('這是舊病患檔，請用「開啟舊病患檔」');return;}
-  const O=r.obj,mine=new Map(S.data.patients.map(p=>[p.id,p]));
+  const O=r.obj;const {add,upd,keep,skip,det}=mergeCore(O);
+  markDirty();renderList();renderMain();
+  await modal('合併完成',`來源：${esc(fileName)}${metaTxt(O)?`（最後更新 ${esc(metaTxt(O))}）`:''}<br><br>新增 ${add} 位、以較新版本更新 ${upd} 位、保留目前版本 ${keep} 位${skip?`、略過已歸檔 ${skip} 位`:''}。${det.length?'<br><br>'+det.map(esc).join('<br>'):''}<br><br><span class="small">以「每位病人最後修改時間」決定保留哪一份。</span>`,[{t:'確定',v:true,cls:'pri'}]);
+}
+function mergeCore(O){
+  const mine=new Map(S.data.patients.map(p=>[p.id,p]));
   const arch=new Set([...(S.data.archivedIds||[]),...(O.archivedIds||[])]);
   let add=0,upd=0,keep=0,skip=0;const det=[];
   (O.patients||[]).forEach(op=>{
@@ -938,10 +1083,12 @@ async function mergeWorkText(text,fileName){
   });
   S.data.patients=S.data.patients.filter(p=>!arch.has(p.id));
   S.data.archivedIds=[...arch];
-  markDirty();renderList();renderMain();
-  await modal('合併完成',`來源：${esc(fileName)}${metaTxt(O)?`（最後更新 ${esc(metaTxt(O))}）`:''}<br><br>新增 ${add} 位、以較新版本更新 ${upd} 位、保留目前版本 ${keep} 位${skip?`、略過已歸檔 ${skip} 位`:''}。${det.length?'<br><br>'+det.map(esc).join('<br>'):''}<br><br><span class="small">以「每位病人最後修改時間」決定保留哪一份。</span>`,[{t:'確定',v:true,cls:'pri'}]);
+  const P=(O.settings&&O.settings.pnProd)||{};if(Object.keys(P).length){S.data.settings.pnProd=Object.assign({},P,S.data.settings.pnProd||{});}
+  if(add||upd)S.dirty=true;
+  return {add,upd,keep,skip,det};
 }
 $('btnMerge').onclick=async()=>{
+  if(S.mode==='gd'){try{await gdAuth();const list=(await gdList('')).filter(f=>f.id!==S.gdFile.id);const f=await gdPick('選擇要合併的雲端工作檔',list);if(!f)return;mergeWorkText(await gdGet(f.id),f.name);}catch(e){toast(gdErr(e));}return;}
   if(FS){try{const [h]=await window.showOpenFilePicker({types:FTYPES,multiple:false});mergeWorkText(await (await h.getFile()).text(),h.name);}catch(e){}}
   else{$('fileInput').dataset.purpose='merge';$('fileInput').click();}
 };
