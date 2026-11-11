@@ -350,7 +350,7 @@ const hm=(d=new Date())=>`${pad(d.getHours())}:${pad(d.getMinutes())}`;
 const uid=()=>'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const safeName=s=>String(s).replace(/[\\/:*?"<>|\s]+/g,'_').replace(/^_+|_+$/g,'')||'patient';
 
-function emptyData(){return {version:1,created:new Date().toISOString(),settings:{hideNames:false,dripInclDrugVol:true},patients:[]};}
+function emptyData(){return {version:1,created:new Date().toISOString(),settings:{hideNames:false,dripInclDrugVol:false,dripVol2:true},patients:[]};}
 function ensurePatient(p){
   // 舊工作檔補上新欄位
   for(const [k,v] of Object.entries({medList:[],medLog:{},medPasteAt:'',drips:{},dripHistory:[],orderSources:[]}))if(p[k]==null)p[k]=JSON.parse(JSON.stringify(v));
@@ -410,7 +410,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-11a';
+const APP_VER='2026-11-11b';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -594,7 +594,10 @@ function enterApp(){
   const mt=metaTxt(S.data);if(mt)$('hdFile').textContent=S.fileName+'　最後更新 '+mt;
   $('btnChangePw').classList.toggle('hidden',S.mode==='sample');
   S.data.patients.forEach(ensurePatient);
-  if(S.data.settings.dripInclDrugVol==null)S.data.settings.dripInclDrugVol=true;
+  // 稀釋體積＝總體積（不再加上藥液體積）；舊工作檔一次性轉換
+  if(!S.data.settings.dripVol2){S.data.settings.dripInclDrugVol=false;S.data.settings.dripVol2=true;
+    S.data.patients.forEach(x=>Object.values(x.drips||{}).forEach(d=>{if(d.dil!=null&&d.dil!=='')d.vol=calcDripVol(d);}));
+    if(S.mode!=='sample')setTimeout(()=>markDirty(),0);}
   $('chkHide').checked=!!S.data.settings.hideNames;
   if(!S.data.patients.find(p=>p.id===S.selId))S.selId=sortedPatients()[0]?.id||null;
   renderStatus();renderList();renderMain();resetIdle();
@@ -2852,7 +2855,7 @@ function renderDrip(p,ro){
   const ids=Object.keys(p.drips||{}).filter(id=>DRIP_BY_ID[id]);
   let h=`<div class="row" style="margin-bottom:10px">
     ${ro?'':`<select id="dripAddSel" style="width:auto"><option value="">＋ 手動加入輸注…</option>${DRIP_CFG.filter(c=>!p.drips[c.id]).map(c=>`<option value="${c.id}">${c.label}</option>`).join('')}</select>`}
-    <label class="small mute row" style="gap:6px"><input type="checkbox" id="chkDrugVol" style="width:auto" ${S.data.settings.dripInclDrugVol?'checked':''} ${ro?'disabled':''}> 稀釋總體積計入藥液體積（例：NS 250 ＋ 10 支 × 3 mL）</label>
+    <label class="small mute row" style="gap:6px"><input type="checkbox" id="chkDrugVol" style="width:auto" ${S.data.settings.dripInclDrugVol?'checked':''} ${ro?'disabled':''}> 另加藥液體積（預設不勾：稀釋量即總體積，例 10 支 in NS 250 ＝ 250 mL）</label>
     <span class="small mute">體重：${p.wt?esc(p.wt)+' kg':'<b class="over">未填，µg/kg 劑量無法計算</b>'}</span></div>`;
   if(!ids.length)return h+'<div class="todo">目前沒有輸注。貼上醫囑時，含「in NS … run as order」的 IRRE 醫囑會自動帶入這裡。</div>';
   return h+`<div class="dgrid">${ids.map(id=>dripCard(p,id,ro)).join('')}</div>`;
