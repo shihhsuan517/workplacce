@@ -410,7 +410,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-11c';
+const APP_VER='2026-11-11d';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -2805,10 +2805,25 @@ function doseSummary(c,r){
   if(!out.length)out.push(`${fmtN(r.final)} ${c.outUnit}/${c.timeDiv===60?'min':'hr'}（需體重換算）`);
   return out.join(' = ');
 }
-function dresHTML(c,r){
+function dripRuleHTML(p,c){
+  const R=rulesList().find(x=>x.infusion&&x.status==='verified'&&x.names.some(n=>c.match.test(n)));if(!R)return '';
+  const d=p.drips[c.id];if(!d)return '';const ctx=ruleCtx(p);
+  let dw=ctx.wtOf((R.weight&&R.weight.basis)||'TBW'),lab=(R.weight&&R.weight.basis)||'TBW';
+  if(R.weight&&R.weight.obese&&ctx.obeseBy(R.weight.obese.def)){lab=R.weight.obese.basis;dw=ctx.wtOf(lab);}
+  const res=computeResult(c,+d.amp,+d.dose,+d.vol,+d.flow,dw||0);const pr=R.infusion.ranges[R.infusion.primary||0];
+  const head=`<span class="mute">資料庫 ${esc(pr.ind)} ${pr.min}–${pr.max} ${esc(R.infusion.unit)}</span>`;
+  if(res.stage!=='done')return `<div class="line">${head}<span class="mute">需流速</span></div>`;
+  const U=R.infusion.unit.match(/^(mcg|mg|units?)(\/kg)?\/(hr|min)$/i);if(!U)return '';
+  let v=(c.timeDiv===60?res.final*60:res.final)*(c.outUnit==='mg'?1000:1)/(U[1].toLowerCase()==='mg'?1000:1)/(U[3]==='min'?60:1);
+  if(U[2]){if(!dw)return `<div class="line">${head}<span class="mute">需體重</span></div>`;v=v/dw;}
+  const out=v>pr.max||v<pr.min;
+  return `<div class="line">${head}<span class="v ${out?'under':'ok'}">${out?'':'✓ '}${fmtN(+v.toPrecision(3))} ${esc(R.infusion.unit)}${out?'（非資料庫建議區間）':''}</span></div><div class="small mute">${U[2]?`${lab} ${dw.toFixed(1)} kg・`:''}依規則庫：${esc(R.source[0].ref.split('—')[0].trim())}</div>`;
+}
+function dresHTML(c,r,rh){
   if(r.stage==='incomplete-basic')return '<div class="mute">請輸入支數、每支劑量、稀釋總體積</div>';
   let h=`<div class="line"><span class="mute">濃度</span><span class="v">${fmtN(r.concOrig)} ${c.ampUnit}/mL${c.conv!==1?` = ${fmtN(r.concOut)} ${c.outUnit}/mL`:''}</span></div>`;
   if(r.concWarn)h+=`<div class="over">⚠ 超過最高濃度 ${c.maxConc} ${c.ampUnit}/mL</div>`;
+  if(rh)return h+rh;
   if(r.stage==='incomplete-flow')return h+'<div class="mute">輸入流速計算劑量</div>';
   r.rangesEval.forEach(x=>{
     const lab=x.label?x.label+'　':'';
@@ -2850,7 +2865,7 @@ function dripCard(p,id,ro){
   return `<div class="dcard ${c.cat}"><div class="row"><h4>${c.label}</h4><span class="small mute">${c.ampText}</span><span style="flex:1"></span>${ro?'':`<button class="ghost small" data-drem="${id}" title="移除">✕</button>`}</div>
     <div class="src">${esc(src)}${d.recipeSrc?`（${esc(d.recipeSrc)}）`:''}</div>${tags?`<div style="margin-bottom:6px">${tags}</div>`:''}${titr}
     <div class="din">${inp('amp','支數','amp')}${inp('dose','每支劑量',c.ampUnit)}${inp('vol','稀釋總體積','mL')}${inp('flow','流速','mL/hr')}</div>
-    <div class="dres" id="dres-${id}">${dresHTML(c,r)}</div>
+    <div class="dres" id="dres-${id}">${dresHTML(c,r,dripRuleHTML(p,c))}</div>
     ${noteHTML}
     ${hist.length?`<details class="hist"><summary>每日紀錄（${hist.length}）</summary><table class="tbl" style="margin-top:4px"><tbody>${hist.map(x=>`<tr><td>${esc(x.date.slice(5))} ${esc(x.time||'')}</td><td>${esc(fmtN(x.flow))} mL/hr</td><td>${esc(x.text||'')}</td></tr>`).join('')}</tbody></table></details>`:''}
   </div>`;
@@ -2883,7 +2898,7 @@ function bindDrip(p,ro){
     if(k==='flow'){d.flowManualAt=new Date().toISOString();d.flowSrc='手動輸入';d.flowStale=false;}
     if(k==='amp'&&d.dil!=null&&d.dil!==''){d.vol=calcDripVol(d);const v=document.querySelector(`[data-did="${id}"][data-k="vol"]`);if(v)v.value=d.vol;}
     logDrip(p,id);markDirty();
-    $('dres-'+id).innerHTML=dresHTML(c,computeResult(c,+d.amp,+d.dose,+d.vol,+d.flow,parseFloat(p.wt)));
+    $('dres-'+id).innerHTML=dresHTML(c,computeResult(c,+d.amp,+d.dose,+d.vol,+d.flow,parseFloat(p.wt)),dripRuleHTML(p,c));
   }));
 }
 
@@ -4781,7 +4796,7 @@ function ruleCheck(p,m,ctx){
           if(U[2]){if(!dw){push('info','輸注','需體重才能換算 '+R.infusion.unit);v=null;}else v=v/dw;}
           if(v!=null){const pr=R.infusion.ranges[R.infusion.primary||0];
             const lv=v>pr.max?'warn':v<pr.min?'info':'ok';
-            push(lv,'輸注',`${fmtN(+v.toPrecision(3))} ${R.infusion.unit}${U[2]?`（${dwLab} ${dw.toFixed(1)} kg）`:''}；${pr.ind}常用 ${pr.min}–${pr.max}${v>pr.max?'，高於範圍':v<pr.min?'，低於範圍':'，在範圍內'}`);
+            push(lv,'輸注',`${fmtN(+v.toPrecision(3))} ${R.infusion.unit}${U[2]?`（${dwLab} ${dw.toFixed(1)} kg）`:''}；資料庫 ${pr.ind} ${pr.min}–${pr.max}${v>pr.max||v<pr.min?'（非資料庫建議區間）':'（資料庫建議區間內）'}`);
             let hit=false;(R.infusion.alerts||[]).sort((a,b)=>b.gt-a.gt).forEach(a=>{if(!hit&&v>a.gt){push(a.level,'輸注',a.text);hit=true;}});
             if(R.infusion.cumulative&&U[2]&&U[3]==='hr'&&v*24>R.infusion.cumulative.gt)push('info','輸注',`以目前速率估 ${fmtN(+(v*24).toFixed(1))} ${R.infusion.cumulative.unit}：${R.infusion.cumulative.text}`);}}}}
     else push('info','輸注','尚未填流速，無法檢查輸注劑量');}
@@ -4795,14 +4810,14 @@ function ruleCheck(p,m,ctx){
       const key=ctx.rrt?({new:'HD',hd:'HD',pd:'PD',crrt:'CRRT'}[ctx.rrt]):'';
       const match=(regs)=>g&&q?regs.some(x=>near(g,x.g)&&x.q===q):null;
       if(key&&rn[key]){const RR=rn[key];const ok=RR.regimens?match(RR.regimens):null;
-        push(ok===false?'warn':'ok','腎功能',`${rrtLabel(ctx.rrt)}（依 ${key} 建議）：${RR.text}${g&&q?`　目前 ${fmtN(g)} g q${q}h${ok===false?'，與建議不符':ok?'，符合':''}`:''}`);
+        push(ok===false?'warn':'ok','腎功能',`${rrtLabel(ctx.rrt)}（依 ${key} 建議）：${RR.text}${g&&q?`　目前 ${fmtN(g)} g q${q}h${ok===false?'（非資料庫建議區間）':ok?'，符合':''}`:''}`);
         if(RR.afterHD&&key==='HD'){const nx=rrtNext(p);push('info','腎功能',`透析日排定劑量建議在透析後給${nx?`（下次透析 ${nx.slice(5).replace('-','/')}${nx===ymd()?'，今天':''}）`:''}`);}}
       else if(rn.bands&&ctx.crcl!=null){
         const band=v=>rn.bands.find(b=>v>=b.min&&v<b.max)||(v>=130?null:null);
         const b1=band(ctx.crcl),b2=ctx.crclAdj!=null?band(ctx.crclAdj):null;
         if(ctx.crcl>=130&&rn.ARC)push('info','腎功能',`CrCl ${ctx.crcl.toFixed(0)}：${rn.ARC}`);
         if(b1){const ok=b1.regimens?match(b1.regimens):null;
-          push(ok===false?'warn':'ok','腎功能',`CrCl ${ctx.crcl.toFixed(0)} mL/min（C-G，實際體重）落在 ${b1.min}–<${b1.max}：${b1.text}${g&&q?`　目前 ${fmtN(g)} g q${q}h${ok===false?'，與此區間建議不符':ok?'，符合':''}`:''}`);}
+          push(ok===false?'warn':'ok','腎功能',`CrCl ${ctx.crcl.toFixed(0)} mL/min（C-G，實際體重）落在 ${b1.min}–<${b1.max}：${b1.text}${g&&q?`　目前 ${fmtN(g)} g q${q}h${ok===false?'（非資料庫建議區間）':ok?'，符合':''}`:''}`);}
         if(b2&&b2!==b1)push('info','腎功能',`以 AdjBW 計算 CrCl ${ctx.crclAdj.toFixed(0)}，落在 ${b2.min}–<${b2.max} 區間：${b2.text}`);
         const rc=renalCalc(p);if(rc&&rc.crSk){const prev=latestLab(p,'72-333','B',1);if(prev&&Math.abs(labNum(prev)-rc.scr)>=0.3)push('info','腎功能',`Cr 近期變動 ${labNum(prev)}→${rc.scr}，非穩定狀態，C-G CrCl 可能不準`);}
       }else if(rn.bands&&ctx.crcl==null)push('info','腎功能','缺少年齡、性別、體重或 Cr，無法計算 CrCl 對照劑量');}}
