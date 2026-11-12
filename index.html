@@ -118,6 +118,15 @@ main{flex:1;overflow-y:auto;padding:16px 18px 50px;min-width:0}
 .medrow .md{font-size:12.5px;color:var(--mute)}
 .medrow .right{margin-left:auto;text-align:right;white-space:nowrap}
 .medrow.old{opacity:.55}
+.modebar{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding:8px 14px;border-radius:10px;margin-bottom:10px;font-weight:700;font-size:14px}
+.modebar span{font-weight:400;font-size:12.5px;opacity:.85}
+.modebar.m-adult{background:rgba(120,130,150,.10);color:var(--mute);font-size:13px;padding:5px 12px}
+.modebar.m-peds{background:#fdf0e3;color:#9a4f12;border:1px solid #f1c79b}
+.modebar.m-neo{background:#ede9fb;color:#4b3a9a;border:1px solid #c9bff0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .modebar.m-peds{background:#3a2412;color:#f3b77d;border-color:#6b4220}:root:not([data-theme="light"]) .modebar.m-neo{background:#251f45;color:#c3b6f5;border-color:#463b80}}
+.subtabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.subtabs button{background:transparent;border:1px solid var(--line);color:inherit;border-radius:999px;padding:5px 14px;font-size:13px;cursor:pointer}
+.subtabs button.on{background:#e2954f;border-color:#e2954f;color:#fff}
 .dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
 .dcard{background:var(--card);border:1px solid var(--line);border-left:5px solid #8874c9;border-radius:12px;padding:12px 14px}
 .dcard.vp{border-left-color:#e2726a}.dcard.vd{border-left-color:#3fae95}.dcard.ar{border-left-color:#e2954f}
@@ -414,7 +423,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-12e';
+const APP_VER='2026-11-12f';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -2998,7 +3007,7 @@ function dripInfoHTML(p,c){
     h+=row('配製與保存',I.prep);
   }
   const src=I?`${esc(R.source[R.source.length-1].ref)}${I.up?'・更新 '+esc(I.up):''}${peds?'・兒科':''}`:'ICU notebook 院內常規';
-  return `<details class="hist dinfo"><summary>藥物資訊${I?'（含 Lexidrug）':''}</summary><div style="margin-top:4px">${h}<div class="small mute" style="margin-top:4px">${src}</div></div></details>`;
+  return `<details class="hist dinfo"><summary>藥物資訊${peds?'（兒科）':I?'（含 Lexidrug）':''}</summary><div style="margin-top:4px">${h}<div class="small mute" style="margin-top:4px">${src}</div></div></details>`;
 }
 function dresHTML(c,r,rh,peds){
   if(r.stage==='incomplete-basic')return '<div class="mute">請輸入支數、每支劑量、稀釋總體積</div>';
@@ -3011,7 +3020,7 @@ function dresHTML(c,r,rh,peds){
       h+=`<div class="line"><span class="mute">院內常規${x.label?' '+x.label:''} ${x.min}–${x.max} ${x.unit}</span><span class="v ${o?'under':'ok'}">${o?'':'✓ '}${fmtN(x.value)} ${x.unit}${o?'（非院內常規區間）':''}</span></div>`;});}
     return h+rh;}
   if(r.stage==='incomplete-flow')return h+'<div class="mute">輸入流速計算劑量</div>';
-  if(peds)h+='<div class="small mute">以下為成人院內常規；Lexidrug 兒科未建立此藥輸注範圍</div>';
+  if(peds){const pk=r.perKg!=null?` = ${fmtN(r.perKg)} ${c.outUnit}/kg/${c.timeDiv===60?'min':'hr'}`:'';return h+`<div class="line"><span class="mute">劑量</span><span class="v">${fmtN(r.final)} ${c.outUnit}/${c.timeDiv===60?'min':'hr'}${pk}</span></div><div class="small mute">${peds==='neo'?'新生兒規則尚未建立':'Lexidrug 兒科未建立此藥輸注範圍'}；成人資料不顯示</div>`;}
   r.rangesEval.forEach(x=>{
     const lab=x.label?x.label+'　':'';
     if(x.flag==='empty'){h+=`<div class="line"><span class="mute">${lab}${x.min}–${x.max} ${x.unit}</span><span class="mute">需體重</span></div>`;return;}
@@ -3040,7 +3049,7 @@ function dripCard(p,id,ro){
   let titr='';
   if(d.titr){
     const parts=[d.titr.step!=null?`每次 ±${d.titr.step} mL/hr`:'',d.titr.target?`keep ${d.titr.target}`:'',d.titr.max!=null?`上限 ${d.titr.max} mL/hr`:''].filter(Boolean);
-    let mx='';if(d.titr.max!=null){const rm=computeResult(c,+d.amp,+d.dose,+d.vol,d.titr.max,parseFloat(p.wt));if(rm.stage==='done')mx=`（上限時 ${doseSummary(c,rm)}${rm.rangesEval.some(x=>x.flag==='over')?' ⚠ 超過建議範圍':''}）`;}
+    let mx='';if(d.titr.max!=null){const rm=computeResult(c,+d.amp,+d.dose,+d.vol,d.titr.max,parseFloat(p.wt));if(rm.stage==='done')mx=`（上限時 ${doseSummary(c,rm)}${p.template!=='peds'&&rm.rangesEval.some(x=>x.flag==='over')?' ⚠ 超過建議範圍':''}）`;}
     titr=`<div class="small" style="margin:-2px 0 6px">調整：${esc(parts.join('，'))}<span class="mute">${esc(mx)}</span></div>`;
   }
   const notes=(p.dripNotes&&p.dripNotes[id])||[];
@@ -3052,14 +3061,14 @@ function dripCard(p,id,ro){
   return `<div class="dcard ${c.cat}"><div class="row"><h4>${c.label}</h4><span class="small mute">${c.ampText}</span><span style="flex:1"></span>${ro?'':`<button class="ghost small" data-drem="${id}" title="移除">✕</button>`}</div>
     <div class="src">${esc(src)}${d.recipeSrc?`（${esc(d.recipeSrc)}）`:''}</div>${tags?`<div style="margin-bottom:6px">${tags}</div>`:''}${titr}
     <div class="din">${inp('amp','支數','amp')}${inp('dose','每支劑量',c.ampUnit)}${inp('vol','稀釋總體積','mL')}${inp('flow','流速','mL/hr')}</div>
-    <div class="dres" id="dres-${id}">${dresHTML(c,r,dripRuleHTML(p,c),p.template==='peds')}</div>
+    <div class="dres" id="dres-${id}">${dresHTML(c,r,dripRuleHTML(p,c),p.template==='peds'?popMode(p):false)}</div>
     ${dripInfoHTML(p,c)}${noteHTML}
     ${hist.length?`<details class="hist"><summary>每日紀錄（${hist.length}）</summary><table class="tbl" style="margin-top:4px"><tbody>${hist.map(x=>`<tr><td>${esc(x.date.slice(5))} ${esc(x.time||'')}</td><td>${esc(fmtN(x.flow))} mL/hr</td><td>${esc(x.text||'')}</td></tr>`).join('')}</tbody></table></details>`:''}
   </div>`;
 }
 function renderDrip(p,ro){
   const ids=Object.keys(p.drips||{}).filter(id=>DRIP_BY_ID[id]);
-  let h=`<div class="row" style="margin-bottom:10px">
+  let h=(p.template==='peds'?modeBanner(popMode(p),'drip'):'')+`<div class="row" style="margin-bottom:10px">
     ${ro?'':`<select id="dripAddSel" style="width:auto"><option value="">＋ 手動加入輸注…</option>${DRIP_CFG.filter(c=>!p.drips[c.id]).map(c=>`<option value="${c.id}">${c.label}</option>`).join('')}</select>`}
     <label class="small mute row" style="gap:6px"><input type="checkbox" id="chkDrugVol" style="width:auto" ${S.data.settings.dripInclDrugVol?'checked':''} ${ro?'disabled':''}> 另加藥液體積（預設不勾：稀釋量即總體積，例 10 支 in NS 250 ＝ 250 mL）</label>
     <span class="small mute">體重：${p.wt?esc(p.wt)+' kg':'<b class="over">未填，µg/kg 劑量無法計算</b>'}</span></div>`;
@@ -3085,7 +3094,7 @@ function bindDrip(p,ro){
     if(k==='flow'){d.flowManualAt=new Date().toISOString();d.flowSrc='手動輸入';d.flowStale=false;}
     if(k==='amp'&&d.dil!=null&&d.dil!==''){d.vol=calcDripVol(d);const v=document.querySelector(`[data-did="${id}"][data-k="vol"]`);if(v)v.value=d.vol;}
     logDrip(p,id);markDirty();
-    $('dres-'+id).innerHTML=dresHTML(c,computeResult(c,+d.amp,+d.dose,+d.vol,+d.flow,parseFloat(p.wt)),dripRuleHTML(p,c),p.template==='peds');
+    $('dres-'+id).innerHTML=dresHTML(c,computeResult(c,+d.amp,+d.dose,+d.vol,+d.flow,parseFloat(p.wt)),dripRuleHTML(p,c),p.template==='peds'?popMode(p):false);
   }));
 }
 
@@ -5067,7 +5076,7 @@ function ruleView(R,p){
   const P=R.peds,ctx={age:ageYears(p),wt:parseFloat(p.wt)||null};
   let inf=P.infusion?Object.assign({},P.infusion,{ranges:pedsPick(P.infusion.ranges,ctx)}):null;if(inf&&!inf.ranges.length)inf=null;
   return Object.assign({},R,{infusion:inf,weight:{basis:'TBW'},obesity:null,usual:P.usual?{text:P.usual}:null,renal:P.renal?{text:P.renal.text}:null,hepatic:P.hepatic||null,elderly:null,
-    notes:P.notes||[],info:Object.assign({},R.info||{},P.info||{}),source:P.source||R.source,_peds:true});
+    notes:P.notes||[],info:Object.assign({},P.info||{}),source:P.source||R.source,_peds:true});
 }
 // 水劑濃度（mg/mL）：醫囑字串 > 規則 > 兒科手冊查表
 function liqConc(m,P){
@@ -5140,25 +5149,75 @@ function rulePatrolText(p){
   return rulePatrol(p).map(({m,res})=>`- ${m.display} ${m.dose}${m.route?' '+m.route:''} ${m.freq}：`+res.out.filter(x=>x.lv!=='ok'||x.k==='腎功能').map(x=>`[${x.lv==='warn'?'注意':x.lv==='ok'?'符合':'參考'}] ${x.k} ${x.t}`).join('；')).join('\n');
 }
 // 規則庫頁
-function renderRules(p,ro){
-  const ctx=ruleCtx(p),q=(S.ruleQ||'').toLowerCase().trim(),RS=rulesList();
-  const b=ctx.b,kv=(k,v)=>`<div class="kv"><span class="k">${k}</span><span style="text-align:right">${v}</span></div>`;
-  let h=`<div class="card"><h3>這位病人的劑量條件</h3><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:2px 18px">
-    ${kv('TBW',ctx.wt?ctx.wt+' kg':'未填')}${kv('BMI',b.bmi!=null?b.bmi.toFixed(1)+(b.bmi>=30?' <span class="tag t-warn">≥30</span>':b.bmi<18.5?' <span class="tag t-warn">&lt;18.5</span>':''):'—')}
+// ===== 族群模式：成人／兒科（≥28 天）／新生兒（<28 天） =====
+function popMode(p){return p.template!=='peds'?'adult':pedsNeo(p)?'neo':'peds';}
+const MODE_LAB={adult:'成人',peds:'兒科',neo:'新生兒'};
+function modeBanner(mode,where){
+  if(mode==='adult')return `<div class="modebar m-adult">成人模式<span>規則依 Lexidrug 成人與院內常規</span></div>`;
+  if(mode==='peds')return `<div class="modebar m-peds">兒科模式（≥ 28 天）<span>${where==='drip'?'輸注範圍只用 Lexidrug 兒科；成人資料不顯示':'只套用 Lexidrug 兒科規則；成人資料不顯示'}</span></div>`;
+  return `<div class="modebar m-neo">新生兒模式（< 28 天）<span>新生兒規則尚未建立，平台目前不做劑量檢查；成人與兒科資料不顯示</span></div>`;
+}
+function condCard(p,mode){
+  const ctx=ruleCtx(p),b=ctx.b,kv=(k,v)=>`<div class="kv"><span class="k">${k}</span><span style="text-align:right">${v}</span></div>`,wt=parseFloat(p.wt),ht=parseFloat(p.ht);
+  const g=(x)=>`<div class="card"><h3>這位病人的劑量條件</h3><div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:2px 18px">${x}</div></div>`;
+  const egfr=kv('兒科 eGFR',ctx.egfr!=null?ctx.egfr.toFixed(0)+' mL/min/1.73m²':'—'),bsa=kv('BSA (Mosteller)',wt>0&&ht>0?Math.sqrt(ht*wt/3600).toFixed(2)+' m²':'—'),rrt=kv('RRT',ctx.rrt?rrtLabel(ctx.rrt):'無／未設定');
+  if(mode==='adult')return g(`${kv('TBW',ctx.wt?ctx.wt+' kg':'未填')}${kv('BMI',b.bmi!=null?b.bmi.toFixed(1)+(b.bmi>=30?' <span class="tag t-warn">≥30</span>':b.bmi<18.5?' <span class="tag t-warn">&lt;18.5</span>':''):'—')}
     ${kv('IBW／AdjBW',b.ibw?`${b.ibw.toFixed(1)}／${b.adj!=null?b.adj.toFixed(1):'—'} kg${b.pct?` <span class="small mute">TBW ${b.pct.toFixed(0)}% IBW</span>`:''}`:'—')}
-    ${ctx.peds?kv('兒科 eGFR',ctx.egfr!=null?ctx.egfr.toFixed(0)+' mL/min/1.73m²':'—'):''}${ctx.peds?'':kv('CrCl (C-G)',ctx.crcl!=null?`${ctx.crcl.toFixed(1)} mL/min${ctx.crclAdj!=null?`；AdjBW ${ctx.crclAdj.toFixed(1)}`:''}`:'—')}
-    ${kv('RRT',ctx.rrt?rrtLabel(ctx.rrt):'無／未設定')}${kv('年齡',ageDisp(p)||'—')}</div></div>`;
-  if(ctx.peds)h+=pedsBolusCard(p)+pedsRefCard(p);
+    ${kv('CrCl (C-G)',ctx.crcl!=null?`${ctx.crcl.toFixed(1)} mL/min${ctx.crclAdj!=null?`；AdjBW ${ctx.crclAdj.toFixed(1)}`:''}`:'—')}${rrt}${kv('年齡',ageDisp(p)||'—')}`);
+  if(mode==='peds')return g(`${kv('年齡',ageDisp(p)||'—')}${kv('體重',wt>0?wt+' kg':'<b class="over">未填</b>')}${kv('身高',ht>0?ht+' cm':'—')}${bsa}${egfr}${rrt}`);
+  return g(`${kv('生後',ageDisp(p)||'—')}${kv('GA／PMA',`${esc(p.ga||'—')}／${pmaTxt(p)||'—'}`)}${kv('出生體重',p.birthWt?esc(p.birthWt)+' g':'—')}${kv('目前體重',wt>0?wt+' kg':'—')}${kv('身高',ht>0?ht+' cm':'—')}${egfr}${rrt}`);
+}
+function patrolCard(p){
   const pat=rulePatrol(p);
-  h+=`<div class="card"><h3>目前用藥巡查 <span class="small mute">${pat.length} 個藥有規則</span></h3>${pat.length?pat.map(({m,res})=>`<div class="medrow"><div><div class="mn">${esc(m.display)} <span class="small mute">${esc(m.dose)} ${esc(m.route||'')} ${esc(m.freq)}</span> ${ruleBadge(res)}</div>${ruleLines(res)}</div></div>`).join(''):'<div class="small mute">目前用藥中沒有已建立規則的藥品。</div>'}</div>`;
-  h+=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">規則庫 <span class="small mute">${RS.length} 條・版本 ${esc((S.rules&&S.rules.version)||'—')}・${S.rulesSrc}</span></h3><input id="ruleQ" class="sm" style="width:200px" placeholder="搜尋藥名" value="${esc(S.ruleQ||'')}"></div>
-    ${RS.filter(r=>!q||[r.label,...r.names].join(' ').toLowerCase().includes(q)).map(r=>ruleCard(r)).join('')||'<div class="small mute" style="margin-top:8px">沒有符合的規則。遇到個案時把資料貼給 Claude，確認後就會加進來。</div>'}</div>`;
+  return `<div class="card"><h3>目前用藥巡查 <span class="small mute">${pat.length} 個藥有規則</span></h3>${pat.length?pat.map(({m,res})=>`<div class="medrow"><div><div class="mn">${esc(m.display)} <span class="small mute">${esc(m.dose)} ${esc(m.route||'')} ${esc(m.freq)}</span> ${ruleBadge(res)}</div>${ruleLines(res)}</div></div>`).join(''):'<div class="small mute">目前用藥中沒有已建立規則的藥品。</div>'}</div>`;
+}
+function libCard(p,mode){
+  S.libView=S.libView||{};const view=S.libView[p.id]||mode,q=(S.ruleQ||'').toLowerCase().trim();
+  const RS=rulesList().filter(r=>view==='adult'?!r.pedsOnly:view==='peds'?!!r.peds:!!r.neo);
+  const F=RS.filter(r=>!q||[r.label,...r.names].join(' ').toLowerCase().includes(q));
+  const sw=['adult','peds','neo'].map(k=>`<button class="${k===view?'':'ghost '}small" data-lview="${k}">${MODE_LAB[k]}</button>`).join('');
+  return `<div class="card"><div class="row" style="justify-content:space-between;gap:8px"><h3 style="margin:0">${MODE_LAB[view]}規則庫 <span class="small mute">${RS.length} 條・版本 ${esc((S.rules&&S.rules.version)||'—')}・${S.rulesSrc}</span></h3>
+    <div class="row" style="gap:6px"><span class="small mute">檢視</span>${sw}<input id="ruleQ" class="sm" style="width:170px" placeholder="搜尋藥名" value="${esc(S.ruleQ||'')}"></div></div>
+    ${view!==mode?`<div class="small over" style="margin-top:6px">目前檢視的是「${MODE_LAB[view]}」規則，這位病人是「${MODE_LAB[mode]}」。此處僅供查閱，病人的劑量檢查仍依${MODE_LAB[mode]}規則。</div>`:''}
+    ${view==='neo'&&!RS.length?'<div class="small mute" style="margin-top:8px">新生兒規則尚未建立。核對 Lexidrug 新生兒劑量後貼給 Claude，就會加進這裡。</div>':
+      F.map(r=>view==='adult'?ruleCard(r):pedsRuleCard(r)).join('')||'<div class="small mute" style="margin-top:8px">沒有符合的規則。</div>'}</div>`;
+}
+function renderRules(p,ro){
+  const mode=popMode(p);let h=modeBanner(mode,'rules');
+  if(mode==='adult')return h+condCard(p,mode)+patrolCard(p)+libCard(p,mode);
+  const SUB=mode==='peds'?[['patrol','用藥巡查'],['bolus','急救速算'],['ref','口服／水劑查表'],['lib','兒科規則庫']]:[['patrol','用藥巡查'],['lib','規則庫']];
+  let cur=(S.rulesSub&&S.rulesSub[mode])||'patrol';if(!SUB.some(x=>x[0]===cur))cur='patrol';
+  h+=`<div class="subtabs">${SUB.map(([k,l])=>`<button class="${k===cur?'on':''}" data-rsub="${k}">${l}</button>`).join('')}</div>`;
+  if(cur==='patrol')h+=condCard(p,mode)+(mode==='neo'?'<div class="card"><h3>目前用藥巡查</h3><div class="small mute">新生兒規則尚未建立，暫不檢查劑量。</div></div>':patrolCard(p));
+  else if(cur==='bolus')h+=pedsBolusCard(p);
+  else if(cur==='ref')h+=pedsRefCard(p);
+  else h+=libCard(p,mode);
   return h;
+}
+// 兒科規則卡：只呈現兒科資料
+function pedsRuleCard(r){
+  if(!r.peds)return '';const P=r.peds,f=x=>x.lo===x.hi?x.lo:x.lo+'–'+x.hi,td=x=>`<td style="white-space:normal">${x}</td>`;
+  const lim=x=>[x.max?`單次 ${x.max.v} ${x.max.unit}`:'',x.maxDay?`每日 ${x.maxDay.v} ${x.maxDay.unit}`:'',x.maxDayKg?`每日 ${x.maxDayKg.v} ${x.maxDayKg.unit}/kg`:''].filter(Boolean).join('；');
+  const pop=x=>[ageLab(x),wtLab(x)].filter(Boolean).join('、');
+  let h='';
+  (P.avoid||[]).forEach(a=>h+=`<div class="small over" style="margin:4px 0">⚠ ${esc((a.ageLt!=null?`< ${a.ageLt<1?Math.round(a.ageLt*12)+' 個月':a.ageLt+' 歲'}：`:'')+a.text)}</div>`);
+  if(P.usual)h+=`<div class="small">${esc(P.usual)}</div>`;
+  if(P.doses)h+=`<div style="overflow-x:auto;margin-top:6px"><table class="tbl"><thead><tr><th>適應症</th><th>途徑</th><th>年齡／體重</th><th>劑量</th><th>頻次</th><th>上限</th></tr></thead><tbody>${P.doses.map(x=>`<tr>${td(esc(x.ind)+(x.text?`<div class="small mute">${esc(x.text)}</div>`:''))}${td(esc((x.routes||['—']).join('/')))}${td(esc(pop(x)||'—'))}<td class="num">${f(x)} ${esc(x.unit)}/${x.per||'dose'}</td>${td(esc(x.freq||'—'))}${td(esc(lim(x)||'—'))}</tr>`).join('')}</tbody></table></div>`;
+  if(P.infusion)h+=`<div style="overflow-x:auto;margin-top:6px"><table class="tbl"><thead><tr><th>連續輸注</th><th>年齡／體重</th><th>範圍</th><th>說明</th></tr></thead><tbody>${P.infusion.ranges.map(x=>`<tr>${td(esc(x.ind))}${td(esc(pop(x)||'—'))}<td class="num">${x.min}–${x.max} ${esc(P.infusion.unit)}</td>${td(esc(x.text||''))}</tr>`).join('')}</tbody></table></div>`;
+  const sec=(t,x)=>x?`<div style="margin-top:6px"><b class="small">${t}</b><div class="small" style="white-space:pre-wrap">${esc(x)}</div></div>`:'';
+  if(P.info&&P.info.bolus)h+=sec('單次給藥',P.info.bolus.items.map(it=>`・${it.label}：${f(it)} ${it.unit}${it.max!=null?`（max ${it.max} ${it.unit.split('/')[0]}）`:''}${pop(it)?'（'+pop(it)+'）':''}`).join('\n'));
+  if(P.mgPerMl)h+=sec('水劑濃度（換算用）',`${P.mgPerMl} mg/mL；醫囑字串若有濃度則優先`);
+  h+=sec('腎功能（兒科 GFR）',P.renal&&[P.renal.text,...(P.renal.bands||[]).map(b=>`GFR ${bandLab(b)}：${b.text}`)].join('\n'));
+  h+=sec('血中濃度',P.tdm);h+=sec('其他',(P.notes||[]).map(n=>'・'+n).join('\n'));
+  const cc=P.concomitant||r.concomitant;h+=sec('交互作用（不分年齡）',cc&&cc.length?cc.map(c=>'・'+c.text).join('\n'):'');
+  if(P.handbook)h+=`<div class="small mute" style="margin-top:6px;white-space:pre-wrap">手冊原書：${esc(P.handbook)}</div>`;
+  return `<details class="lgroup" style="margin-top:8px"><summary><span>${esc(r.label)} <span class="small mute">${esc(r.names.join('、'))}</span></span><span class="tag ${r.status==='verified'?'t-new':'t-warn'}">${r.status==='verified'?'已確認':'草稿'}</span></summary><div style="padding:8px 14px">${h}
+    <div class="small mute" style="margin-top:6px">出處：${esc((P.source||r.source).map(s=>`${s.ref}（${s.by||''} ${s.addedAt||''}）`).join('；'))}</div></div></details>`;
 }
 function ruleCard(r){
   const sec=(t,x)=>x?`<div style="margin-top:6px"><b class="small">${t}</b><div class="small" style="white-space:pre-wrap">${x}</div></div>`:'';
   const rn=r.renal||{};
-  return `<details class="lgroup" style="margin-top:8px"><summary><span>${esc(r.label)} <span class="small mute">${esc(r.names.join('、'))}</span></span>${r.peds?'<span class="tag t-abx">兒科</span>':''}<span class="tag ${r.status==='verified'?'t-new':'t-warn'}">${r.status==='verified'?'已確認':'草稿'}</span></summary><div style="padding:8px 14px">
+  return `<details class="lgroup" style="margin-top:8px"><summary><span>${esc(r.label)} <span class="small mute">${esc(r.names.join('、'))}</span></span><span class="tag ${r.status==='verified'?'t-new':'t-warn'}">${r.status==='verified'?'已確認':'草稿'}</span></summary><div style="padding:8px 14px">
     ${r.info?sec('藥物資訊',esc([r.info.times?`Onset ${r.info.times[0]}｜Peak ${r.info.times[1]}｜Duration ${r.info.times[2]}`+(r.info.tnote?`（${r.info.tnote}）`:''):'',r.info.alert?'⚠ '+r.info.alert:'',r.info.bolus?'單次給藥：'+r.info.bolus.items.map(it=>`${it.label} ${it.lo===it.hi?it.lo:it.lo+'–'+it.hi} ${it.unit}`).join('；')+(r.info.bolus.cap?`（上限 ${r.info.bolus.cap} ${r.info.bolus.stockUnit}）`:''):'',r.info.bp?'血壓與心率：'+r.info.bp:'',r.info.prep?'配製與保存：'+r.info.prep:''].filter(Boolean).join('\n'))):''}
     ${sec('常用劑量',r.usual?esc(r.usual.text)+(r.usual.maxDaily?`\n上限 ${r.usual.maxDaily} ${r.doseUnit||''}/day`:''):'')}
     ${sec('體重',r.weight?esc(`基準 ${r.weight.basis||'TBW'}`+(r.weight.text?`；${r.weight.text}`:'')+(r.weight.obese?`；${r.weight.obese.text}（計算用 ${r.weight.obese.basis}${r.weight.obese.severeBasis?`；${r.weight.obese.severeDef.replace('>=','≥')} 用 ${r.weight.obese.severeBasis}`:''}）`:'')):'')}${sec('肥胖',r.obesity?esc(r.obesity.text+(r.obesity.severeText?'\n'+r.obesity.severeText:'')):'')}
@@ -5168,7 +5227,6 @@ function ruleCard(r){
     ${sec('肝功能',r.hepatic?esc(r.hepatic.text+(r.hepatic.triggerText?'\n'+r.hepatic.triggerText:'')):'')}${sec('年長',r.elderly?esc(r.elderly.text):'')}
     ${sec('併用',r.concomitant&&r.concomitant.length?esc(r.concomitant.map(c=>'・'+c.text).join('\n')):'')}
     ${sec('其他',r.notes&&r.notes.length?esc(r.notes.map(n=>'・'+n).join('\n')):'')}
-    ${r.peds?pedsCardHTML(r):''}
     <div class="small mute" style="margin-top:6px">出處：${esc(r.source.map(s=>`${s.ref}（${s.sections||''}；${s.by||''} ${s.addedAt||''}）`).join('；'))}</div></div></details>`;
 }
 function pedsRefCard(p){
@@ -5188,7 +5246,9 @@ function pedsCardHTML(r){const P=r.peds,L=[];const f=x=>x.lo===x.hi?x.lo:x.lo+'�
   if(P.info&&P.info.bolus)L.push('單次給藥：'+P.info.bolus.items.map(it=>`${it.label} ${f(it)} ${it.unit}${it.max!=null?`（max ${it.max} ${it.unit.split('/')[0]}）`:''}`).join('；'));
   if(P.renal)L.push('腎功能：'+P.renal.text);if(P.tdm)L.push('血中濃度：'+P.tdm);(P.notes||[]).forEach(n=>L.push('・'+n));
   return `<div style="margin-top:8px;padding:6px 10px;border-left:3px solid #e2954f;background:rgba(226,149,79,.07);border-radius:6px"><b class="small">兒科（Lexidrug Pediatric；≥ 28 天）</b><div class="small" style="white-space:pre-wrap">${esc(L.join('\n'))}</div>${P.handbook?`<div class="small mute" style="margin-top:4px;white-space:pre-wrap">手冊原書：${esc(P.handbook)}</div>`:''}</div>`;}
-function bindRules(p,ro){const pq=$('pedsRefQ');if(pq)pq.addEventListener('input',()=>{S.pedsRefQ=pq.value;const pos=pq.selectionStart;renderMain();const j=$('pedsRefQ');if(j){j.focus();j.setSelectionRange(pos,pos);}});const i=$('ruleQ');if(i)i.addEventListener('input',()=>{S.ruleQ=i.value;const pos=i.selectionStart;renderMain();const j=$('ruleQ');if(j){j.focus();j.setSelectionRange(pos,pos);}});}
+function bindRules(p,ro){
+  document.querySelectorAll('[data-rsub]').forEach(b=>b.onclick=()=>{S.rulesSub=S.rulesSub||{};S.rulesSub[popMode(p)]=b.dataset.rsub;renderMain();});
+  document.querySelectorAll('[data-lview]').forEach(b=>b.onclick=()=>{S.libView=S.libView||{};S.libView[p.id]=b.dataset.lview;renderMain();});const pq=$('pedsRefQ');if(pq)pq.addEventListener('input',()=>{S.pedsRefQ=pq.value;const pos=pq.selectionStart;renderMain();const j=$('pedsRefQ');if(j){j.focus();j.setSelectionRange(pos,pos);}});const i=$('ruleQ');if(i)i.addEventListener('input',()=>{S.ruleQ=i.value;const pos=i.selectionStart;renderMain();const j=$('ruleQ');if(j){j.focus();j.setSelectionRange(pos,pos);}});}
 
 /* =====================================================================
    AI 判讀包：去識別化匯出（床號為代號、相對日期 HD），以及 AI 回覆存檔
