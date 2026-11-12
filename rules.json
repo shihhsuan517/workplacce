@@ -1,5 +1,5 @@
 {
- "version": "2026-11-12b",
+ "version": "2026-11-12c",
  "updated": "2026-11-12",
  "rules": [
   {
@@ -1330,6 +1330,959 @@
     "prep": "中央靜脈優先；無中央靜脈時可由近端大靜脈短期（< 72 小時）給藥。外滲：phentolamine 5–10 mg/10 mL NS 局部注射。常用濃度 4–64 µg/mL。",
     "alert": "Linezolid、三環抗憂鬱劑、SNRI 會增強升壓反應。"
    }
+  },
+  {
+   "id": "morphine",
+   "label": "Morphine",
+   "names": [
+    "morphine",
+    "mscontin",
+    "ms contin"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) — Morphine (Systemic)",
+     "sections": "Dosing: Adult; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity; Administration; Warnings; Pharmacokinetics",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "usual": {
+    "text": "ICU 鎮痛鎮靜（off-label）：IV loading 2–10 mg（可能需要多次；老人、低血容、血流動力學不穩者減量或省略），維持 2–4 mg q1–2h 或 4–8 mg q3–4h。用最低有效劑量、最短時間；多模式止痛。（Lexidrug 未提供 ICU 連續輸注範圍）"
+   },
+   "renal": {
+    "method": "CG",
+    "text": "清除率與腎功能無關，但代謝物 M3G（降低癲癇閾值）與 M6G（具止痛活性）在腎功能下降時大量蓄積，可能造成延遲出現、嚴重且延長的呼吸抑制。腎功能不全時最好避免長效劑型。",
+    "bands": [
+     {
+      "min": 60,
+      "max": 9999,
+      "text": "不需調整。"
+     },
+     {
+      "min": 30,
+      "max": 60,
+      "level": "info",
+      "text": "考慮改用其他鴉片類；若必須使用：起始劑量給一般的 50–75%，可延長間隔，小心調整。"
+     },
+     {
+      "min": 15,
+      "max": 30,
+      "level": "warn",
+      "text": "避免使用；若必須使用：起始劑量給一般的 25–50%，可延長間隔，小心調整。"
+     },
+     {
+      "min": 0,
+      "max": 15,
+      "level": "warn",
+      "text": "避免使用。"
+     }
+    ],
+    "HD": {
+     "text": "避免使用，考慮其他鴉片類；若必須使用給一般劑量 25–50%，可延長間隔。Morphine 與 M6G 可被透析，但由 CNS 回到血中慢，透析後仍可能 CNS 抑制延長。",
+     "level": "warn"
+    },
+    "PD": {
+     "text": "避免使用，考慮其他鴉片類（morphine、M3G、M6G 不會被 PD 明顯移除）。",
+     "level": "warn"
+    },
+    "CRRT": {
+     "text": "優先使用其他鴉片類（如 hydromorphone、fentanyl），PK 較可預期；morphine 不會被血液過濾明顯移除。",
+     "level": "warn"
+    },
+    "PIRRT": {
+     "text": "優先使用其他鴉片類（如 hydromorphone、fentanyl）。",
+     "level": "warn"
+    }
+   },
+   "hepatic": {
+    "trigger": "cirrhosis|child|ctp|liver failure|hepatic failure|肝硬化",
+    "text": "肝硬化時 AUC 與半衰期約加倍。治療前已有肝硬化：CTP A 劑量不變、延長間隔（例 q2–4h → q4–6h）；CTP B 劑量減半並延長間隔；CTP C 不建議（改用無活性代謝物的藥），必須用時劑量 ≥50% 減量並延長間隔。使用中急性肝功能惡化：避免，改用其他藥。預防便秘與肝性腦病變。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "除嚴重急性疼痛外盡量少用鴉片類（跌倒、譫妄風險）；小心使用，可能需減量。"
+   },
+   "concomitant": [
+    {
+     "re": "midazolam|lorazepam|diazepam|alprazolam|clonazepam|oxazolam|estazolam|triazolam",
+     "text": "併用 benzodiazepine：鴉片類過量風險增加，考慮備妥 naloxone 等反轉劑。"
+    }
+   ],
+   "notes": [
+    "過量風險因子（過量或物質使用疾患病史、睡眠呼吸障礙、口服 ≥50 MME/day、併用 benzodiazepine）：考慮開立 naloxone／nalmefene。",
+    "單次 IV 推注 4–5 分鐘（推太快可致胸壁僵直）。"
+   ],
+   "info": {
+    "up": "2026-11-11",
+    "times": [
+     "IV 5–10 min",
+     "—",
+     "IV 3–5 hr"
+    ],
+    "tnote": "Duration＝立即釋放劑型（含注射）止痛時間",
+    "bp": "可能嚴重低血壓（含姿勢性低血壓、昏厥）；低血容、心血管疾病、休克或併用降壓藥時小心，循環性休克避免使用。",
+    "prep": "單劑預充針 IV 緩推 4–5 分鐘；常用輸注濃度 1 mg/mL。",
+    "alert": "腎功能下降時 M3G／M6G 蓄積，呼吸抑制可能延遲出現且延長；CrCl < 30 或透析避免使用。",
+    "bolus": {
+     "stockPerMl": 10,
+     "stockUnit": "mg",
+     "items": [
+      {
+       "label": "ICU loading（可重複；老人、低血容、不穩定者減量或省略）",
+       "lo": 2,
+       "hi": 10,
+       "unit": "mg"
+      },
+      {
+       "label": "ICU 間歇維持 q1–2h",
+       "lo": 2,
+       "hi": 4,
+       "unit": "mg"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "aminophylline",
+   "label": "Aminophylline",
+   "names": [
+    "aminophylline",
+    "aminofilina"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) — Aminophylline",
+     "sections": "Dosing: Adult; Older Adult; Altered Kidney Function; Altered Liver Function; Administration; Warnings; Monitoring; Reference Range; Pharmacokinetics",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "weight": {
+    "basis": "IBW",
+    "text": "所有劑量以 IBW 計算（theophylline 幾乎不分布到脂肪）。"
+   },
+   "infusion": {
+    "unit": "mg/kg/hr",
+    "ranges": [
+     {
+      "ind": "維持（依年齡與狀況）",
+      "min": 0.25,
+      "max": 0.5,
+      "text": "≤60 歲 0.5；>60 歲 0.38；心臟失代償、肺心症、敗血症合併多重器官衰竭、休克、肝功能不全 0.25 mg/kg/hr。目標 theophylline 約 10 mcg/mL，依血中濃度調整。"
+     }
+    ],
+    "primary": 0,
+    "dailyMax": {
+     "mg": 1125,
+     "elderlyAge": 60,
+     "elderlyMg": 500,
+     "text": "每日上限：≤60 歲 1,125 mg/day；>60 歲或心臟失代償、休克、肝功能不全 500 mg/day（除非血中濃度顯示需要更高劑量）。"
+    },
+    "alerts": [],
+    "loading": "Loading（24 小時內未用 aminophylline／theophylline）：5.7 mg/kg IV 打 30 分鐘；24 小時內已用過：先驗血中濃度，LD =（目標 − 測得濃度）× 0.5 L/kg × 體重。"
+   },
+   "renal": {
+    "none": true,
+    "text": "不需調整。"
+   },
+   "hepatic": {
+    "trigger": "cirrhosis|child|ctp|liver failure|hepatic failure|肝硬化|hepatitis|肝炎|cholestasis|膽汁鬱積",
+    "text": "清除率下降 ≥50%，毒性風險高：起始 0.25 mg/kg/hr，每日上限 500 mg，密切監測血中濃度。"
+   },
+   "elderly": {
+    "age": 60,
+    "text": ">60 歲：維持 0.38 mg/kg/hr，每日上限 500 mg/day；清除率平均下降 30%，毒性風險較高。初始維持速率不超過 21 mg/hr。"
+   },
+   "concomitant": [
+    {
+     "re": "erythromycin|clarithromycin",
+     "text": "Macrolide 會升高 theophylline 濃度（erythromycin Risk D）：考慮替代藥，或降低 theophylline 劑量並監測濃度。"
+    },
+    {
+     "re": "ciprofloxacin|fluvoxamine|enoxacin",
+     "text": "CYP1A2 抑制劑會升高 theophylline 濃度（Risk D）：強效抑制劑考慮先降到原劑量 1/3，監測濃度。"
+    },
+    {
+     "re": "fluconazole|allopurinol|isoniazid|methotrexate|verapamil|norfloxacin|pentoxifylline",
+     "text": "會升高 theophylline 濃度（Risk C）：監測血中濃度與毒性。"
+    },
+    {
+     "re": "carbamazepine|phenytoin|fosphenytoin|rifampin|rifampicin|phenobarbital",
+     "text": "會降低 theophylline 濃度（carbamazepine Risk D）：監測血中濃度與療效。"
+    },
+    {
+     "re": "adenosine|regadenoson|dipyridamole",
+     "text": "Theophylline 會降低 adenosine／regadenoson／dipyridamole 效果（Risk D）。"
+    }
+   ],
+   "notes": [
+    "劑量以 aminophylline 表示；theophylline 劑量約為 aminophylline 的 80%。",
+    "治療濃度 5–15 mcg/mL，> 20 mcg/mL 為中毒濃度。",
+    "依濃度調整：< 9.9 未控制且耐受 → 速率約 +25%；10–14.9 維持；15–19.9 考慮 −10%；20–24.9 −25%；25–30 停 24 小時後至少 −25%；> 30 停藥處理中毒，若恢復至少 −50%。調整後 24 小時再驗。",
+    "Loading 結束後 30 分鐘驗濃度；連續輸注開始後一個半衰期（健康成人約 8 小時）驗，之後每 12–24 小時。",
+    "清除率下降：急性肺水腫、心衰竭、肺心症、發燒 ≥102°F ≥24 小時、肝病、甲狀腺低下、敗血症多重器官衰竭、休克、> 60 歲、戒菸後。",
+    "不常規建議用於氣喘或 COPD 急性惡化。"
+   ],
+   "info": {
+    "up": "2026-11-04",
+    "times": [
+     "—",
+     "30 min 內（血中）",
+     "t½ 成人約 8.7 hr"
+    ],
+    "tnote": "> 60 歲 t½ 約 9.8 hr；變異很大（肝功能、心功能、肺病、吸菸）",
+    "bp": "可能加重心律不整（緩脈除外）；監測心率、呼吸、CNS（失眠、躁動）。",
+    "prep": "常用濃度 1 mg/mL（250 mg in 250 mL D5W 或 NS）；loading 打 30 分鐘；vesicant，外滲用 hyaluronidase；避光室溫，變色或結晶勿用。",
+    "alert": "治療範圍窄：> 20 mcg/mL 中毒（噁心、持續嘔吐時立即驗濃度並暫停）；多種藥物交互作用（CYP1A2）。",
+    "bolus": {
+     "stockPerMl": 25,
+     "stockUnit": "mg",
+     "items": [
+      {
+       "label": "Loading（24 小時內未用 theophylline 類，打 30 分鐘）",
+       "lo": 5.7,
+       "hi": 5.7,
+       "unit": "mg/kg"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "dopamine",
+   "label": "Dopamine",
+   "names": [
+    "dopamine",
+    "intropin"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) — Dopamine",
+     "sections": "Dosing: Adult; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity; Administration; Warnings; Pharmacokinetics",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "weight": {
+    "basis": "TBW",
+    "obese": {
+     "def": "BMI>=30",
+     "basis": "IBW",
+     "text": "BMI ≥30：起始劑量以 IBW 計算，再依血流動力學效果調整；治療中不要更換體重基準。"
+    }
+   },
+   "infusion": {
+    "unit": "mcg/kg/min",
+    "ranges": [
+     {
+      "ind": "休克（替代藥）",
+      "min": 2,
+      "max": 20,
+      "text": "敗血性休克起始 2–5，最高 20；心因性休克 2–20；心跳停止後休克 5–20。"
+     },
+     {
+      "ind": "強心支持",
+      "min": 5,
+      "max": 15,
+      "text": "偏好低端（低劑量以強心為主，高劑量以血管收縮為主）。"
+     },
+     {
+      "ind": "症狀性緩脈／AV block（off-label）",
+      "min": 5,
+      "max": 20,
+      "text": "起始 5，每 2 分鐘調整至效果，最高 20。"
+     }
+    ],
+    "primary": 0,
+    "alerts": [
+     {
+      "gt": 20,
+      "level": "warn",
+      "text": "超過 Lexidrug 最高劑量 20 mcg/kg/min。"
+     },
+     {
+      "gt": 10,
+      "level": "info",
+      "text": "> 10 mcg/kg/min：α 作用為主（血管收縮、升壓）。"
+     }
+    ]
+   },
+   "renal": {
+    "none": true,
+    "text": "不需調整（非腎臟清除，依效果調整）。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "依成人劑量；心血管疾病多，密切監測。"
+   },
+   "concomitant": [
+    {
+     "re": "linezolid|tedizolid",
+     "text": "Linezolid／tedizolid 會增強擬交感神經藥升壓作用（Risk D）：考慮降低起始劑量並密切監測血壓。"
+    },
+    {
+     "re": "amitriptyline|imipramine|nortriptyline|clomipramine|doxepin",
+     "text": "三環抗憂鬱劑會增強升壓作用（Risk D）：盡量避免；併用時考慮降低起始劑量。"
+    },
+    {
+     "re": "venlafaxine|duloxetine|milnacipran|desvenlafaxine",
+     "text": "SNRI 會增強升壓與心搏過速作用（Risk D）：盡量避免併用，併用時監測。"
+    },
+    {
+     "re": "selegiline|rasagiline|moclobemide|phenelzine|tranylcypromine",
+     "text": "MAOI（含 2–3 週內使用過）：dopamine 起始劑量不超過一般的 1/10（Risk D；tranylcypromine Risk X）。"
+    }
+   ],
+   "notes": [
+    "不建議用於敗血性休克（心律不整、死亡率較 norepinephrine 高）；僅在緩脈、心律不整風險低或無 norepinephrine 時考慮。",
+    "低劑量 dopamine 腎臟保護無效（KDIGO、SSC 建議不要使用）。",
+    "使用前與使用中矯正低血鉀、低血鎂。",
+    "禁忌：嗜鉻細胞瘤。"
+   ],
+   "info": {
+    "up": "2026-10-09",
+    "times": [
+     "5 min 內",
+     "—",
+     "< 10 min"
+    ],
+    "tnote": "t½ 約 2 分鐘",
+    "bp": "增加心搏過速與心室性心律不整風險；增加心肌耗氧，活動性缺血或近期 MI 小心。",
+    "prep": "中央靜脈優先；無中央靜脈時可由近端大靜脈短期（< 72 小時）給藥，密切監測注射部位。Vesicant；外滲：停止輸注、回抽、抬高肢體、乾熱敷，phentolamine 5–10 mg/10 mL NS 局部注射（替代：nitroglycerin 2% 軟膏、terbutaline）。 不可與鹼性溶液（含 sodium bicarbonate）同管；稀釋後至少穩定 24 小時；顏色變深勿用。",
+    "alert": "劑量依賴：< 5 多巴胺受體、5–10 β 作用（心跳、收縮力）、> 10 α 作用（血管收縮）；各區間效果重疊。"
+   }
+  },
+  {
+   "id": "dobutamine",
+   "label": "Dobutamine",
+   "names": [
+    "dobutamine",
+    "dobutrex"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) — Dobutamine",
+     "sections": "Dosing: Adult; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity; Administration; Warnings; Pharmacokinetics",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "weight": {
+    "basis": "TBW",
+    "obese": {
+     "def": "BMI>=30",
+     "basis": "IBW",
+     "text": "BMI ≥30：起始劑量以 IBW 計算，再依血流動力學效果調整；治療中不要更換體重基準（stress test 用實際體重）。"
+    }
+   },
+   "infusion": {
+    "unit": "mcg/kg/min",
+    "ranges": [
+     {
+      "ind": "急性失代償心衰竭／強心支持",
+      "min": 2,
+      "max": 20,
+      "text": "起始 2–5，常用 2–10，最高 20；輕度失代償可低至 0.5。"
+     }
+    ],
+    "primary": 0,
+    "alerts": [
+     {
+      "gt": 20,
+      "level": "warn",
+      "text": "超過 Lexidrug 最高劑量 20 mcg/kg/min。"
+     },
+     {
+      "gt": 10,
+      "level": "info",
+      "text": "> 10 mcg/kg/min 已超過常用範圍（2–10）；高劑量可能因血管擴張造成低血壓。"
+     }
+    ]
+   },
+   "renal": {
+    "method": "CG",
+    "text": "任何程度腎功能不全不需調整（代謝物無活性）。CrCl < 20 連續輸注曾有 dobutamine 引起肌躍症（myoclonus）的報告。",
+    "bands": [
+     {
+      "min": 20,
+      "max": 9999,
+      "text": "不需調整。"
+     },
+     {
+      "min": 0,
+      "max": 20,
+      "level": "info",
+      "text": "不需調整；留意罕見的 dobutamine 引起肌躍症（myoclonus）。"
+     }
+    ],
+    "HD": {
+     "text": "不需補充劑量或調整；留意肌躍症。",
+     "level": "ok"
+    },
+    "PD": {
+     "text": "不需調整。",
+     "level": "ok"
+    },
+    "CRRT": {
+     "text": "可能不需調整。",
+     "level": "ok"
+    }
+   },
+   "hepatic": {
+    "none": true,
+    "text": "仿單無肝功能調整建議。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "小心使用，從劑量範圍低端開始。"
+   },
+   "concomitant": [
+    {
+     "re": "metoprolol|bisoprolol|carvedilol|propranolol|atenolol|labetalol|esmolol|nebivolol|landiolol",
+     "text": "β-blocker 會降低 dobutamine 效果（Risk C）。"
+    },
+    {
+     "re": "linezolid|tedizolid",
+     "text": "Linezolid／tedizolid 會增強擬交感神經藥升壓作用（Risk D）：考慮降低起始劑量並密切監測血壓。"
+    }
+   ],
+   "notes": [
+    "NYHA III/IV 心衰竭長期使用會增加住院與死亡風險。",
+    "心房顫動／撲動需先控制心室速率。",
+    "先矯正低血容；矯正低血鉀、低血鎂。",
+    "禁忌：肥厚性心肌病變合併流出道阻塞；嚴重主動脈瓣狹窄時無效。"
+   ],
+   "info": {
+    "up": "2026-10-14",
+    "times": [
+     "1–10 min",
+     "10–20 min",
+     "—"
+    ],
+    "tnote": "t½ 約 2 分鐘",
+    "bp": "通常因心輸出增加而血壓上升；高劑量可能因血管擴張低血壓；劑量相關心搏過速、心室早期收縮（5%）、心律不整。",
+    "prep": "大靜脈給藥；可能為 vesicant，嚴重外滲用 phentolamine。20 mL vial 稀釋於 ≥ 50 mL；最大濃度 5 mg/mL；稀釋後 24 小時內用完；粉紅色變化為輕微氧化，效價不受影響。",
+    "alert": "心律不整（含 VT、SVT）、劑量相關心搏過速；CrCl < 20 罕見肌躍症。"
+   }
+  },
+  {
+   "id": "vasopressin",
+   "label": "Vasopressin",
+   "names": [
+    "vasopressin",
+    "pitressin",
+    "argipressin",
+    "vasostrict"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) — Argipressin [Vasopressin]",
+     "sections": "Dosing: Adult; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity; Administration; Warnings; Pharmacokinetics",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "infusion": {
+    "unit": "units/min",
+    "ranges": [
+     {
+      "ind": "敗血性休克（輔助）",
+      "min": 0.01,
+      "max": 0.04,
+      "text": "0.03 units/min 固定劑量加在 norepinephrine 上（不調整）；NE 約 0.2–0.5 mcg/kg/min 仍需升高時考慮加上。"
+     },
+     {
+      "ind": "心臟手術後休克",
+      "min": 0.03,
+      "max": 0.1,
+      "text": "起始 0.03，每 10–15 分鐘加 0.005，最高 0.1；不用兒茶酚胺維持 8 小時後每小時減 0.005。"
+     }
+    ],
+    "primary": 0,
+    "alerts": [
+     {
+      "gt": 0.04,
+      "level": "warn",
+      "text": "> 0.04 units/min 僅作救援治療（皮膚、心臟、內臟缺血風險）。"
+     }
+    ]
+   },
+   "renal": {
+    "none": true,
+    "text": "任何程度腎功能不全不需調整。",
+    "HD": "不易被透析，不需補充或調整。",
+    "PD": "不需調整。",
+    "CRRT": "可被 CRRT 部分移除但臨床意義不明，不需調整。",
+    "PIRRT": "不需調整。"
+   },
+   "hepatic": {
+    "none": true,
+    "text": "仿單無肝功能調整建議。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "依成人劑量。"
+   },
+   "notes": [
+    "肥胖：不需調整，證據不支持體重劑量。",
+    "停藥：先停 vasopressin 再停 norepinephrine 常出現明顯低血壓；可每 30–60 分鐘減 0.01 units/min，監測 MAP。",
+    "停藥後可能出現可逆性尿崩（多尿、稀釋尿、高血鈉），監測電解質、尿量。",
+    "監測血鈉與尿鈉、尿比重、滲透壓、尿量（水中毒、低血鈉）。",
+    "已不建議用於心跳停止。"
+   ],
+   "info": {
+    "up": "2026-10-29",
+    "times": [
+     "快速",
+     "15 min 內",
+     "停藥後 20 min 內"
+    ],
+    "tnote": "升壓作用；t½ 10–20 分鐘",
+    "bp": "可能心搏過緩、心輸出下降；肢端、皮膚、腸繫膜、心肌缺血。",
+    "prep": "建議中央靜脈；vesicant，外滲首選 nitroglycerin 2% 軟膏（替代 phentolamine、terbutaline）。常用濃度 0.1 units/mL（50 U in 500 mL）或限水 1 unit/mL（100 U in 100 mL）。稀釋液室溫 18 小時、冷藏 24 小時；原瓶冷藏，室溫可放 12 個月。",
+    "alert": "> 0.04 units/min 缺血風險高；停藥順序與速度影響血壓；停藥後注意尿崩。"
+   }
+  },
+  {
+   "id": "isoproterenol",
+   "label": "Isoproterenol",
+   "names": [
+    "isoproterenol",
+    "isoprenaline",
+    "proternol",
+    "isuprel"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) — Isoprenaline [Isoproterenol]",
+     "sections": "Dosing: Adult; Older Adult; Altered Kidney Function; Altered Liver Function; Administration; Warnings; Pharmacokinetics",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "infusion": {
+    "unit": "mcg/min",
+    "ranges": [
+     {
+      "ind": "症狀性緩脈／AV block",
+      "min": 1,
+      "max": 20,
+      "text": "從低端開始，依反應調整；作為放置心律調節器前的過渡。"
+     },
+     {
+      "ind": "緩脈引起的心因性休克（off-label）",
+      "min": 2,
+      "max": 20
+     },
+     {
+      "ind": "預防 torsade 復發（off-label）",
+      "min": 2,
+      "max": 10,
+      "text": "僅限緩脈引起的 torsade；先天性長 QT 避免。"
+     }
+    ],
+    "primary": 0,
+    "alerts": [
+     {
+      "gt": 20,
+      "level": "warn",
+      "text": "超過 Lexidrug 常用上限 20 mcg/min。"
+     }
+    ]
+   },
+   "renal": {
+    "none": true,
+    "text": "仿單無調整建議；原形尿中排除少，應不需調整。"
+   },
+   "hepatic": {
+    "none": true,
+    "text": "仿單無肝功能調整建議。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "小心使用，從劑量範圍低端開始。"
+   },
+   "concomitant": [
+    {
+     "re": "epinephrine|adrenaline|bosmin",
+     "text": "Isoproterenol 會增強 epinephrine 作用（Risk X：避免併用）。"
+    },
+    {
+     "re": "metoprolol|bisoprolol|carvedilol|propranolol|atenolol|labetalol|esmolol|landiolol",
+     "text": "β-blocker 會降低 isoproterenol 效果（Risk C）。"
+    },
+    {
+     "re": "aminophylline|theophylline",
+     "text": "Isoproterenol 會降低 theophylline 濃度（Risk C）。"
+    },
+    {
+     "re": "linezolid|tedizolid",
+     "text": "Linezolid／tedizolid 會增強擬交感神經藥升壓作用（Risk D）：考慮降低起始劑量並密切監測血壓。"
+    }
+   ],
+   "notes": [
+    "不建議用於分布性休克（會進一步降低 SVR）。",
+    "禁忌：心絞痛、既有心室性心律不整、心搏過速、毛地黃中毒引起的 heart block 或心搏過速。",
+    "可能暫時升高血糖；監測血鉀、血鎂、血糖。",
+    "目前不是首選治療；過量或長期使用效果下降。"
+   ],
+   "info": {
+    "up": "2026-09-10",
+    "times": [
+     "立即",
+     "—",
+     "10–15 min"
+    ],
+    "tnote": "t½ 2.5–5 分鐘",
+    "bp": "β2 作用可致劑量相關低血壓；心搏過速、心律不整、增加心肌耗氧與缺血。",
+    "prep": "需輸注幫浦。常用濃度 2–16 mcg/mL（如 1 mg/500 mL = 2 mcg/mL）；限水最高 20 mcg/mL。避光，變色（粉紅、棕色）或沉澱勿用；稀釋於 NS 或 D5W 至少 24 小時穩定。",
+    "alert": "與 epinephrine 併用 Risk X；分布性休克避免。"
+   }
+  },
+  {
+   "id": "epinephrine",
+   "label": "Epinephrine",
+   "names": [
+    "epinephrine",
+    "adrenaline",
+    "bosmin"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) — Adrenaline [Epinephrine] (Systemic)",
+     "sections": "Dosing: Adult; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity; Administration; Warnings; Pharmacokinetics",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "weight": {
+    "basis": "TBW",
+    "obese": {
+     "def": "BMI>=30",
+     "basis": "IBW",
+     "text": "BMI ≥30：若用體重劑量，起始以 IBW 計算再依效果調整；用非體重劑量的單位繼續非體重劑量；治療中不要更換體重基準或劑量方式。IM／SC 一律用固定劑量。"
+    }
+   },
+   "infusion": {
+    "unit": "mcg/min",
+    "ranges": [
+     {
+      "ind": "休克（敗血性、心因性、強心支持）",
+      "min": 1,
+      "max": 40,
+      "text": "敗血性休克起始 1–15，常用 1–40，難治性 40–160 mcg/min。"
+     },
+     {
+      "ind": "心跳停止後休克",
+      "min": 1,
+      "max": 80,
+      "text": "難治性最高 160 mcg/min。"
+     },
+     {
+      "ind": "症狀性緩脈（off-label）",
+      "min": 2,
+      "max": 40,
+      "text": "起始 2–10 mcg/min。"
+     },
+     {
+      "ind": "Anaphylaxis 連續輸注（off-label）",
+      "min": 1,
+      "max": 16,
+      "text": "起始 0.1–0.2 mcg/kg/min（80 kg 約 8–16 mcg/min），每 2–3 分鐘調 0.05 mcg/kg/min。"
+     }
+    ],
+    "primary": 0,
+    "alt": {
+     "unit": "mcg/kg/min",
+     "min": 0.01,
+     "max": 0.5,
+     "text": "體重基準 0.01–0.5 mcg/kg/min（難治性休克 0.5–2；anaphylaxis 0.01–0.2）"
+    },
+    "alerts": [
+     {
+      "gt": 160,
+      "level": "warn",
+      "text": "超過 Lexidrug 難治性休克最高 160 mcg/min。"
+     },
+     {
+      "gt": 40,
+      "level": "info",
+      "text": "> 40 mcg/min 屬難治性休克劑量（40–160 mcg/min）。"
+     }
+    ]
+   },
+   "renal": {
+    "none": true,
+    "text": "任何程度腎功能不全不需調整。",
+    "HD": "不易被透析，不需補充或調整。",
+    "PD": "不需調整。",
+    "CRRT": "不需調整。",
+    "PIRRT": "不需調整。"
+   },
+   "hepatic": {
+    "none": true,
+    "text": "仿單無肝功能調整建議。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "依成人劑量，小心使用。"
+   },
+   "concomitant": [
+    {
+     "re": "linezolid|tedizolid",
+     "text": "Linezolid／tedizolid 會增強擬交感神經藥升壓作用（Risk D）：考慮降低起始劑量並密切監測血壓。"
+    },
+    {
+     "re": "amitriptyline|imipramine|nortriptyline|clomipramine|doxepin",
+     "text": "三環抗憂鬱劑會增強升壓作用（Risk D）：盡量避免；併用時考慮降低起始劑量。"
+    },
+    {
+     "re": "venlafaxine|duloxetine|milnacipran|desvenlafaxine",
+     "text": "SNRI 會增強升壓與心搏過速作用（Risk D）：盡量避免併用，併用時監測。"
+    },
+    {
+     "re": "isoproterenol|isoprenaline|proternol",
+     "text": "Isoproterenol 會增強 epinephrine 作用（Risk X：避免併用）。"
+    }
+   ],
+   "notes": [
+    "Anaphylaxis：首選 IM 大腿前外側 0.3–0.5 mg（1 mg/mL；> 50 kg 用 0.5 mg），每 5–15 分鐘可重複；IV 僅用於多次 IM 後仍無反應者。",
+    "Anaphylaxis 緩慢 IV bolus（僅在即將心肺停止且無輸注可用時）：0.05–0.1 mg（0.1 mg/mL 再稀釋於 10 mL NS）打 1–10 分鐘。",
+    "先矯正低血容；可能造成肺水腫、腎血管收縮使尿量下降、暫時升高血糖。"
+   ],
+   "info": {
+    "up": "2026-11-12",
+    "times": [
+     "—",
+     "—",
+     "—"
+    ],
+    "tnote": "IV t½ < 5 分鐘（Lexidrug 未列 IV onset／duration）",
+    "bp": "可能誘發心絞痛、心律不整；心血管疾病小心。",
+    "prep": "中央靜脈優先；無中央靜脈時可由近端大靜脈短期（< 72 小時）給藥，密切監測注射部位。Vesicant；外滲：停止輸注、回抽、抬高肢體、乾熱敷，phentolamine 5–10 mg/10 mL NS 局部注射（替代：nitroglycerin 2% 軟膏、terbutaline）。 常用濃度 4 mcg/mL（1 mg/250 mL）或 16 mcg/mL（4 mg/250 mL）。",
+    "alert": "注射濃度已不用比例標示：1:1,000＝1 mg/mL，1:10,000＝0.1 mg/mL；不同途徑劑量差很多。",
+    "bolus": {
+     "stockPerMl": 1,
+     "stockUnit": "mg",
+     "items": [
+      {
+       "label": "Anaphylaxis IM（> 50 kg 用 0.5 mg），每 5–15 分鐘可重複",
+       "lo": 0.3,
+       "hi": 0.5,
+       "unit": "mg"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "nitroglycerin",
+   "label": "Nitroglycerin",
+   "names": [
+    "nitroglycerin",
+    "glyceryl trinitrate",
+    "millisrol"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) — Glyceryl Trinitrate [Nitroglycerin]",
+     "sections": "Dosing: Adult; Older Adult; Altered Kidney Function; Altered Liver Function; Administration; Warnings; Pharmacokinetics",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "infusion": {
+    "unit": "mcg/min",
+    "ranges": [
+     {
+      "ind": "急性失代償心衰竭／高血壓急症／圍術期高血壓",
+      "min": 5,
+      "max": 200,
+      "text": "起始 5–10 mcg/min，每 3–5 分鐘加 5（到 20 後可每次加 10–20），最高 200 mcg/min。低劑量以靜脈擴張為主，高劑量才有動脈擴張。"
+     }
+    ],
+    "primary": 0,
+    "alerts": [
+     {
+      "gt": 200,
+      "level": "warn",
+      "text": "超過 Lexidrug 最高劑量 200 mcg/min。"
+     }
+    ]
+   },
+   "renal": {
+    "none": true,
+    "text": "任何程度腎功能不全不需調整（尿中排除 < 1%）。",
+    "HD": "不易被透析，不需補充或調整。",
+    "PD": "不需調整。",
+    "CRRT": "不需調整。",
+    "PIRRT": "不需調整。"
+   },
+   "hepatic": {
+    "none": true,
+    "text": "仿單無肝功能調整建議。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "依成人劑量。"
+   },
+   "concomitant": [
+    {
+     "re": "sildenafil|vardenafil|tadalafil|avanafil",
+     "text": "PDE-5 抑制劑：服用後需間隔才可用 nitrate（avanafil ≥ 12 小時、sildenafil／vardenafil ≥ 24 小時、tadalafil ≥ 48 小時），否則嚴重低血壓。"
+    }
+   ],
+   "notes": [
+    "連續輸注 24–48 小時內產生耐受性；需要超過 24–48 小時時改用其他 IV 或口服血管擴張劑。",
+    "可能升高顱內壓，神經損傷（顱內出血、TBI）病人可能惡化。",
+    "肥厚性心肌病變合併流出道阻塞避免使用。",
+    "高血壓急症：第一小時 MAP 降約 10–20%。"
+   ],
+   "info": {
+    "up": "2026-10-30",
+    "times": [
+     "立即",
+     "立即",
+     "3–5 min"
+    ],
+    "tnote": "IV；t½ 約 1–4 分鐘",
+    "bp": "可能嚴重低血壓與休克（即使小劑量），可伴隨反常性緩脈與心絞痛加重；姿勢性低血壓；反射性心搏過速。劑量相關頭痛。",
+    "prep": "用玻璃瓶或非 PVC 容器與 nitroglycerin 專用輸注套（會吸附於軟塑膠）；避免會吸附的 in-line filter；需輸注幫浦。常用濃度 200 mcg/mL（50 mg/250 mL）或 400 mcg/mL（100 mg/250 mL）D5W。",
+    "alert": "24–48 小時耐受性；PDE-5 抑制劑併用禁忌；顱內壓升高。"
+   }
+  },
+  {
+   "id": "lidocaine",
+   "label": "Lidocaine",
+   "names": [
+    "lidocaine",
+    "xylocaine",
+    "lignocaine"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) — Lidocaine (Systemic)",
+     "sections": "Dosing: Adult（Ventricular arrhythmias; Perioperative pain）; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity; Administration; Warnings; Reference Range; Pharmacokinetics",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "weight": {
+    "basis": "TBW",
+    "obese": {
+     "def": "BMI>=30",
+     "basis": "AdjBW",
+     "text": "BMI ≥30：不需調整，體重劑量以 LBW 或 AdjBW 計算（平台以 AdjBW 計）；分布體積大、清除率低，長時間輸注注意蓄積。"
+    }
+   },
+   "infusion": {
+    "unit": "mg/min",
+    "ranges": [
+     {
+      "ind": "心室性心律不整（VF／pVT 後、穩定單型 VT）",
+      "min": 1,
+      "max": 4,
+      "text": "> 24 小時清除變慢，可能需減量；依血中濃度與毒性調整；1 小時內累積最多 300 mg。"
+     }
+    ],
+    "primary": 0,
+    "alerts": [
+     {
+      "gt": 4,
+      "level": "warn",
+      "text": "超過 Lexidrug 範圍 4 mg/min。"
+     }
+    ],
+    "loading": "Bolus 1–1.5 mg/kg（常用 50–100 mg），每 5–10 分鐘可再給 0.5–0.75 mg/kg；累積最多 3 mg/kg 或 1 小時內 300 mg。術中止痛（off-label）：1–1.5 mg/kg（IBW）後 1 mg/kg/hr（IBW）。"
+   },
+   "renal": {
+    "method": "CG",
+    "text": "活性代謝物 GX 部分經腎排除，蓄積可致 CNS 副作用。Lexidrug 以 eGFR 分界（此處以 CrCl 近似）。",
+    "bands": [
+     {
+      "min": 30,
+      "max": 9999,
+      "text": "連續輸注不需調整。"
+     },
+     {
+      "min": 0,
+      "max": 30,
+      "level": "info",
+      "text": "從常用劑量低端開始；盡量避免長時間輸注（≥ 12 小時），監測血中濃度與毒性。"
+     }
+    ],
+    "HD": {
+     "text": "不易被透析；不需調整。盡量避免輸注 ≥ 12 小時，監測濃度與毒性。",
+     "level": "info"
+    },
+    "PD": {
+     "text": "不需調整；盡量避免輸注 ≥ 12 小時，監測濃度與毒性。",
+     "level": "info"
+    },
+    "CRRT": {
+     "text": "不需調整；代謝物蓄積，長時間輸注密切監測神經毒性；避免 ≥ 12 小時。",
+     "level": "info"
+    },
+    "PIRRT": {
+     "text": "不需調整；避免 ≥ 12 小時輸注，監測神經毒性。",
+     "level": "info"
+    }
+   },
+   "hepatic": {
+    "trigger": "cirrhosis|child|ctp|liver failure|hepatic failure|肝硬化",
+    "text": "給較低的維持輸注速率，密切監測毒性；嚴重肝功能不全毒性風險增加。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "依成人劑量。"
+   },
+   "notes": [
+    "治療濃度 1.5–5 mcg/mL；> 6 mcg/mL 較常出現毒性（脆弱病人可能更低）。",
+    "IV 給藥需持續 ECG 監測；心衰竭、低血氧、低血容、休克時小心。",
+    "可能造成變性血紅素血症。"
+   ],
+   "info": {
+    "up": "2026-11-07",
+    "times": [
+     "45–90 秒",
+     "—",
+     "10–20 min"
+    ],
+    "tnote": "單次 IV bolus；t½ 成人 1.5–2 hr，輸注 > 24 小時、心衰竭時延長",
+    "bp": "IV 時需 ECG 監測；可能使心室速率增加（心房顫動／撲動）。",
+    "prep": "Bolus 可 25–50 mg/min 推注（心跳停止時可快速推）。常用輸注濃度 4 mg/mL（1 g/250 mL）或 8 mg/mL（2 g/250 mL）D5W；長時間輸注可能局部血栓性靜脈炎。",
+    "alert": "> 24 小時清除變慢；CrCl < 30、肝病、心衰竭蓄積風險；監測血中濃度（1.5–5 mcg/mL）。",
+    "bolus": {
+     "stockPerMl": 20,
+     "stockUnit": "mg",
+     "items": [
+      {
+       "label": "VF／pVT、穩定 VT 初始",
+       "lo": 1,
+       "hi": 1.5,
+       "unit": "mg/kg"
+      },
+      {
+       "label": "每 5–10 分鐘追加（累積 ≤ 3 mg/kg）",
+       "lo": 0.5,
+       "hi": 0.75,
+       "unit": "mg/kg"
+      }
+     ]
+    }
+   },
+   "excludeRe": "patch|gel|jelly|spray|topical|cream|ointment|viscous|pump spray|外用|貼片|凝膠"
   }
  ]
 }
