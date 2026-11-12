@@ -1,5 +1,5 @@
 {
- "version": "2026-11-12a",
+ "version": "2026-11-12b",
  "updated": "2026-11-12",
  "rules": [
   {
@@ -894,8 +894,7 @@
     "text": "誘導 0.5–1.5 mg/kg；調整間隔 3–5 分鐘。"
    },
    "notes": [
-    "使用 > 48 小時或 ≥ 50 mcg/kg/min 時，每 3–7 天驗三酸甘油酯；注意 PRIS。",
-    "脂肪乳劑提供熱量約 1.1 kcal/mL，需計入營養。"
+    "使用 > 48 小時或 ≥ 50 mcg/kg/min 時，每 3–7 天驗三酸甘油酯；注意 PRIS。"
    ],
    "info": {
     "up": "2026-11-10",
@@ -980,15 +979,15 @@
       "min": 0,
       "max": 30,
       "level": "info",
-      "text": "慎用：活性代謝物（α-hydroxymidazolam glucuronide）蓄積，鎮靜可能延長。"
+      "text": "慎用：活性代謝物蓄積。"
      }
     ],
     "HD": {
-     "text": "活性代謝物蓄積，慎用並依效果調整。",
+     "text": "活性代謝物蓄積，慎用。",
      "level": "info"
     },
     "CRRT": {
-     "text": "活性代謝物蓄積，慎用並依效果調整。",
+     "text": "活性代謝物蓄積，慎用。",
      "level": "info"
     }
    },
@@ -1191,7 +1190,7 @@
       "min": 0,
       "max": 30,
       "level": "info",
-      "text": "不調整，但作用時間變異大；監測 TOF。CrCl < 30 不建議以 sugammadex 逆轉。"
+      "text": "不調整，但作用時間變異大；CrCl < 30 不建議以 sugammadex 逆轉。"
      }
     ],
     "HD": {
@@ -1199,7 +1198,7 @@
      "level": "info"
     },
     "CRRT": {
-     "text": "作用時間變異大，監測 TOF。",
+     "text": "作用時間變異大。",
      "level": "info"
     }
    },
