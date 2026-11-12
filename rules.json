@@ -1,5 +1,5 @@
 {
- "version": "2026-11-12c",
+ "version": "2026-11-12d",
  "updated": "2026-11-12",
  "rules": [
   {
@@ -642,6 +642,162 @@
       }
      ]
     }
+   },
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：止痛 0.5–2 mcg/kg/dose IV q1–2h，或 1–2 mcg/kg IV/IM q30–60 min prn；鎮靜 1–3 mcg/kg/h。",
+    "doses": [
+     {
+      "ind": "急性疼痛（<50 kg）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "wtMax": 50,
+      "lo": 0.5,
+      "hi": 1,
+      "unit": "mcg/kg",
+      "max": {
+       "v": 100,
+       "unit": "mcg"
+      },
+      "freq": "q1–2h（必要時 q30 min）",
+      "text": "單次 max 50 mcg（ICU 可至 100）"
+     },
+     {
+      "ind": "ICU bolus（<50 kg）",
+      "routes": [
+       "IV"
+      ],
+      "wtMax": 50,
+      "lo": 1,
+      "hi": 2,
+      "unit": "mcg/kg",
+      "max": {
+       "v": 100,
+       "unit": "mcg"
+      }
+     },
+     {
+      "ind": "急性疼痛（≥50 kg）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "wtMin": 50,
+      "lo": 25,
+      "hi": 50,
+      "unit": "mcg"
+     },
+     {
+      "ind": "鼻噴",
+      "routes": [
+       "NASAL",
+       "IN"
+      ],
+      "lo": 1.5,
+      "hi": 2,
+      "unit": "mcg/kg",
+      "max": {
+       "v": 100,
+       "unit": "mcg"
+      }
+     }
+    ],
+    "infusion": {
+     "unit": "mcg/kg/hr",
+     "ranges": [
+      {
+       "ind": "ICU 鎮痛鎮靜",
+       "min": 1,
+       "max": 3,
+       "text": "先 bolus 1–2 mcg/kg，再 1 mcg/kg/hr 起，少數需 5。"
+      },
+      {
+       "ind": "急性疼痛（<50 kg）",
+       "wtMax": 50,
+       "min": 0.5,
+       "max": 2.5
+      }
+     ],
+     "primary": 0,
+     "alerts": [
+      {
+       "gt": 5,
+       "level": "warn",
+       "text": "超過 Lexidrug 兒科少數病人所需的 5 mcg/kg/hr。"
+      },
+      {
+       "gt": 3,
+       "level": "info",
+       "text": "> 3 mcg/kg/hr：少數病人需要（可至 5）。"
+      }
+     ]
+    },
+    "renal": {
+     "text": "GFR 10–50 給 75%、<10 給 50%。",
+     "bands": [
+      {
+       "min": 50,
+       "max": 9999,
+       "text": "不需調整。"
+      },
+      {
+       "min": 10,
+       "max": 50,
+       "level": "info",
+       "text": "給一般劑量的 75%。"
+      },
+      {
+       "min": 0,
+       "max": 10,
+       "level": "warn",
+       "text": "給一般劑量的 50%。"
+      }
+     ]
+    },
+    "notes": [
+     "緩推 3–5 分鐘；> 5 mcg/kg 推 5–10 分鐘，避免胸壁僵直。"
+    ],
+    "info": {
+     "alert": "推太快會胸壁僵直：緩推 3–5 分鐘，> 5 mcg/kg 推 5–10 分鐘。",
+     "bolus": {
+      "stockPerMl": 50,
+      "stockUnit": "mcg",
+      "items": [
+       {
+        "label": "急性疼痛 <50 kg（q1–2h）",
+        "lo": 0.5,
+        "hi": 1,
+        "unit": "mcg/kg",
+        "max": 50,
+        "wtMax": 50
+       },
+       {
+        "label": "ICU bolus",
+        "lo": 1,
+        "hi": 2,
+        "unit": "mcg/kg",
+        "max": 100,
+        "wtMax": 50
+       },
+       {
+        "label": "急性疼痛 ≥50 kg",
+        "wtMin": 50,
+        "lo": 25,
+        "hi": 50,
+        "unit": "mcg"
+       }
+      ]
+     }
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Fentanyl",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
    }
   },
   {
@@ -1443,6 +1599,134 @@
       }
      ]
     }
+   },
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：≤6 個月 IV/SC 0.025–0.03 mg/kg q4h；>6 個月且 <50 kg 0.05 mg/kg（max 嬰兒 2、1–6 歲 4、7–12 歲 8、青少年 10 mg）；≥50 kg 2–5 mg q4h。",
+    "doses": [
+     {
+      "ind": "≤6 個月",
+      "routes": [
+       "IV",
+       "SC",
+       "SUBQ"
+      ],
+      "ageMax": 0.5,
+      "lo": 0.025,
+      "hi": 0.05,
+      "unit": "mg/kg",
+      "freq": "q2–4h"
+     },
+     {
+      "ind": ">6 個月、<50 kg",
+      "routes": [
+       "IV",
+       "IM",
+       "SC",
+       "SUBQ"
+      ],
+      "ageMin": 0.5,
+      "wtMax": 50,
+      "lo": 0.05,
+      "hi": 0.1,
+      "unit": "mg/kg",
+      "freq": "q2–4h"
+     },
+     {
+      "ind": "≥50 kg",
+      "routes": [
+       "IV",
+       "IM",
+       "SC",
+       "SUBQ"
+      ],
+      "wtMin": 50,
+      "lo": 2,
+      "hi": 5,
+      "unit": "mg",
+      "freq": "q2–4h"
+     }
+    ],
+    "infusion": {
+     "unit": "mcg/kg/hr",
+     "ranges": [
+      {
+       "ind": "≤6 個月",
+       "ageMax": 0.5,
+       "min": 8,
+       "max": 20
+      },
+      {
+       "ind": ">6 個月、<50 kg",
+       "ageMin": 0.5,
+       "min": 10,
+       "max": 40
+      }
+     ],
+     "primary": 0,
+     "alerts": []
+    },
+    "avoid": [
+     {
+      "ageLt": 0.25,
+      "level": "info",
+      "text": "< 3 個月呼吸抑制風險較高，需連續監測。"
+     }
+    ],
+    "renal": {
+     "text": "腎功能差時 M6G／M3G 蓄積，宜改用其他鴉片類。",
+     "bands": [
+      {
+       "min": 50,
+       "max": 9999,
+       "text": "不需調整。"
+      },
+      {
+       "min": 0,
+       "max": 50,
+       "level": "warn",
+       "text": "代謝物蓄積，宜改用其他鴉片類。"
+      }
+     ]
+    },
+    "info": {
+     "alert": "< 3 個月呼吸抑制風險高；腎功能差時代謝物蓄積。",
+     "bolus": {
+      "stockPerMl": 10,
+      "stockUnit": "mg",
+      "items": [
+       {
+        "label": "≤6 個月",
+        "lo": 0.025,
+        "hi": 0.05,
+        "unit": "mg/kg",
+        "ageMax": 0.5
+       },
+       {
+        "label": ">6 個月、<50 kg",
+        "lo": 0.05,
+        "hi": 0.1,
+        "unit": "mg/kg",
+        "ageMin": 0.5,
+        "wtMax": 50
+       },
+       {
+        "label": "≥50 kg",
+        "wtMin": 50,
+        "lo": 2,
+        "hi": 5,
+        "unit": "mg"
+       }
+      ]
+     }
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Morphine",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
    }
   },
   {
@@ -1655,6 +1939,40 @@
     "bp": "增加心搏過速與心室性心律不整風險；增加心肌耗氧，活動性缺血或近期 MI 小心。",
     "prep": "中央靜脈優先；無中央靜脈時可由近端大靜脈短期（< 72 小時）給藥，密切監測注射部位。Vesicant；外滲：停止輸注、回抽、抬高肢體、乾熱敷，phentolamine 5–10 mg/10 mL NS 局部注射（替代：nitroglycerin 2% 軟膏、terbutaline）。 不可與鹼性溶液（含 sodium bicarbonate）同管；稀釋後至少穩定 24 小時；顏色變深勿用。",
     "alert": "劑量依賴：< 5 多巴胺受體、5–10 β 作用（心跳、收縮力）、> 10 α 作用（血管收縮）；各區間效果重疊。"
+   },
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：低 2–5（增加腎灌流）；中 5–15；高 >20（血管收縮），max 20 mcg/kg/min。",
+    "infusion": {
+     "unit": "mcg/kg/min",
+     "ranges": [
+      {
+       "ind": "血流動力學支持",
+       "min": 2,
+       "max": 20,
+       "text": "以 5–10 遞增；兒童偏好低劑量端（強心為主）。"
+      }
+     ],
+     "primary": 0,
+     "alerts": [
+      {
+       "gt": 20,
+       "level": "warn",
+       "text": "超過 Lexidrug 兒科 20 mcg/kg/min。"
+      }
+     ]
+    },
+    "notes": [
+     "不宜再以「低劑量護腎」為目的使用。",
+     "成人敗血性休克已不作首選。"
+    ],
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Dopamine",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
    }
   },
   {
@@ -1769,6 +2087,36 @@
     "bp": "通常因心輸出增加而血壓上升；高劑量可能因血管擴張低血壓；劑量相關心搏過速、心室早期收縮（5%）、心律不整。",
     "prep": "大靜脈給藥；可能為 vesicant，嚴重外滲用 phentolamine。20 mL vial 稀釋於 ≥ 50 mL；最大濃度 5 mg/mL；稀釋後 24 小時內用完；粉紅色變化為輕微氧化，效價不受影響。",
     "alert": "心律不整（含 VT、SVT）、劑量相關心搏過速；CrCl < 20 罕見肌躍症。"
+   },
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：2–10 mcg/kg/min，max 20。",
+    "infusion": {
+     "unit": "mcg/kg/min",
+     "ranges": [
+      {
+       "ind": "血流動力學支持",
+       "min": 2,
+       "max": 20,
+       "text": "起始 0.5–1，逐步調整至反應。"
+      }
+     ],
+     "primary": 0,
+     "alerts": [
+      {
+       "gt": 20,
+       "level": "warn",
+       "text": "超過 Lexidrug 兒科 20 mcg/kg/min。"
+      }
+     ]
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Dobutamine",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
    }
   },
   {
@@ -1945,6 +2293,48 @@
     "bp": "β2 作用可致劑量相關低血壓；心搏過速、心律不整、增加心肌耗氧與缺血。",
     "prep": "需輸注幫浦。常用濃度 2–16 mcg/mL（如 1 mg/500 mL = 2 mcg/mL）；限水最高 20 mcg/mL。避光，變色（粉紅、棕色）或沉澱勿用；稀釋於 NS 或 D5W 至少 24 小時穩定。",
     "alert": "與 epinephrine 併用 Risk X；分布性休克避免。"
+   },
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：IV drip 0.05–2 mcg/kg/min；適應症含支氣管痙攣（應刪除）。",
+    "infusion": {
+     "unit": "mcg/kg/min",
+     "ranges": [
+      {
+       "ind": "嚴重心搏過緩／AV block",
+       "min": 0.05,
+       "max": 0.5,
+       "text": "依效果調整，必要時可至 2 mcg/kg/min。"
+      }
+     ],
+     "primary": 0,
+     "alerts": [
+      {
+       "gt": 2,
+       "level": "warn",
+       "text": "超過 Lexidrug 兒科最高 2 mcg/kg/min。"
+      },
+      {
+       "gt": 0.5,
+       "level": "info",
+       "text": "> 0.5 mcg/kg/min：少數病人需要，最高 2。"
+      }
+     ]
+    },
+    "avoid": [
+     {
+      "always": true,
+      "level": "info",
+      "text": "不建議用於支氣管痙攣：兒童難治性氣喘曾發生心肌壞死與死亡。"
+     }
+    ],
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Isoproterenol",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
    }
   },
   {
@@ -2082,6 +2472,118 @@
       }
      ]
     }
+   },
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：針劑印「1 g/vial」（應為 1 mg/mL）；急救 IV「0.01 kg/dose」（應為 mg/kg）、ETT 0.1 mg/kg/dose，q3–5 min。",
+    "doses": [
+     {
+      "ind": "心跳停止／心搏過緩 IV/IO",
+      "routes": [
+       "IV",
+       "IO"
+      ],
+      "lo": 0.01,
+      "hi": 0.01,
+      "unit": "mg/kg",
+      "max": {
+       "v": 1,
+       "unit": "mg"
+      },
+      "freq": "q3–5 min"
+     },
+     {
+      "ind": "心跳停止 ETT",
+      "routes": [
+       "ETT",
+       "ET"
+      ],
+      "lo": 0.1,
+      "hi": 0.1,
+      "unit": "mg/kg",
+      "max": {
+       "v": 2.5,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "過敏性休克 IM（<30 kg）",
+      "routes": [
+       "IM"
+      ],
+      "wtMax": 30,
+      "lo": 0.01,
+      "hi": 0.01,
+      "unit": "mg/kg",
+      "max": {
+       "v": 0.3,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "過敏性休克 IM（≥30 kg）",
+      "routes": [
+       "IM"
+      ],
+      "wtMin": 30,
+      "lo": 0.01,
+      "hi": 0.01,
+      "unit": "mg/kg",
+      "max": {
+       "v": 0.5,
+       "unit": "mg"
+      }
+     }
+    ],
+    "info": {
+     "alert": "濃度別搞混：IV/IO 用 0.1 mg/mL（0.1 mL/kg），ETT 與 IM 用 1 mg/mL（0.1 mL/kg 與 0.01 mL/kg）。",
+     "bolus": {
+      "stockPerMl": 0.1,
+      "stockUnit": "mg",
+      "items": [
+       {
+        "label": "心跳停止／心搏過緩 IV/IO（q3–5 min）",
+        "lo": 0.01,
+        "hi": 0.01,
+        "unit": "mg/kg",
+        "max": 1
+       },
+       {
+        "label": "心跳停止 ETT",
+        "lo": 0.1,
+        "hi": 0.1,
+        "unit": "mg/kg",
+        "max": 2.5,
+        "stockPerMl": 1
+       },
+       {
+        "label": "過敏性休克 IM（<30 kg）",
+        "wtMax": 30,
+        "lo": 0.01,
+        "hi": 0.01,
+        "unit": "mg/kg",
+        "max": 0.3,
+        "stockPerMl": 1
+       },
+       {
+        "label": "過敏性休克 IM（≥30 kg）",
+        "wtMin": 30,
+        "lo": 0.01,
+        "hi": 0.01,
+        "unit": "mg/kg",
+        "max": 0.5,
+        "stockPerMl": 1
+       }
+      ]
+     }
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Epinephrine",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
    }
   },
   {
@@ -2282,7 +2784,883 @@
      ]
     }
    },
-   "excludeRe": "patch|gel|jelly|spray|topical|cream|ointment|viscous|pump spray|外用|貼片|凝膠"
+   "excludeRe": "patch|gel|jelly|spray|topical|cream|ointment|viscous|pump spray|外用|貼片|凝膠",
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：初始 1 mg/kg「滴注 30 分鐘」（錯誤，應為推注）；維持 20–50 mcg/kg/min。",
+    "doses": [
+     {
+      "ind": "VF／無脈 VT bolus",
+      "routes": [
+       "IV",
+       "IO"
+      ],
+      "lo": 1,
+      "hi": 1,
+      "unit": "mg/kg",
+      "text": "距開始滴注 >15 分鐘可再推一次"
+     },
+     {
+      "ind": "ETT",
+      "routes": [
+       "ETT",
+       "ET"
+      ],
+      "lo": 2,
+      "hi": 3,
+      "unit": "mg/kg"
+     }
+    ],
+    "infusion": {
+     "unit": "mcg/kg/min",
+     "ranges": [
+      {
+       "ind": "VF／無脈 VT 維持",
+       "min": 20,
+       "max": 50,
+       "text": "休克、肝病、心跳停止、心衰竭者 ≤ 20 mcg/kg/min。"
+      }
+     ],
+     "primary": 0,
+     "alerts": [
+      {
+       "gt": 50,
+       "level": "warn",
+       "text": "超過 Lexidrug 兒科 50 mcg/kg/min。"
+      }
+     ]
+    },
+    "info": {
+     "alert": "休克、肝病、心跳停止、心衰竭者維持 ≤ 20 mcg/kg/min。",
+     "bolus": {
+      "stockPerMl": 20,
+      "stockUnit": "mg",
+      "items": [
+       {
+        "label": "VF／無脈 VT IV/IO 推注",
+        "lo": 1,
+        "hi": 1,
+        "unit": "mg/kg"
+       },
+       {
+        "label": "ETT",
+        "lo": 2,
+        "hi": 3,
+        "unit": "mg/kg"
+       }
+      ]
+     }
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Lidocaine",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
+  },
+  {
+   "id": "adenosine",
+   "label": "Adenosine",
+   "names": [
+    "adenosine",
+    "adenozer",
+    "adenocor"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Adenosine",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：近心端快推 0.1–0.2 mg/kg，每 2 分鐘加 0.05 mg/kg，至單次 max 0.25 mg/kg 或 12 mg。",
+    "doses": [
+     {
+      "ind": "血行不穩 第一劑",
+      "routes": [
+       "IV",
+       "IO"
+      ],
+      "wtMax": 50,
+      "lo": 0.1,
+      "hi": 0.1,
+      "unit": "mg/kg",
+      "max": {
+       "v": 6,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "血行不穩 第二劑",
+      "routes": [
+       "IV",
+       "IO"
+      ],
+      "wtMax": 50,
+      "lo": 0.2,
+      "hi": 0.2,
+      "unit": "mg/kg",
+      "max": {
+       "v": 12,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "穩定、<50 kg 漸增",
+      "routes": [
+       "IV",
+       "IO"
+      ],
+      "wtMax": 50,
+      "lo": 0.05,
+      "hi": 0.3,
+      "unit": "mg/kg",
+      "max": {
+       "v": 12,
+       "unit": "mg"
+      },
+      "text": "0.05–0.1 起，每 1–2 分鐘加 0.05–0.1，單次 max 0.3 mg/kg 或 12 mg"
+     },
+     {
+      "ind": "≥50 kg",
+      "routes": [
+       "IV",
+       "IO"
+      ],
+      "wtMin": 50,
+      "lo": 6,
+      "hi": 12,
+      "unit": "mg",
+      "text": "6 mg → 12 mg"
+     }
+    ],
+    "concomitant": [
+     {
+      "re": "theophylline|aminophylline",
+      "text": "Theophylline 類會降低 adenosine 效果。"
+     },
+     {
+      "re": "dipyridamole|carbamazepine",
+      "text": "Dipyridamole、carbamazepine：宜降低 adenosine 首劑。"
+     }
+    ],
+    "notes": [
+     "快推後立即 NS 5–10 mL flush。",
+     "禁忌：二、三度 AV block、病竇症候群、氣喘／支氣管痙攣、症狀性心搏過緩。"
+    ],
+    "info": {
+     "times": [
+      "數秒",
+      "—",
+      "< 1 min"
+     ],
+     "alert": "禁忌含氣喘／支氣管痙攣、二三度 AV block、病竇症候群；快推後 NS flush。",
+     "bolus": {
+      "stockPerMl": 3,
+      "stockUnit": "mg",
+      "items": [
+       {
+        "label": "血行不穩 第一劑",
+        "lo": 0.1,
+        "hi": 0.1,
+        "unit": "mg/kg",
+        "max": 6,
+        "wtMax": 50
+       },
+       {
+        "label": "血行不穩 第二劑",
+        "lo": 0.2,
+        "hi": 0.2,
+        "unit": "mg/kg",
+        "max": 12,
+        "wtMax": 50
+       },
+       {
+        "label": "穩定 <50 kg 起始",
+        "lo": 0.05,
+        "hi": 0.1,
+        "unit": "mg/kg",
+        "max": 12,
+        "wtMax": 50
+       },
+       {
+        "label": "≥50 kg 第一劑",
+        "wtMin": 50,
+        "lo": 6,
+        "hi": 6,
+        "unit": "mg"
+       },
+       {
+        "label": "≥50 kg 第二劑",
+        "wtMin": 50,
+        "lo": 12,
+        "hi": 12,
+        "unit": "mg"
+       }
+      ]
+     }
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Adenosine",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
+  },
+  {
+   "id": "diazepam",
+   "label": "Diazepam",
+   "names": [
+    "diazepam",
+    "valium"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Diazepam",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：IV 0.1–0.3 mg/kg/dose（max 5 mg）；Rectal 0.5 mg/kg/dose（max 20 mg）；5 分鐘未停可再給一次。",
+    "doses": [
+     {
+      "ind": "癲癇重積 IV",
+      "routes": [
+       "IV",
+       "IO"
+      ],
+      "lo": 0.15,
+      "hi": 0.2,
+      "unit": "mg/kg",
+      "max": {
+       "v": 10,
+       "unit": "mg"
+      },
+      "text": "緩推（兒童 ≤ 1–2 mg/min），5 分鐘後可重複一次"
+     },
+     {
+      "ind": "肛門（2–<6 歲）",
+      "routes": [
+       "PR",
+       "RECT"
+      ],
+      "ageMin": 2,
+      "ageMax": 6,
+      "lo": 0.5,
+      "hi": 0.5,
+      "unit": "mg/kg",
+      "max": {
+       "v": 20,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "肛門（6–<12 歲）",
+      "routes": [
+       "PR",
+       "RECT"
+      ],
+      "ageMin": 6,
+      "ageMax": 12,
+      "lo": 0.3,
+      "hi": 0.3,
+      "unit": "mg/kg",
+      "max": {
+       "v": 20,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "肛門（≥12 歲）",
+      "routes": [
+       "PR",
+       "RECT"
+      ],
+      "ageMin": 12,
+      "lo": 0.2,
+      "hi": 0.2,
+      "unit": "mg/kg",
+      "max": {
+       "v": 20,
+       "unit": "mg"
+      }
+     }
+    ],
+    "notes": [
+     "禁忌：嚴重換氣不足、CO2 滯留、昏迷、重症肌無力、神經肌肉疾病。"
+    ],
+    "info": {
+     "alert": "IV 單次 max 10 mg（原書 5 mg）；肛門劑量依年齡不同。",
+     "bolus": {
+      "stockPerMl": 5,
+      "stockUnit": "mg",
+      "items": [
+       {
+        "label": "癲癇重積 IV（可重複一次）",
+        "lo": 0.15,
+        "hi": 0.2,
+        "unit": "mg/kg",
+        "max": 10
+       }
+      ]
+     }
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Diazepam",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
+  },
+  {
+   "id": "lorazepam",
+   "label": "Lorazepam",
+   "names": [
+    "lorazepam",
+    "ativan"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Lorazepam",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：IV 0.1 mg/kg/dose（max 5 mg）；5 分鐘未停可再給一次。",
+    "doses": [
+     {
+      "ind": "癲癇重積",
+      "routes": [
+       "IV",
+       "IO"
+      ],
+      "lo": 0.1,
+      "hi": 0.1,
+      "unit": "mg/kg",
+      "max": {
+       "v": 4,
+       "unit": "mg"
+      },
+      "text": "5–10 分鐘後可重複一次"
+     }
+    ],
+    "notes": [
+     "等量稀釋後緩推，≤ 2 mg/min。"
+    ],
+    "info": {
+     "alert": "單次 max 4 mg（原書 5 mg）；等量稀釋，≤ 2 mg/min。",
+     "bolus": {
+      "stockPerMl": 2,
+      "stockUnit": "mg",
+      "items": [
+       {
+        "label": "癲癇重積（可重複一次）",
+        "lo": 0.1,
+        "hi": 0.1,
+        "unit": "mg/kg",
+        "max": 4
+       }
+      ]
+     }
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Lorazepam",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
+  },
+  {
+   "id": "levetiracetam",
+   "label": "Levetiracetam",
+   "names": [
+    "levetiracetam",
+    "keppra"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Levetiracetam",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：Loading 10–20 mg/kg（稀釋 ≥100 mL，15 分鐘）；維持 10 mg/kg/dose q8–12h，max 3,000 mg/day；trough 10–45。",
+    "doses": [
+     {
+      "ind": "癲癇重積 loading",
+      "routes": [
+       "IV"
+      ],
+      "when": "stat",
+      "lo": 20,
+      "hi": 60,
+      "unit": "mg/kg",
+      "max": {
+       "v": 4500,
+       "unit": "mg"
+      },
+      "text": "AES 60 mg/kg（max 4,500 mg）；NCS 20–60 mg/kg"
+     },
+     {
+      "ind": "維持（4–<16 歲）",
+      "routes": [
+       "IV",
+       "PO",
+       "NG"
+      ],
+      "when": "sched",
+      "ageMin": 4,
+      "ageMax": 16,
+      "lo": 10,
+      "hi": 30,
+      "unit": "mg/kg",
+      "freq": "bid",
+      "maxDay": {
+       "v": 3000,
+       "unit": "mg"
+      },
+      "text": "10 起，漸增至 30 mg/kg/dose"
+     }
+    ],
+    "renal": {
+     "text": "GFR < 50 給 50%。",
+     "bands": [
+      {
+       "min": 50,
+       "max": 9999,
+       "text": "不需調整。"
+      },
+      {
+       "min": 0,
+       "max": 50,
+       "level": "warn",
+       "text": "給一般劑量的 50%。"
+      }
+     ]
+    },
+    "tdm": "參考範圍 12–46 mcg/mL。",
+    "notes": [
+     "濃度 ≤ 15 mg/mL 輸注 15 分鐘；重積時可 2–5 mg/kg/min；未稀釋 100 mg/mL 推 5 分鐘亦有報告。"
+    ],
+    "info": {
+     "alert": "重積 loading 60 mg/kg（max 4,500 mg），原書 10–20 mg/kg 偏低。",
+     "bolus": {
+      "stockPerMl": 100,
+      "stockUnit": "mg",
+      "items": [
+       {
+        "label": "癲癇重積 loading（AES）",
+        "lo": 60,
+        "hi": 60,
+        "unit": "mg/kg",
+        "max": 4500
+       },
+       {
+        "label": "癲癇重積 loading（NCS 範圍）",
+        "lo": 20,
+        "hi": 60,
+        "unit": "mg/kg",
+        "max": 4500
+       }
+      ]
+     }
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Levetiracetam",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
+  },
+  {
+   "id": "phenytoin",
+   "label": "Phenytoin",
+   "names": [
+    "phenytoin",
+    "dilantin"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Phenytoin",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：Loading 10–20 mg/kg 緩慢 IV（1–3 mg/kg/min 或 ≤50 mg/min）；維持 5 mg/kg/24h ÷ q8–12h；10–20 mcg/mL。",
+    "doses": [
+     {
+      "ind": "癲癇重積 loading",
+      "routes": [
+       "IV"
+      ],
+      "when": "stat",
+      "lo": 20,
+      "hi": 20,
+      "unit": "mg/kg",
+      "max": {
+       "v": 1000,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "維持",
+      "routes": [
+       "IV",
+       "PO",
+       "NG"
+      ],
+      "when": "sched",
+      "lo": 4,
+      "hi": 10,
+      "unit": "mg/kg",
+      "per": "day",
+      "maxDay": {
+       "v": 300,
+       "unit": "mg"
+      },
+      "text": "起始 5 mg/kg/day 分 2–3 次（常用 4–8，幼兒可 8–10）"
+     }
+    ],
+    "tdm": "Total 10–20 mcg/mL；free 1–2 mcg/mL（低白蛋白時看 free level）。",
+    "notes": [
+     "輸注速率取 1–3 mg/kg/min 與 50 mg/min 較慢者。",
+     "只用 NS 稀釋、4 小時內輸完、加 in-line filter；有 fosphenytoin 時優先。",
+     "亞裔可考慮先驗 HLA-B*1502。"
+    ],
+    "info": {
+     "alert": "速率取 1–3 mg/kg/min 與 50 mg/min 較慢者；只用 NS 稀釋、in-line filter。",
+     "bolus": {
+      "stockPerMl": 50,
+      "stockUnit": "mg",
+      "items": [
+       {
+        "label": "癲癇重積 loading",
+        "lo": 20,
+        "hi": 20,
+        "unit": "mg/kg",
+        "max": 1000
+       }
+      ]
+     }
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Phenytoin",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
+  },
+  {
+   "id": "milrinone",
+   "label": "Milrinone",
+   "names": [
+    "milrinone",
+    "primacor"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Milrinone",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：Loading 50 mcg/kg 輸注 15 分鐘；維持 0.25–0.75 mcg/kg/min，漸調。",
+    "infusion": {
+     "unit": "mcg/kg/min",
+     "ranges": [
+      {
+       "ind": "維持",
+       "min": 0.25,
+       "max": 0.75,
+       "text": "先心術後 LCOS 預防：75 mcg/kg 60 分鐘 → 0.75。"
+      }
+     ],
+     "primary": 0,
+     "alerts": [
+      {
+       "gt": 0.75,
+       "level": "warn",
+       "text": "超過 Lexidrug 兒科 0.75 mcg/kg/min。"
+      }
+     ]
+    },
+    "renal": {
+     "text": "腎功能差需個別調整。"
+    },
+    "notes": [
+     "Loading 可省略（低血壓風險）；若給 50 mcg/kg 打 10–60 分鐘。"
+    ],
+    "info": {
+     "alert": "Loading 可省略（低血壓風險）；腎功能差需調整。",
+     "bolus": {
+      "stockPerMl": 1000,
+      "stockUnit": "mcg",
+      "items": [
+       {
+        "label": "Loading（可省略；10–60 分鐘）",
+        "lo": 50,
+        "hi": 50,
+        "unit": "mcg/kg"
+       },
+       {
+        "label": "先心術後 LCOS 預防（60 分鐘）",
+        "lo": 75,
+        "hi": 75,
+        "unit": "mcg/kg"
+       }
+      ]
+     }
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Milrinone",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
+  },
+  {
+   "id": "meperidine",
+   "label": "Meperidine",
+   "names": [
+    "meperidine",
+    "pethidine",
+    "demerol"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Meperidine",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：≥12 歲；<50 kg 0.8–1 mg/kg q4h（max 75 mg）；≥50 kg 50–75 mg q4h。",
+    "avoid": [
+     {
+      "always": true,
+      "level": "warn",
+      "text": "APS 與 ISMP 不建議作為止痛藥；列入兒科 KIDs 不適當用藥。若用限 ≤ 48 小時；保留用途：術後顫抖。"
+     }
+    ],
+    "doses": [
+     {
+      "ind": ">6 個月",
+      "routes": [
+       "IV",
+       "IM",
+       "SC",
+       "SUBQ"
+      ],
+      "ageMin": 0.5,
+      "lo": 0.8,
+      "hi": 2,
+      "unit": "mg/kg",
+      "max": {
+       "v": 75,
+       "unit": "mg"
+      },
+      "freq": "q3–4h",
+      "text": "單次 max 50–75 mg"
+     }
+    ],
+    "renal": {
+     "text": "腎功能不全避免使用（normeperidine 蓄積致痙攣）。",
+     "bands": [
+      {
+       "min": 50,
+       "max": 9999,
+       "text": "—"
+      },
+      {
+       "min": 0,
+       "max": 50,
+       "level": "warn",
+       "text": "避免使用（normeperidine 蓄積致痙攣）。"
+      }
+     ]
+    },
+    "concomitant": [
+     {
+      "re": "selegiline|rasagiline|moclobemide|phenelzine|tranylcypromine|linezolid",
+      "text": "禁與 MAOI 併用。"
+     }
+    ],
+    "info": {
+     "alert": "不宜作為常規止痛；腎功能不全避免；禁與 MAOI 併用。"
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Meperidine",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
+  },
+  {
+   "id": "calcium-gluconate",
+   "label": "Calcium gluconate",
+   "names": [
+    "calcium gluconate",
+    "ca gluconate",
+    "calglucon"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Calcium gluconate",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：1 mL/kg/dose（=100 mg/kg）稀釋後 IV，>15 分鐘，qd–q8h。",
+    "mgPerMl": 100,
+    "doses": [
+     {
+      "ind": "嚴重症狀（痙攣、tetany）",
+      "routes": [
+       "IV"
+      ],
+      "lo": 100,
+      "hi": 200,
+      "unit": "mg/kg",
+      "max": {
+       "v": 2000,
+       "unit": "mg"
+      },
+      "text": "輸注 5–10 分鐘"
+     },
+     {
+      "ind": "輕中度低血鈣",
+      "routes": [
+       "IV"
+      ],
+      "lo": 29,
+      "hi": 60,
+      "unit": "mg/kg",
+      "max": {
+       "v": 2000,
+       "unit": "mg"
+      },
+      "freq": "q6h"
+     },
+     {
+      "ind": "高血鉀",
+      "routes": [
+       "IV"
+      ],
+      "lo": 60,
+      "hi": 100,
+      "unit": "mg/kg",
+      "max": {
+       "v": 2000,
+       "unit": "mg"
+      }
+     }
+    ],
+    "concomitant": [
+     {
+      "re": "digoxin|lanoxin",
+      "text": "併用 digoxin：需監測 ECG。"
+     }
+    ],
+    "notes": [
+     "連續輸注 8–13 mg/kg/hr。",
+     "非急救時 ≤ 100 mg/min，稀釋至 10–50 mg/mL。",
+     "不可 IM/SC；避開頭皮與手足小靜脈（vesicant）。",
+     "新生兒（≤ 28 天）禁與 ceftriaxone 併用。",
+     "開立時寫明 gluconate；chloride 鈣含量約為其 3 倍。"
+    ],
+    "info": {
+     "alert": "單次 max 2 g（10% 20 mL）；不可 IM/SC；chloride ≠ gluconate（鈣量約 3 倍）。",
+     "bolus": {
+      "stockPerMl": 100,
+      "stockUnit": "mg",
+      "items": [
+       {
+        "label": "嚴重症狀（5–10 分鐘）",
+        "lo": 100,
+        "hi": 200,
+        "unit": "mg/kg",
+        "max": 2000
+       },
+       {
+        "label": "高血鉀",
+        "lo": 60,
+        "hi": 100,
+        "unit": "mg/kg",
+        "max": 2000
+       },
+       {
+        "label": "輕中度 q6h",
+        "lo": 29,
+        "hi": 60,
+        "unit": "mg/kg",
+        "max": 2000
+       }
+      ]
+     }
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Calcium gluconate",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
   }
  ]
 }
