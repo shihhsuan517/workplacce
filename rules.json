@@ -1,5 +1,5 @@
 {
- "version": "2026-11-12d",
+ "version": "2026-11-12f",
  "updated": "2026-11-12",
  "rules": [
   {
@@ -3660,6 +3660,768 @@
       "by": "JC"
      }
     ]
+   }
+  },
+  {
+   "id": "ampicillin",
+   "label": "Ampicillin",
+   "names": [
+    "ampicillin",
+    "penbritin",
+    "standacillin"
+   ],
+   "excludeRe": "sulbactam|unasyn|sulampicillin",
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Ampicillin",
+     "sections": "Dosing: Pediatric; Altered Kidney Function (Pediatric, Adult); Altered Liver Function; Administration; Interactions; Pharmacokinetics（成人適應症細項與新生兒未納入）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "doseUnit": "g",
+   "usual": {
+    "text": "腎功能表所用常用劑量：口服 500 mg q6h；IV 1–2 g q6h，或 2 g q4h（較重感染）。口服降階優先改 amoxicillin（生體可用率 77% vs 39–54%）。可將每日總量以 24 小時連續輸注（門診 IV 方便用）。（Lexidrug 成人適應症細項未展開）"
+   },
+   "renal": {
+    "method": "CG",
+    "text": "仿單無調整；以下為專家意見。先依常用劑量欄（口服 500 mg q6h／IV 1–2 g q6h／IV 2 g q4h），再對照 CrCl 區間。",
+    "byRoute": {
+     "PO": {
+      "bands": [
+       {
+        "min": 50,
+        "max": 9999,
+        "text": "500 mg q6h。",
+        "regimens": [
+         {
+          "g": 0.5,
+          "q": 6
+         }
+        ]
+       },
+       {
+        "min": 30,
+        "max": 50,
+        "text": "500 mg q8h。",
+        "regimens": [
+         {
+          "g": 0.5,
+          "q": 8
+         }
+        ]
+       },
+       {
+        "min": 15,
+        "max": 30,
+        "text": "500 mg q12h。",
+        "regimens": [
+         {
+          "g": 0.5,
+          "q": 12
+         }
+        ]
+       },
+       {
+        "min": 0,
+        "max": 15,
+        "text": "500 mg q12–24h。",
+        "regimens": [
+         {
+          "g": 0.5,
+          "q": [
+           12,
+           24
+          ]
+         }
+        ]
+       }
+      ],
+      "HD": {
+       "text": "可被透析（39–63%）：500 mg q12–24h；透析日排定劑量在透析後給。",
+       "regimens": [
+        {
+         "g": 0.5,
+         "q": [
+          12,
+          24
+         ]
+        }
+       ],
+       "afterHD": true
+      },
+      "PD": {
+       "text": "500 mg q12–24h。",
+       "regimens": [
+        {
+         "g": 0.5,
+         "q": [
+          12,
+          24
+         ]
+        }
+       ]
+      }
+     },
+     "IV": {
+      "bands": [
+       {
+        "min": 50,
+        "max": 9999,
+        "text": "常用 1–2 g q6h → 1–2 g q6h；常用 2 g q4h → 2 g q4h。",
+        "regimens": [
+         {
+          "gMin": 1,
+          "gMax": 2,
+          "q": [
+           6
+          ]
+         },
+         {
+          "g": 2,
+          "q": 4
+         }
+        ]
+       },
+       {
+        "min": 30,
+        "max": 50,
+        "text": "常用 1–2 g q6h → 1–2 g q8h；常用 2 g q4h → 2 g q6h。",
+        "regimens": [
+         {
+          "gMin": 1,
+          "gMax": 2,
+          "q": [
+           8
+          ]
+         },
+         {
+          "g": 2,
+          "q": 6
+         }
+        ]
+       },
+       {
+        "min": 15,
+        "max": 30,
+        "text": "常用 1–2 g q6h → 1–2 g q12h；常用 2 g q4h → 2 g q8h。",
+        "regimens": [
+         {
+          "gMin": 1,
+          "gMax": 2,
+          "q": [
+           12
+          ]
+         },
+         {
+          "g": 2,
+          "q": 8
+         }
+        ]
+       },
+       {
+        "min": 0,
+        "max": 15,
+        "text": "常用 1–2 g q6h → 1–2 g q24h；常用 2 g q4h → 2 g q12h。",
+        "regimens": [
+         {
+          "gMin": 1,
+          "gMax": 2,
+          "q": [
+           24
+          ]
+         },
+         {
+          "g": 2,
+          "q": 12
+         }
+        ]
+       }
+      ],
+      "HD": {
+       "text": "可被透析（39–63%）。常用 1–2 g q6h → 1–2 g q24h；常用 2 g q4h → 2 g q12h；透析日排定劑量在透析後給。",
+       "regimens": [
+        {
+         "gMin": 1,
+         "gMax": 2,
+         "q": [
+          24
+         ]
+        },
+        {
+         "g": 2,
+         "q": 12
+        }
+       ],
+       "afterHD": true
+      },
+      "PD": {
+       "text": "常用 1–2 g q6h → 1–2 g q24h；常用 2 g q4h → 2 g q12h。",
+       "regimens": [
+        {
+         "gMin": 1,
+         "gMax": 2,
+         "q": [
+          24
+         ]
+        },
+        {
+         "g": 2,
+         "q": 12
+        }
+       ]
+      },
+      "CRRT": {
+       "text": "CVVH／CVVHD／CVVHDF（high-flux、effluent 20–25 mL/kg/h）：常用 1–2 g q6h → 2 g q8–12h；常用 2 g q4h → 2 g q6–8h。監測神經毒性。",
+       "regimens": [
+        {
+         "g": 2,
+         "q": [
+          6,
+          8,
+          12
+         ]
+        }
+       ]
+      },
+      "PIRRT": {
+       "text": "常用 1–2 g q6h → 2 g q8–12h；常用 2 g q4h → 2 g q8h；盡量安排一劑在 PIRRT 後。"
+      }
+     }
+    },
+    "ARC": "Augmented renal clearance（測得尿液 CrCl ≥130 mL/min/1.73m²）：常用 1–2 g q6h 者改 2 g q4h；常用 2 g q4h 者可能仍未達標，考慮延長或連續輸注，必要時換藥。"
+   },
+   "hepatic": {
+    "none": true,
+    "text": "仿單無肝功能調整建議。"
+   },
+   "concomitant": [
+    {
+     "re": "allopurinol",
+     "text": "Allopurinol 會增加 ampicillin 過敏性皮疹（Risk C）。"
+    },
+    {
+     "re": "gentamicin|amikacin|tobramycin|streptomycin",
+     "text": "避免與 aminoglycoside 同時輸注（體外失活）；腎功能差時 penicillin 會降低 aminoglycoside 濃度（Risk C）。"
+    },
+    {
+     "re": "chloroquine",
+     "text": "Chloroquine 會降低 ampicillin 濃度：間隔至少 2 小時。"
+    }
+   ],
+   "notes": [
+    "IV 推注：≤ 500 mg 推 3–5 分鐘，> 500 mg 推 10–15 分鐘；推太快可致痙攣。",
+    "間歇輸注 10–15 分鐘，最終濃度 ≤ 30 mg/mL（NS 為首選稀釋液），泡製後 1 小時內稀釋。",
+    "時間依賴型（fT>MIC ≥ 40%；重症可能需 100%）。",
+    "t½ 1–1.8 小時；無尿 8–20 小時。"
+   ],
+   "info": {
+    "up": "2026-10-10",
+    "times": [
+     "—",
+     "PO 1–2 hr",
+     "t½ 1–1.8 hr"
+    ],
+    "tnote": "無尿者 t½ 8–20 小時；口服吸收約 50%",
+    "prep": "IV 推注：125–500 mg 加 5 mL、1 g 加 7.4 mL、2 g 加 14.8 mL 注射用水；間歇輸注 ≤ 30 mg/mL（如 1 g/50 mL、2 g/100 mL NS），泡製後 1 小時內稀釋。IM 125 或 250 mg/mL，1 小時內用。",
+    "alert": "推注太快可致痙攣（> 500 mg 推 10–15 分鐘）；避免與 aminoglycoside 同時輸注。"
+   },
+   "peds": {
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Ampicillin",
+      "sections": "Dosing: Pediatric; Altered Kidney Function (Pediatric, Adult); Altered Liver Function; Administration; Interactions; Pharmacokinetics（成人適應症細項與新生兒未納入）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "一般 PO",
+      "routes": [
+       "PO",
+       "NG"
+      ],
+      "lo": 50,
+      "hi": 100,
+      "unit": "mg/kg",
+      "per": "day",
+      "freq": "÷ q6h",
+      "maxDay": {
+       "v": 2000,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "一般 IV/IM",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 50,
+      "hi": 200,
+      "unit": "mg/kg",
+      "per": "day",
+      "freq": "÷ q6h",
+      "maxDay": {
+       "v": 8000,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "重症（腦膜炎 300–400、心內膜炎 200–300、PCN 抗藥肺炎鏈球菌 300–400）",
+      "routes": [
+       "IV"
+      ],
+      "lo": 200,
+      "hi": 400,
+      "unit": "mg/kg",
+      "per": "day",
+      "freq": "÷ q4–6h",
+      "maxDay": {
+       "v": 12000,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "手術／牙科預防（單次）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "when": "stat",
+      "lo": 50,
+      "hi": 50,
+      "unit": "mg/kg",
+      "max": {
+       "v": 2000,
+       "unit": "mg"
+      }
+     }
+    ],
+    "renal": {
+     "text": "依 IV/IM 100–200 mg/kg/day q6h 調整：GFR 30–50 35–50 mg/kg/dose q6h；10–29 q8–12h；<10 q12h；HD、PD q12h；CRRT q6h。",
+     "bands": [
+      {
+       "min": 50,
+       "max": 9999,
+       "text": "不需調整。"
+      },
+      {
+       "min": 30,
+       "max": 50,
+       "level": "info",
+       "text": "35–50 mg/kg/dose q6h。"
+      },
+      {
+       "min": 10,
+       "max": 30,
+       "level": "warn",
+       "text": "35–50 mg/kg/dose q8–12h。"
+      },
+      {
+       "min": 0,
+       "max": 10,
+       "level": "warn",
+       "text": "35–50 mg/kg/dose q12h。"
+      }
+     ]
+    },
+    "notes": [
+     "複雜性腹內感染、骨關節感染：200 mg/kg/day，單次 max 2,000 mg。",
+     "社區型肺炎（>3 個月）：經驗治療或 PCN MIC ≤2 的肺炎鏈球菌 150–200；GAS 200；PCN MIC ≥4 的肺炎鏈球菌 300–400 mg/kg/day ÷ q6h。",
+     "炭疽（含腦膜炎）200 mg/kg/day ÷ q6h，單次 max 3,000 mg。",
+     "PD 腹膜炎：腹膜內 125 mg/L 透析液 × 2 週。"
+    ],
+    "info": {
+     "alert": "推注太快可致痙攣；IV 單日上限 8 g（重症 12 g）。"
+    }
+   }
+  },
+  {
+   "id": "gentamicin",
+   "label": "Gentamicin",
+   "names": [
+    "gentamicin",
+    "garamycin",
+    "gentamycin"
+   ],
+   "excludeRe": "cream|ointment|oint|eye|oph|眼|外用|藥膏",
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Gentamicin (Systemic)",
+     "sections": "Dosing: Pediatric; Adult（usual range）; Altered Kidney Function (Pediatric, Adult); Altered Liver Function; Administration; Warnings; Interactions（新生兒未納入）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "doseUnit": "g",
+   "weight": {
+    "basis": "TBW",
+    "obese": {
+     "def": "TBW>1.2IBW",
+     "basis": "AdjBW",
+     "text": "TBW > 1.2 × IBW：起始劑量與 C-G 估算腎功能都用 AdjBW。（TBW < IBW 用 TBW；1–1.2 倍 IBW 可用 TBW 或 IBW，重症 Vd 大時偏好 TBW）"
+    }
+   },
+   "usual": {
+    "text": "革蘭氏陰性：傳統 3–5 mg/kg/day ÷ q8h（部分專家先給 loading 2.5–3 mg/kg）；EID 5–7 mg/kg q24h。革蘭氏陽性協同：3 mg/kg/day 分 1–2 次。不建議用於 P. aeruginosa（達標不足）。重症、CF、燒傷、大手術建議 TDM。"
+   },
+   "doses": [
+    {
+     "ind": "高劑量延長間隔（EID）",
+     "routes": [
+      "IV"
+     ],
+     "lo": 5,
+     "hi": 7,
+     "unit": "mg/kg",
+     "freq": "q24h"
+    },
+    {
+     "ind": "傳統（3–5 mg/kg/day ÷ q8h）",
+     "routes": [
+      "IV",
+      "IM"
+     ],
+     "lo": 1,
+     "hi": 1.7,
+     "unit": "mg/kg",
+     "freq": "q8h"
+    },
+    {
+     "ind": "Loading（傳統前）",
+     "routes": [
+      "IV",
+      "IM"
+     ],
+     "lo": 2.5,
+     "hi": 3,
+     "unit": "mg/kg"
+    },
+    {
+     "ind": "革蘭氏陽性協同（3 mg/kg/day 分 1–2 次）",
+     "routes": [
+      "IV",
+      "IM"
+     ],
+     "lo": 1.5,
+     "hi": 3,
+     "unit": "mg/kg"
+    }
+   ],
+   "renal": {
+    "method": "CG",
+    "obeseCG": {
+     "def": "TBW>1.2IBW",
+     "basis": "AdjBW",
+     "text": "TBW > 1.2 × IBW：以 C-G 搭配 AdjBW 估算腎功能。"
+    },
+    "text": "依給藥方式（EID 或傳統）決定間隔；之後依血中濃度調整。CrCl < 40 使用 EID 需小心（重症休克、MDR 革蘭氏陰性菌仍可考慮）。",
+    "bands": [
+     {
+      "min": 60,
+      "max": 9999,
+      "text": "EID：q24h；傳統：不需調整（q8h）。",
+      "qByKg": [
+       {
+        "kgMin": 4.5,
+        "lab": "EID",
+        "q": [
+         24
+        ]
+       },
+       {
+        "kgMax": 4.5,
+        "lab": "傳統",
+        "q": [
+         8
+        ]
+       }
+      ]
+     },
+     {
+      "min": 40,
+      "max": 60,
+      "level": "info",
+      "text": "EID：q36h；傳統：常用劑量 q12h。依濃度調整。",
+      "qByKg": [
+       {
+        "kgMin": 4.5,
+        "lab": "EID",
+        "q": [
+         36
+        ]
+       },
+       {
+        "kgMax": 4.5,
+        "lab": "傳統",
+        "q": [
+         12
+        ]
+       }
+      ]
+     },
+     {
+      "min": 20,
+      "max": 40,
+      "level": "info",
+      "text": "EID：q48h（小心使用）；傳統：常用劑量 q24h。依濃度調整。",
+      "qByKg": [
+       {
+        "kgMin": 4.5,
+        "lab": "EID",
+        "q": [
+         48
+        ]
+       },
+       {
+        "kgMax": 4.5,
+        "lab": "傳統",
+        "q": [
+         24
+        ]
+       }
+      ]
+     },
+     {
+      "min": 0,
+      "max": 20,
+      "level": "warn",
+      "text": "EID：給一次常用劑量後依濃度決定（部分 protocol 改傳統）；傳統：常用劑量 q36–48h。依濃度調整。",
+      "qByKg": [
+       {
+        "kgMin": 4.5,
+        "lab": "EID",
+        "q": []
+       },
+       {
+        "kgMax": 4.5,
+        "lab": "傳統",
+        "q": [
+         36,
+         48
+        ]
+       }
+      ]
+     }
+    ],
+    "ARC": "Augmented renal clearance（測得尿液 CrCl ≥130）：疑敗血症 EID 起始 7–8 mg/kg q24h，依濃度與個人化 PK 調整；不建議用 nomogram。",
+    "HD": {
+     "text": "可被透析（約 50%）。Loading 2–3 mg/kg 後，透析日透析後給：陽性菌協同 1 mg/kg；UTI 1–1.5 mg/kg；全身性革蘭氏陰性 2–3 mg/kg（每週 3 次）。透析後濃度需在透析結束 ≥ 2–4 小時再抽。",
+     "level": "info",
+     "afterHD": true
+    },
+    "PD": {
+     "text": "起始 1–3 mg/kg q48–72h，依濃度調整。",
+     "level": "info"
+    },
+    "CRRT": {
+     "text": "陽性菌協同／UTI：loading 2–3 mg/kg 後 1–1.5 mg/kg q24–36h；全身性革蘭氏陰性：2.5–3（可至 5）mg/kg q24–48h，依濃度。",
+     "level": "info"
+    },
+    "PIRRT": {
+     "text": "陽性菌協同／UTI：loading 2–3 mg/kg 後 1–1.5 mg/kg q24–36h（PIRRT 日於 PIRRT 後給）；全身性革蘭氏陰性：6 mg/kg q48h（PIRRT 前 30–60 分鐘給）。",
+     "level": "info"
+    }
+   },
+   "hepatic": {
+    "none": true,
+    "text": "不經肝代謝，應不需調整。"
+   },
+   "concomitant": [
+    {
+     "re": "vancomycin",
+     "text": "Vancomycin：增加腎毒性與神經毒性，非必要避免併用（Risk D）。"
+    },
+    {
+     "re": "polymyxin",
+     "text": "Polymyxin B：避免併用（Risk X）。"
+    },
+    {
+     "re": "colistin|colistimethate",
+     "text": "Colistimethate：增加腎毒性與神經肌肉阻斷，避免併用。"
+    },
+    {
+     "re": "furosemide|bumetanide|torsemide|ethacrynic",
+     "text": "Loop diuretic：增加腎毒性與耳毒性（boxed warning：避免併用強效利尿劑）。"
+    },
+    {
+     "re": "amphotericin",
+     "text": "Amphotericin B：增加腎毒性與神經毒性。"
+    },
+    {
+     "re": "foscarnet",
+     "text": "Foscarnet：增加腎毒性，盡量避免。"
+    },
+    {
+     "re": "cisatracurium|rocuronium|vecuronium|atracurium|succinylcholine",
+     "text": "增強肌肉鬆弛劑作用，可能呼吸麻痺。"
+    },
+    {
+     "re": "piperacillin|ampicillin|penicillin|oxacillin",
+     "text": "Penicillin 類在體外會使 aminoglycoside 失活（腎功能差時較明顯）：錯開給藥並監測濃度。"
+    },
+    {
+     "re": "tacrolimus|cyclosporin|cisplatin",
+     "text": "其他腎毒性藥物：增加腎毒性。"
+    }
+   ],
+   "notes": [
+    "TDM：傳統 peak 7–10（嚴重感染），trough < 2（理想 < 1）mcg/mL；EID 外推 peak 約 15–20、trough ≤ 0.5；協同（每日一次）peak 10–12、trough < 1。",
+    "Boxed warning：腎毒性、神經／耳毒性、懷孕胎兒傷害；避免併用其他腎／神經毒性藥物與強效利尿劑。",
+    "Nomogram 不適用於腹水、燒傷 > 20% BSA、ESRD 透析、懷孕等 PK 改變者。"
+   ],
+   "info": {
+    "up": "2026-11-10",
+    "times": [
+     "—",
+     "IV 輸注 30 分鐘後",
+     "—"
+    ],
+    "tnote": "IM peak 30–90 分鐘；大劑量（7 mg/kg）分布延長 ≥ 90 分鐘",
+    "prep": "IV 稀釋於 NS 或 D5W（成人 50–200 mL），輸注 30–120 分鐘（常用 30–60，高劑量 60–120）；IM 可不稀釋。避免與 penicillin、cephalosporin 同時輸注。Vesicant，外滲可用 hyaluronidase。",
+    "alert": "腎毒性、耳毒性（boxed warning）；需 TDM。不建議用於 P. aeruginosa。"
+   },
+   "peds": {
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Gentamicin (Systemic)",
+      "sections": "Dosing: Pediatric; Adult（usual range）; Altered Kidney Function (Pediatric, Adult); Altered Liver Function; Administration; Warnings; Interactions（新生兒未納入）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "傳統（含腦膜炎 7.5 mg/kg/day ÷ q8h）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 2,
+      "hi": 2.5,
+      "unit": "mg/kg",
+      "freq": "q8h"
+     },
+     {
+      "ind": "EID 依體重",
+      "routes": [
+       "IV"
+      ],
+      "lo": 5,
+      "hi": 7.5,
+      "unit": "mg/kg",
+      "freq": "q24h"
+     },
+     {
+      "ind": "EID 依年齡（3 個月–<2 歲）",
+      "routes": [
+       "IV"
+      ],
+      "ageMin": 0.25,
+      "ageMax": 2,
+      "lo": 9.5,
+      "hi": 9.5,
+      "unit": "mg/kg",
+      "freq": "q24h"
+     },
+     {
+      "ind": "EID 依年齡（2–<8 歲）",
+      "routes": [
+       "IV"
+      ],
+      "ageMin": 2,
+      "ageMax": 8,
+      "lo": 8.5,
+      "hi": 8.5,
+      "unit": "mg/kg",
+      "freq": "q24h"
+     },
+     {
+      "ind": "EID 依年齡（≥8 歲）",
+      "routes": [
+       "IV"
+      ],
+      "ageMin": 8,
+      "lo": 7,
+      "hi": 7,
+      "unit": "mg/kg",
+      "freq": "q24h"
+     },
+     {
+      "ind": "囊性纖維化 傳統",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 3.3,
+      "hi": 3.3,
+      "unit": "mg/kg",
+      "freq": "q8h"
+     },
+     {
+      "ind": "囊性纖維化 EID",
+      "routes": [
+       "IV"
+      ],
+      "lo": 10,
+      "hi": 12,
+      "unit": "mg/kg",
+      "freq": "q24h"
+     },
+     {
+      "ind": "UTI 單次 IM／手術預防",
+      "routes": [
+       "IM",
+       "IV"
+      ],
+      "when": "stat",
+      "lo": 2.5,
+      "hi": 5,
+      "unit": "mg/kg",
+      "text": "UTI 單次 IM 5 mg/kg；手術預防 IV 2.5 mg/kg"
+     }
+    ],
+    "renal": {
+     "text": "依 2.5 mg/kg q8h 調整間隔：GFR 30–50 q12–18h；10–29 q18–24h；<10 q48–72h。HD、PD：2 mg/kg，依濃度再給；CRRT：2–2.5 mg/kg q12–24h。之後依濃度調整。",
+     "bands": [
+      {
+       "min": 50,
+       "max": 9999,
+       "text": "不需調整。"
+      },
+      {
+       "min": 30,
+       "max": 50,
+       "level": "info",
+       "text": "間隔延長為 q12–18h。"
+      },
+      {
+       "min": 10,
+       "max": 30,
+       "level": "warn",
+       "text": "間隔延長為 q18–24h。"
+      },
+      {
+       "min": 0,
+       "max": 10,
+       "level": "warn",
+       "text": "間隔延長為 q48–72h。"
+      }
+     ]
+    },
+    "notes": [
+     "肥胖：起始劑量用 AdjBW（IBW + 0.4 ×（TBW − IBW）），或 0.7 × TBW；平台目前以實際體重計算，請自行換算。",
+     "UTI EID 依年齡：<5 歲 7.5、5–10 歲 6、11–12 歲 4.5 mg/kg q24h。",
+     "心內膜炎協同 3–6 mg/kg/day ÷ q8h；革蘭氏陰性治療 7.5 mg/kg/day ÷ q8h。",
+     "IV 輸注 30–120 分鐘；≤ 4 mg/kg 有短時間（≤ 5 分鐘）報告。"
+    ],
+    "info": {
+     "alert": "需 TDM；腎毒性、耳毒性。EID 依年齡劑量較高（<2 歲 9.5 mg/kg）。"
+    }
    }
   }
  ]
