@@ -1,5 +1,5 @@
 {
- "version": "2026-11-12f",
+ "version": "2026-11-12g",
  "updated": "2026-11-12",
  "rules": [
   {
@@ -4423,6 +4423,2289 @@
      "alert": "需 TDM；腎毒性、耳毒性。EID 依年齡劑量較高（<2 歲 9.5 mg/kg）。"
     }
    }
+  },
+  {
+   "id": "omeprazole",
+   "label": "Omeprazole",
+   "names": [
+    "omeprazole",
+    "losec"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Omeprazole",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：「2–8 m/g/kg/dose tid」（誤植；單位與頻次皆需改）。",
+    "doses": [
+     {
+      "ind": "GERD（依體重）",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "lo": 0.7,
+      "hi": 3.5,
+      "unit": "mg/kg",
+      "per": "day",
+      "maxDay": {
+       "v": 40,
+       "unit": "mg"
+      },
+      "text": "0.7–1 mg/kg/day qd 或分 bid（文獻至 3.5）"
+     },
+     {
+      "ind": "GERD 固定劑量 3–<5 kg",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "wtMin": 3,
+      "wtMax": 5,
+      "lo": 2.5,
+      "hi": 2.5,
+      "unit": "mg",
+      "freq": "qd"
+     },
+     {
+      "ind": "GERD 固定劑量 5–<10 kg",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "wtMin": 5,
+      "wtMax": 10,
+      "lo": 5,
+      "hi": 5,
+      "unit": "mg",
+      "freq": "qd"
+     },
+     {
+      "ind": "GERD 固定劑量 10–<20 kg",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "wtMin": 10,
+      "wtMax": 20,
+      "lo": 10,
+      "hi": 10,
+      "unit": "mg",
+      "freq": "qd"
+     },
+     {
+      "ind": "GERD 固定劑量 ≥20 kg",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "wtMin": 20,
+      "lo": 20,
+      "hi": 20,
+      "unit": "mg",
+      "freq": "qd"
+     },
+     {
+      "ind": "嗜酸性食道炎",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "lo": 1,
+      "hi": 1,
+      "unit": "mg/kg",
+      "max": {
+       "v": 20,
+       "unit": "mg"
+      },
+      "freq": "bid"
+     },
+     {
+      "ind": "H. pylori 15–<25 kg",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "wtMin": 15,
+      "wtMax": 25,
+      "lo": 20,
+      "hi": 20,
+      "unit": "mg",
+      "freq": "bid × 14 天"
+     },
+     {
+      "ind": "H. pylori 25–<35 kg",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "wtMin": 25,
+      "wtMax": 35,
+      "lo": 30,
+      "hi": 30,
+      "unit": "mg",
+      "freq": "bid × 14 天"
+     },
+     {
+      "ind": "H. pylori ≥35 kg",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "wtMin": 35,
+      "lo": 40,
+      "hi": 40,
+      "unit": "mg",
+      "freq": "bid × 14 天"
+     }
+    ],
+    "renal": {
+     "text": "不需調整。"
+    },
+    "notes": [
+     "早產兒不建議常規使用。",
+     "CYP2C19 代謝。"
+    ],
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Omeprazole",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
+  },
+  {
+   "id": "enalapril",
+   "label": "Enalapril",
+   "names": [
+    "enalapril",
+    "renitec"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Enalapril",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：0.1 mg/kg/dose qd–bid，max 0.5 mg/kg/dose（上限應為 /day；bid 給 0.1 mg/kg 已超過起始量）。",
+    "doses": [
+     {
+      "ind": "高血壓",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "lo": 0.08,
+      "hi": 0.6,
+      "unit": "mg/kg",
+      "per": "day",
+      "maxDay": {
+       "v": 40,
+       "unit": "mg"
+      },
+      "text": "起始 0.08 mg/kg/day（起始 max 5 mg/day）"
+     },
+     {
+      "ind": "心衰竭",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "lo": 0.1,
+      "hi": 0.5,
+      "unit": "mg/kg",
+      "per": "day",
+      "text": "起始 0.1 mg/kg/day 分 1–2 次，2 週內調至 max 0.5"
+     }
+    ],
+    "renal": {
+     "text": "仿單：GFR < 30 不建議；另有建議 GFR 10–50 給 75%、< 10 或透析給 50%。",
+     "bands": [
+      {
+       "min": 50,
+       "max": 9999,
+       "text": "不需調整。"
+      },
+      {
+       "min": 30,
+       "max": 50,
+       "level": "info",
+       "text": "給一般劑量 75%。"
+      },
+      {
+       "min": 10,
+       "max": 30,
+       "level": "warn",
+       "text": "仿單不建議；若使用給 75%。"
+      },
+      {
+       "min": 0,
+       "max": 10,
+       "level": "warn",
+       "text": "仿單不建議；若使用給 50%（透析同）。"
+      }
+     ]
+    },
+    "notes": [
+     "新生兒 0.1 mg/kg 起始曾致低血壓與少尿（新生兒不在本平台範圍）。"
+    ],
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Enalapril",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
+  },
+  {
+   "id": "spironolactone",
+   "label": "Spironolactone",
+   "names": [
+    "spironolactone",
+    "aldactone"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Spironolactone",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：1–3 mg/kg/day ÷ qd–tid，max 400 mg/day（與 Lexidrug 水腫適應症一致）。",
+    "doses": [
+     {
+      "ind": "水腫",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "lo": 1,
+      "hi": 6,
+      "unit": "mg/kg",
+      "per": "day",
+      "maxDay": {
+       "v": 400,
+       "unit": "mg"
+      },
+      "text": "起始 1–3 mg/kg/day q6–24h，max 4–6 mg/kg/day"
+     },
+     {
+      "ind": "高血壓",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "lo": 1,
+      "hi": 3.3,
+      "unit": "mg/kg",
+      "per": "day",
+      "maxDay": {
+       "v": 100,
+       "unit": "mg"
+      },
+      "text": "起始 1 mg/kg/day"
+     },
+     {
+      "ind": "BPD 嬰兒",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMax": 1,
+      "lo": 1.5,
+      "hi": 1.5,
+      "unit": "mg/kg",
+      "freq": "q12h"
+     }
+    ],
+    "renal": {
+     "text": "輕中度延長給藥間隔；重度避免；監測血鉀。"
+    },
+    "notes": [
+     "市售懸液與錠劑不等效（懸液血中濃度高 15–37%），處方以 mg 開立。",
+     "監測血鉀。"
+    ],
+    "info": {
+     "alert": "懸液與錠劑不等效；監測血鉀。"
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Spironolactone",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
+  },
+  {
+   "id": "digoxin",
+   "label": "Digoxin",
+   "names": [
+    "digoxin",
+    "lanoxin",
+    "cardiacin"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Digoxin",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：PO 5–10 mcg/kg/day qd–bid；目標 0.8–2 ng/mL（單一範圍會讓嬰兒不足、>10 歲過量；目標需改）。",
+    "mgPerMl": 0.05,
+    "doses": [
+     {
+      "ind": "維持 1–24 個月",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 0.08,
+      "ageMax": 2,
+      "lo": 10,
+      "hi": 15,
+      "unit": "mcg/kg",
+      "per": "day",
+      "freq": "÷ bid"
+     },
+     {
+      "ind": "維持 2–5 歲",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 2,
+      "ageMax": 5,
+      "lo": 8,
+      "hi": 10,
+      "unit": "mcg/kg",
+      "per": "day",
+      "freq": "÷ bid"
+     },
+     {
+      "ind": "維持 5–10 歲",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 5,
+      "ageMax": 10,
+      "lo": 5,
+      "hi": 10,
+      "unit": "mcg/kg",
+      "per": "day",
+      "freq": "÷ bid"
+     },
+     {
+      "ind": "維持 >10 歲",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 10,
+      "lo": 2.5,
+      "hi": 5,
+      "unit": "mcg/kg",
+      "per": "day",
+      "freq": "qd"
+     }
+    ],
+    "renal": {
+     "text": "GFR 30–50 給 75%；10–29 給 50%；< 10 或透析給 25%。",
+     "bands": [
+      {
+       "min": 50,
+       "max": 9999,
+       "text": "不需調整。"
+      },
+      {
+       "min": 30,
+       "max": 50,
+       "level": "info",
+       "text": "給 75%。"
+      },
+      {
+       "min": 10,
+       "max": 30,
+       "level": "warn",
+       "text": "給 50%。"
+      },
+      {
+       "min": 0,
+       "max": 10,
+       "level": "warn",
+       "text": "給 25%（透析同）。"
+      }
+     ]
+    },
+    "tdm": "心衰竭目標 0.5–0.9 ng/mL；> 2 ng/mL 為中毒。",
+    "notes": [
+     "劑量為口服液；IV 約為口服的 80%。",
+     "Loading 可省略；若給，TDD 分 1/2、1/4、1/4，間隔 6–8 小時。",
+     "依瘦體重給藥。",
+     "併用 calcium gluconate 需監測 ECG。"
+    ],
+    "info": {
+     "alert": "維持劑量依年齡差很多；心衰竭目標 0.5–0.9 ng/mL。"
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Digoxin",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
+  },
+  {
+   "id": "theophylline",
+   "label": "Theophylline",
+   "names": [
+    "theophylline",
+    "ventol",
+    "xanthium",
+    "theovent",
+    "theolan"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Theophylline",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：起始 4–5 mg/kg；維持依年齡 10–24 mg/kg/day，max 600 mg/day；目標支氣管痙攣 10–20 mg/L（目標應改 5–15）。糖漿濃度原書印 5.34 mg/5 mL，疑誤植，平台不據此換算。",
+    "avoid": [
+     {
+      "always": true,
+      "level": "info",
+      "text": "不建議用於氣喘急性發作。"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "≤45 kg 兒童",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 1,
+      "wtMax": 45,
+      "lo": 10,
+      "hi": 20,
+      "unit": "mg/kg",
+      "per": "day",
+      "maxDay": {
+       "v": 600,
+       "unit": "mg"
+      },
+      "text": "第 1–3 天 12–14、第 4–6 天 16、維持 20 mg/kg/day；專家建議氣喘 10 → 13 → 16；無法監測濃度者 ≤16 mg/kg/day 且 ≤400 mg/day"
+     }
+    ],
+    "tdm": "目標 5–15 mcg/mL；> 20 為中毒。",
+    "notes": [
+     "嬰兒每日總量 =（0.2 × 週齡 + 5）× 體重，≤26 週 q8h、> 26 週 q6h。",
+     "肥胖用理想體重。",
+     "無法監測濃度者 ≤ 16 mg/kg/day 且 ≤ 400 mg/day。"
+    ],
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Theophylline",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
+  },
+  {
+   "id": "cyproheptadine",
+   "label": "Cyproheptadine",
+   "names": [
+    "cyproheptadine",
+    "periactin",
+    "cypromin"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Cyproheptadine",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：錠 4 mg；糖漿 2 mg/5 mL（原書印「400 g/mL」，應為 400 µg/mL）；125 µg/kg/dose q8–12h。",
+    "mgPerMl": 0.4,
+    "avoid": [
+     {
+      "ageLt": 2,
+      "level": "warn",
+      "text": "< 2 歲不建議。"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "過敏（依體重，≥2 歲）",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 2,
+      "lo": 0.25,
+      "hi": 0.25,
+      "unit": "mg/kg",
+      "per": "day",
+      "text": "分 2–3 次（或 8 mg/m²/day）"
+     },
+     {
+      "ind": "2–<7 歲",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 2,
+      "ageMax": 7,
+      "lo": 2,
+      "hi": 2,
+      "unit": "mg",
+      "freq": "q8–12h",
+      "maxDay": {
+       "v": 12,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "7–<15 歲",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 7,
+      "ageMax": 15,
+      "lo": 4,
+      "hi": 4,
+      "unit": "mg",
+      "freq": "q8–12h",
+      "maxDay": {
+       "v": 16,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "≥15 歲",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 15,
+      "lo": 4,
+      "hi": 4,
+      "unit": "mg",
+      "freq": "q8h",
+      "maxDay": {
+       "v": 32,
+       "unit": "mg"
+      }
+     }
+    ],
+    "renal": {
+     "text": "腎功能差時降低起始劑量。"
+    },
+    "notes": [
+     "另有促進食慾、偏頭痛預防、週期性嘔吐預防等用法。"
+    ],
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Cyproheptadine",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   }
+  },
+  {
+   "id": "cetirizine",
+   "label": "Cetirizine",
+   "names": [
+    "cetirizine",
+    "zyrtec"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Cetirizine",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：2–5 歲 2.5 mg qd–bid；≥6 歲 5 mg qd–bid。",
+    "mgPerMl": 1,
+    "avoid": [
+     {
+      "ageLt": 0.5,
+      "level": "warn",
+      "text": "< 6 個月無建議劑量。"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "6 個月–<2 歲",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 0.5,
+      "ageMax": 2,
+      "lo": 2.5,
+      "hi": 2.5,
+      "unit": "mg",
+      "freq": "qd，可增至 bid",
+      "maxDay": {
+       "v": 5,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "2–<6 歲",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 2,
+      "ageMax": 6,
+      "lo": 2.5,
+      "hi": 5,
+      "unit": "mg",
+      "freq": "qd 或 2.5 mg bid",
+      "maxDay": {
+       "v": 5,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "≥6 歲",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 6,
+      "lo": 5,
+      "hi": 10,
+      "unit": "mg",
+      "freq": "qd",
+      "maxDay": {
+       "v": 10,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "慢性蕁麻疹 6–<12 歲",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 6,
+      "ageMax": 12,
+      "lo": 5,
+      "hi": 5,
+      "unit": "mg",
+      "freq": "qd–bid",
+      "maxDay": {
+       "v": 10,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "慢性蕁麻疹 ≥12 歲（效果不足可加倍）",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 12,
+      "lo": 10,
+      "hi": 20,
+      "unit": "mg",
+      "freq": "qd",
+      "maxDay": {
+       "v": 20,
+       "unit": "mg"
+      }
+     }
+    ],
+    "renal": {
+     "text": "口服：GFR 10–29 或透析減半；< 10 不建議。",
+     "bands": [
+      {
+       "min": 30,
+       "max": 9999,
+       "text": "不需調整。"
+      },
+      {
+       "min": 10,
+       "max": 30,
+       "level": "info",
+       "text": "減半。"
+      },
+      {
+       "min": 0,
+       "max": 10,
+       "level": "warn",
+       "text": "不建議使用。"
+      }
+     ]
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Cetirizine",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   },
+   "excludeRe": "levocetirizine|xyzal"
+  },
+  {
+   "id": "diclofenac",
+   "label": "Diclofenac",
+   "names": [
+    "diclofenac",
+    "voren",
+    "cataflam",
+    "voltaren"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Diclofenac",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：肛塞 0.1–0.8 mg/kg/dose q6h（頻次應為 tid；q6h × 0.8 = 3.2 mg/kg/day 超過上限）。",
+    "doses": [
+     {
+      "ind": "術後疼痛（肛塞）",
+      "routes": [
+       "PR",
+       "RECT",
+       "R"
+      ],
+      "lo": 1,
+      "hi": 2,
+      "unit": "mg/kg",
+      "max": {
+       "v": 50,
+       "unit": "mg"
+      },
+      "maxDayKg": {
+       "v": 3,
+       "unit": "mg"
+      },
+      "freq": "首劑 1–2，之後 1 mg/kg tid",
+      "text": "療程 ≤ 4 天，劑量取最接近的塞劑規格"
+     },
+     {
+      "ind": "JIA",
+      "routes": [
+       "PO",
+       "PR",
+       "RECT",
+       "R"
+      ],
+      "lo": 1,
+      "hi": 3,
+      "unit": "mg/kg",
+      "per": "day",
+      "text": "分 2–3 次"
+     }
+    ],
+    "renal": {
+     "text": "eGFR 30–60 遇急性病暫停；< 30 避免。",
+     "bands": [
+      {
+       "min": 60,
+       "max": 9999,
+       "text": "不需調整。"
+      },
+      {
+       "min": 30,
+       "max": 60,
+       "level": "info",
+       "text": "遇急性病（脫水、感染）暫停。"
+      },
+      {
+       "min": 0,
+       "max": 30,
+       "level": "warn",
+       "text": "避免使用。"
+      }
+     ]
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Diclofenac",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   },
+   "excludeRe": "gel|emulgel|patch|plaster|eye|oph|眼|外用|凝膠|貼"
+  },
+  {
+   "id": "indomethacin",
+   "label": "Indomethacin",
+   "names": [
+    "indomethacin",
+    "indometacin",
+    "inteban",
+    "indocid"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Indomethacin",
+     "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "handbook": "《兒科常見疾病診療手冊》第 17 章：塞劑 1.5–2.5 mg/kg/day ÷ q6h，max 4 mg/kg/day（Lexidrug 兒科塞劑僅列 ≥15 歲痛風；兒童塞劑劑量屬外推）。",
+    "avoid": [
+     {
+      "ageLt": 2,
+      "level": "warn",
+      "text": "< 2 歲無口服抗發炎建議劑量（新生兒 PDA 用法不在本平台範圍）。"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "發炎／類風濕（≥2 歲，口服速效）",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PEG",
+       "NJ"
+      ],
+      "ageMin": 2,
+      "lo": 1,
+      "hi": 4,
+      "unit": "mg/kg",
+      "per": "day",
+      "maxDay": {
+       "v": 200,
+       "unit": "mg"
+      },
+      "text": "起始 1–2 mg/kg/day 分 3–4 次，max 4 mg/kg/day 或 200 mg/day 取低者"
+     },
+     {
+      "ind": "痛風急性發作（≥15 歲，肛塞）",
+      "routes": [
+       "PR",
+       "RECT",
+       "R"
+      ],
+      "ageMin": 15,
+      "lo": 50,
+      "hi": 50,
+      "unit": "mg",
+      "freq": "tid"
+     }
+    ],
+    "renal": {
+     "text": "eGFR 30–60 遇急性病暫停；< 30 避免。",
+     "bands": [
+      {
+       "min": 60,
+       "max": 9999,
+       "text": "不需調整。"
+      },
+      {
+       "min": 30,
+       "max": 60,
+       "level": "info",
+       "text": "遇急性病（脫水、感染）暫停。"
+      },
+      {
+       "min": 0,
+       "max": 30,
+       "level": "warn",
+       "text": "避免使用。"
+      }
+     ]
+    },
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Indomethacin",
+      "sections": "JC 核對（《兒科常用藥物劑量整理》第三、四批）",
+      "addedAt": "2026-11-12",
+      "by": "JC"
+     }
+    ]
+   },
+   "excludeRe": "eye|oph|眼"
+  }
+ ],
+ "pedsRef": [
+  {
+   "cat": "一、抗組織胺（Antihistamine）",
+   "drug": "Spiz (Peace)",
+   "form": "每 mL：triprolidine 0.25 mg + pseudoephedrine 6 mg",
+   "dose": "1 mL/kg/day，tid–qid",
+   "note": "含減充血劑",
+   "names": [
+    "spiz",
+    "peace"
+   ]
+  },
+  {
+   "cat": "一、抗組織胺（Antihistamine）",
+   "drug": "Brompheniramine maleate elixir (Dimetane)",
+   "form": "elixir",
+   "dose": "0.5 mg/kg/day，tid–qid",
+   "note": "",
+   "names": [
+    "brompheniramine",
+    "dimetane"
+   ]
+  },
+  {
+   "cat": "一、抗組織胺（Antihistamine）",
+   "drug": "Cyproheptadine (Periactin, Cypromin)",
+   "form": "錠 4 mg；糖漿 2 mg/5 mL（400 µg/mL）",
+   "dose": "125 µg/kg/dose，q8–12h",
+   "note": "",
+   "names": [
+    "cyproheptadine",
+    "periactin",
+    "cypromin"
+   ],
+   "mgPerMl": 0.4,
+   "lexi": [
+    "過敏（≥2 歲）：0.25 mg/kg/day 或 8 mg/m²/day 分 2–3 次；固定劑量 2–<7 歲 2 mg q8–12h（max 12 mg/day）、7–<15 歲 4 mg q8–12h（max 16 mg/day）、≥15 歲 4 mg q8h（常用 12–16、max 32 mg/day）。另有促進食慾、偏頭痛預防、週期性嘔吐預防等用法。腎功能差時降低起始量（判定：糖漿濃度應為 400 µg/mL；q8h 給藥時每日量（0.375 mg/kg）略高於 0.25，補 <2 歲不建議與每日上限）"
+   ]
+  },
+  {
+   "cat": "一、抗組織胺（Antihistamine）",
+   "drug": "Diphenhydramine (Benadryl, Vena)",
+   "form": "針 30 mg/vial；膠囊 50 mg",
+   "dose": "IV/IM：1–2 mg/kg/dose q4–6h，max 50 mg/dose。PO：<6 歲 6.25 mg；6–12 歲 12.5–25 mg；≥12 歲 25–50 mg，皆 q4–6h",
+   "note": "",
+   "names": [
+    "diphenhydramine",
+    "benadryl",
+    "vena"
+   ]
+  },
+  {
+   "cat": "一、抗組織胺（Antihistamine）",
+   "drug": "Hydroxyzine HCl (Vistaril)",
+   "form": "膠囊 25 mg",
+   "dose": "0.5 mg/kg/dose q6h；單次上限 <6 歲 12.5 mg、6–12 歲 25 mg、≥12 歲 100 mg",
+   "note": "",
+   "names": [
+    "hydroxyzine",
+    "vistaril"
+   ]
+  },
+  {
+   "cat": "一、抗組織胺（Antihistamine）",
+   "drug": "Ketotifen (Asumalife, Zaditen)",
+   "form": "膠囊 1 mg",
+   "dose": "6 個月–3 歲：0.5 mg（或 0.05 mg/kg/dose）bid；>3 歲：1 mg bid",
+   "note": "穩定肥大細胞",
+   "names": [
+    "ketotifen",
+    "asumalife",
+    "zaditen"
+   ]
+  },
+  {
+   "cat": "一、抗組織胺（Antihistamine）",
+   "drug": "Loratadine (Clarityne)",
+   "form": "錠 10 mg；糖漿 1 mg/mL",
+   "dose": ">30 kg：10 mg qd；≤30 kg：5 mg qd；成人 10 mg qd",
+   "note": "長效",
+   "names": [
+    "loratadine",
+    "clarityne"
+   ],
+   "mgPerMl": 1.0
+  },
+  {
+   "cat": "一、抗組織胺（Antihistamine）",
+   "drug": "Cetirizine (Zyrtec 勝克敏液)",
+   "form": "糖漿 1 mg/mL；錠 10 mg",
+   "dose": "2–5 歲：2.5 mg qd–bid；≥6 歲：5 mg qd–bid",
+   "note": "長效",
+   "names": [
+    "cetirizine"
+   ],
+   "mgPerMl": 1.0,
+   "lexi": [
+    "過敏性鼻炎／搔癢：≥6 個月 2.5 mg qd；<2 歲可增至 2.5 mg bid；2–<6 歲 2.5–5 mg qd 或 2.5 mg bid；≥6 歲 5–10 mg qd。慢性蕁麻疹 6–<12 歲 5 mg qd–bid、≥12 歲 10 mg qd，效果不足可加倍。IV 劑型另有。腎（口服）：GFR 10–29 或透析減半，<10 不建議（判定：相符；補 6 個月–2 歲劑量、≥6 歲常用 10 mg qd、腎調）"
+   ]
+  },
+  {
+   "cat": "一、抗組織胺（Antihistamine）",
+   "drug": "Levocetirizine (Xyzal)",
+   "form": "錠 5 mg",
+   "dose": "6–12 歲：2.5 mg qd；>12 歲：5 mg qd",
+   "note": "<6 歲、腎衰竭不適用",
+   "names": [
+    "levocetirizine",
+    "xyzal"
+   ]
+  },
+  {
+   "cat": "一、抗組織胺（Antihistamine）",
+   "drug": "Clarinase",
+   "form": "錠：loratadine 5 mg + pseudoephedrine 120 mg",
+   "dose": ">12 歲：1# bid",
+   "note": "長效錠，不可剝半",
+   "names": [
+    "clarinase"
+   ]
+  },
+  {
+   "cat": "二、支氣管擴張劑",
+   "drug": "Fenoterol (Strolin, Berotec)",
+   "form": "錠 2.5 mg；糖漿 0.5 mg/mL；MDI 100/200 mcg/puff",
+   "dose": "PO：<1 mL/kg/day，qid。MDI：prn 1–2 puffs",
+   "note": "",
+   "names": [
+    "fenoterol",
+    "strolin",
+    "berotec"
+   ],
+   "mgPerMl": 0.5
+  },
+  {
+   "cat": "二、支氣管擴張劑",
+   "drug": "Procaterol (Meptin)",
+   "form": "錠 25 mcg；糖漿 5 mcg/mL",
+   "dose": "<6 歲：1.25 µg/kg/dose（≈0.25 mL/kg）bid；>6 歲（20 kg）：25 mcg（≈5 mL）qd–bid；成人 50 mcg（≈10 mL）qd–bid",
+   "note": "",
+   "names": [
+    "procaterol",
+    "meptin"
+   ],
+   "mgPerMl": 0.005
+  },
+  {
+   "cat": "二、支氣管擴張劑",
+   "drug": "Salbutamol (Salutol, Ventolin, Buventol Easyhaler)",
+   "form": "錠 2 mg；DPI 100/200 µg/dose",
+   "dose": "PO：2–6 歲 1–2 mg；6–12 歲 2 mg；>12 歲 2–4 mg，皆 tid–qid。DPI：prn 1–2 下",
+   "note": "",
+   "names": [
+    "salbutamol",
+    "salutol",
+    "ventolin",
+    "buventol"
+   ]
+  },
+  {
+   "cat": "二、支氣管擴張劑",
+   "drug": "Terbutaline (Bricanyl, Butanyl) 霧化液",
+   "form": "5 mg/2 mL/vial",
+   "dose": "每次 2.5–5 mg，以 NS 稀釋至 4–5 mL",
+   "note": "",
+   "names": [
+    "terbutaline",
+    "bricanyl",
+    "butanyl"
+   ]
+  },
+  {
+   "cat": "二、支氣管擴張劑",
+   "drug": "Ipratropium (Atrovent) 霧化液",
+   "form": "—",
+   "dose": "每次 0.25–0.5 mg，以 NS 稀釋至 4–5 mL；副作用口乾、GI 蠕動失調",
+   "note": "",
+   "names": [
+    "ipratropium",
+    "atrovent"
+   ]
+  },
+  {
+   "cat": "二、支氣管擴張劑",
+   "drug": "Theophylline / Aminophylline",
+   "form": "Theophylline (Ventol, Xanthium) 錠 200 mg、糖漿（原書 5.34 mg/5 mL，疑誤植）；Aminophylline 針；Theovent 250 mg、Theolan SR",
+   "dose": "PO 起始：4–5 mg/kg/dose；PO 維持（依年齡，mg/kg/day）：6 週–6 個月 10；6 個月–1 歲 12–18；1–9 歲 20–24；9–12 歲 16；12–16 歲 13；成人 10（max 600 mg/day）；IV loading：5–6 mg/kg，20–30 分鐘輸注；IV 維持：0.5–1 mg/kg/hr；緩釋劑：Theovent：6–12 歲 125–250 mg bid；Theolan：10–16 歲 1# qd；目標濃度：新生兒呼吸中止 7–13 mg/L；支氣管痙攣 10–20 mg/L",
+   "note": "",
+   "names": [
+    "theophylline",
+    "ventol",
+    "xanthium",
+    "theovent",
+    "theolan"
+   ],
+   "lexi": [
+    "嬰兒：每日總量 =（0.2 × 週齡 + 5）× 體重，≤26 週 q8h、>26 週 q6h。≤45 kg 兒童：第 1–3 天 12–14、第 4–6 天 16、維持 20 mg/kg/day，max 600 mg/day；專家建議氣喘維持改用 10 → 13 → 16 mg/kg/day。無法監測濃度者 ≤16 mg/kg/day 且 ≤400 mg/day。目標 5–15 mcg/mL（早產兒呼吸中止 6–12），>20 為中毒。不建議用於氣喘急性發作；肥胖用理想體重（判定：劑量大致相符；目標濃度改 5–15，補「急性發作不建議」）"
+   ]
+  },
+  {
+   "cat": "三、鎮咳化痰藥",
+   "drug": "Antica 伏咳糖漿",
+   "form": "每 mL：bromhexine 0.8 mg、doxylamine 0.75 mg、orciprenaline 0.5 mg；120 mL/bot",
+   "dose": "1–6 歲 5 mL bid–tid；6–14 歲 5 mL tid；成人 10 mL tid",
+   "note": "",
+   "names": [
+    "antica"
+   ]
+  },
+  {
+   "cat": "三、鎮咳化痰藥",
+   "drug": "Medicon",
+   "form": "每 mL：dextromethorphan 2.5 mg、potassium cresolsulfonate 15 mg；60 mL/bot",
+   "dose": "1–7 歲 1–1.5 mL tid；8–14 歲 2–3 mL tid",
+   "note": "",
+   "names": [
+    "medicon"
+   ]
+  },
+  {
+   "cat": "三、鎮咳化痰藥",
+   "drug": "Ambroxol",
+   "form": "錠 30 mg；液 3 mg/mL",
+   "dose": "<2 歲 7.5 mg bid；2–5 歲 7.5 mg tid；5–10 歲 15 mg bid–tid",
+   "note": "",
+   "names": [
+    "ambroxol"
+   ],
+   "mgPerMl": 3.0
+  },
+  {
+   "cat": "三、鎮咳化痰藥",
+   "drug": "Guaifenesin (Robitussin)",
+   "form": "20 mg/mL，120 mL/bot",
+   "dose": "6 個月–2 歲 25–50 mg q4h（≤300 mg/day）；2–6 歲 50–100 mg q4h（≤600 mg/day）；6–12 歲 100–200 mg q4h（≤1.2 g/day）",
+   "note": "",
+   "names": [
+    "guaifenesin",
+    "robitussin"
+   ],
+   "mgPerMl": 20
+  },
+  {
+   "cat": "三、鎮咳化痰藥",
+   "drug": "Secorine",
+   "form": "每 20 mL：dl-methylephedrine 20 mg、chlorpheniramine 2 mg、guaifenesin 100 mg",
+   "dose": "1–2 mL/kg/day，qid",
+   "note": "",
+   "names": [
+    "secorine"
+   ]
+  },
+  {
+   "cat": "四、退燒止痛消炎劑（NSAIDs）",
+   "drug": "Acetaminophen (Panadol)",
+   "form": "錠 500 mg；糖漿 24 mg/mL",
+   "dose": "PO 10–15 mg/kg/dose q6h",
+   "note": "注意肝毒性",
+   "names": [
+    "acetaminophen",
+    "panadol",
+    "paracetamol",
+    "scanol"
+   ],
+   "mgPerMl": 24.0
+  },
+  {
+   "cat": "四、退燒止痛消炎劑（NSAIDs）",
+   "drug": "Ibuprofen",
+   "form": "錠 400 mg；糖漿 20 mg/mL",
+   "dose": "PO 5–10 mg/kg/dose（≈0.25–0.5 mL/kg）q6–8h",
+   "note": "幼年型類風濕關節炎（JRA）：30–40 mg/kg/day ÷ q6h，max 2,400 mg/day",
+   "names": [
+    "ibuprofen"
+   ],
+   "mgPerMl": 20.0
+  },
+  {
+   "cat": "四、退燒止痛消炎劑（NSAIDs）",
+   "drug": "Naproxen",
+   "form": "錠 250 mg",
+   "dose": "PO 5–6 mg/kg/dose q12h，max 1,000 mg/day",
+   "note": "JRA：10–15 mg/kg/day ÷ q12h，max 1,000 mg/day",
+   "names": [
+    "naproxen"
+   ]
+  },
+  {
+   "cat": "四、退燒止痛消炎劑（NSAIDs）",
+   "drug": "Aspirin (Cardiopirin, Ascotyl, Aspirin Protect, Bokey)",
+   "form": "錠 100 mg",
+   "dose": "退燒止痛少用（10–15 mg/kg/dose q4–6h）",
+   "note": "川崎氏症：急性發燒期 80–100 mg/kg/day ÷ qid；恢復期 3–5 mg/kg/day qd",
+   "names": [
+    "aspirin",
+    "cardiopirin",
+    "ascotyl",
+    "bokey"
+   ]
+  },
+  {
+   "cat": "四、退燒止痛消炎劑（NSAIDs）",
+   "drug": "Diclofenac (Voren supp.)",
+   "form": "塞劑 12.5 mg",
+   "dose": "肛塞 0.1–0.8 mg/kg/dose q6h",
+   "note": "",
+   "names": [
+    "diclofenac",
+    "voren"
+   ],
+   "lexi": [
+    "Diclofenac 塞劑（Voren 12.5 mg）：術後疼痛：首劑 1–2 mg/kg，之後 1 mg/kg tid；單次 max 50 mg、每日 max 3 mg/kg，療程 ≤4 天，劑量取最接近的塞劑規格。JIA：1–3 mg/kg/day 分 2–3 次。腎：eGFR 30–60 遇急性病暫停，<30 避免（判定：頻次應為 tid；q6h × 0.8 mg/kg = 3.2 mg/kg/day 超過上限；補療程 ≤4 天）"
+   ]
+  },
+  {
+   "cat": "四、退燒止痛消炎劑（NSAIDs）",
+   "drug": "Indomethacin (Inteban)",
+   "form": "塞劑 50 mg；錠 25 mg",
+   "dose": "肛塞 1.5–2.5 mg/kg/day ÷ q6h",
+   "note": "max 4 mg/kg/day",
+   "names": [
+    "indomethacin",
+    "inteban"
+   ],
+   "lexi": [
+    "發炎／類風濕（≥2 歲，口服速效）：起始 1–2 mg/kg/day 分 3–4 次，max 4 mg/kg/day 或 200 mg/day 取低者。Lexidrug 兒科肛門劑型僅列 ≥15 歲痛風急性發作 50 mg tid。腎：eGFR 30–60 遇急性病暫停，<30 避免（判定：大致相符；補 ≥2 歲、每日上限 200 mg、腎功能限制；兒童塞劑劑量屬外推）"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 抗心律不整 / 急救",
+   "drug": "Adenosine (Adenozer)",
+   "form": "針 6 mg/vial",
+   "dose": "近心端靜脈快速推注（1–2 秒）0.1–0.2 mg/kg/dose；每 2 分鐘加 0.05 mg/kg，至單次 max 0.25 mg/kg 或 12 mg",
+   "note": "PSVT。副作用胸痛、頭暈、潮紅、呼吸困難。禁忌：二、三度 AV block、病竇症候群",
+   "names": [
+    "adenosine",
+    "adenozer"
+   ],
+   "lexi": [
+    "血行不穩：0.1 mg/kg（max 6 mg）→ 0.2 mg/kg（max 12 mg）。穩定且 <50 kg：0.05–0.1 mg/kg，每 1–2 分鐘加 0.05–0.1 mg/kg，單次 max 0.3 mg/kg 或 12 mg。≥50 kg：6 mg → 12 mg。快推後 NS 5–10 mL flush（判定：大致相符；補首劑 max 6 mg。禁忌另含氣喘／支氣管痙攣、症狀性心搏過緩；theophylline 降效，dipyridamole、carbamazepine 宜降首劑）"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 抗心律不整 / 急救",
+   "drug": "Epinephrine (Bosmin)",
+   "form": "針劑（原書印 1 g/vial，應為 1 mg/mL）",
+   "dose": "急救 IV 0.01 mg/kg/dose；ETT 0.1 mg/kg/dose，q3–5 min",
+   "note": "原書印「0.01 kg/dose」",
+   "names": [
+    "epinephrine",
+    "bosmin"
+   ],
+   "lexi": [
+    "心跳停止／心搏過緩：IV/IO 0.01 mg/kg（0.1 mg/mL 取 0.1 mL/kg），max 1 mg，q3–5 min；ETT 0.1 mg/kg（1 mg/mL 取 0.1 mL/kg），max 2.5 mg。過敏性休克 IM 0.01 mg/kg，<30 kg max 0.3 mg、≥30 kg max 0.5 mg（判定：誤植確認，需更正並補上限）"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 抗心律不整 / 急救",
+   "drug": "Isoproterenol (Isuprel)",
+   "form": "針 0.2 mg/mL",
+   "dose": "IV drip 0.05–2 µg/kg/min",
+   "note": "心搏過緩、支氣管痙攣",
+   "names": [
+    "isoproterenol",
+    "isuprel"
+   ],
+   "lexi": [
+    "嚴重心搏過緩／AV block 0.05–0.5，必要時至 2 µg/kg/min。不建議用於支氣管痙攣：兒童難治性氣喘曾發生心肌壞死與死亡（判定：刪除支氣管痙攣適應症）"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 抗心律不整 / 急救",
+   "drug": "Lidocaine (Xylocaine)",
+   "form": "針 20 mg/mL",
+   "dose": "初始 1 mg/kg（原書：滴注 30 分鐘）；維持 20–50 mcg/kg/min",
+   "note": "室性心律失常",
+   "names": [
+    "lidocaine",
+    "xylocaine"
+   ],
+   "lexi": [
+    "VF／無脈 VT：1 mg/kg IV/IO 推注，距開始滴注 >15 分鐘可再推一次；維持 20–50 mcg/kg/min，休克、肝病、心跳停止、心衰竭者 ≤20；ETT 2–3 mg/kg（判定：「30 分鐘」錯誤，需更正）"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 抗心律不整 / 急救",
+   "drug": "Digoxin (Lanoxin, Cardiacin elixir)",
+   "form": "錠 0.25 mg；液 0.05 mg/mL；針 0.5 mg/amp",
+   "dose": "PO 5–10 µg/kg/day，qd–bid",
+   "note": "心律不整、心衰竭。目標 0.8–2 ng/mL，給藥前或給藥後 6 h 抽血。中毒：噁心嘔吐、無力、心律不整",
+   "names": [
+    "digoxin",
+    "lanoxin",
+    "cardiacin"
+   ],
+   "mgPerMl": 0.05,
+   "lexi": [
+    "維持量依年齡（口服液，µg/kg/day）：1–24 個月 10–15；2–5 歲 8–10；5–10 歲 5–10；>10 歲 2.5–5；≤10 歲分 bid、>10 歲 qd。IV 約為口服的 80%。loading 可省略，若給則 TDD 分 1/2、1/4、1/4 間隔 6–8 h。心衰竭目標 0.5–0.9 ng/mL，>2 ng/mL 為中毒。腎：GFR 30–50 給 75%、10–29 給 50%、<10 或透析給 25%；依瘦體重給藥（判定：單一範圍會讓嬰兒劑量不足、>10 歲過量；目標濃度需改）"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 降血壓 / 利尿",
+   "drug": "Hydralazine (Apresoline)",
+   "form": "錠 10、50 mg",
+   "dose": "IV 0.1–0.2 mg/kg/dose q4–6h，max 20 mg；PO 1–5 mg/kg/day ÷ q6–12h",
+   "note": "反射性心搏過速、頭痛；可逆性藥物性類狼瘡",
+   "names": [
+    "hydralazine",
+    "apresoline"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 降血壓 / 利尿",
+   "drug": "Captopril (Capoten)",
+   "form": "錠 25 mg",
+   "dose": "PO 0.01–0.5 mg/kg/dose tid，max 6 mg/kg/day",
+   "note": "ACEI；咳嗽；低血壓、高血鉀不宜",
+   "names": [
+    "captopril",
+    "capoten"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 降血壓 / 利尿",
+   "drug": "Enalapril (Renitec)",
+   "form": "錠 5、20 mg",
+   "dose": "0.1 mg/kg/dose qd–bid，max 0.5 mg/kg/dose（原書）",
+   "note": "",
+   "names": [
+    "enalapril",
+    "renitec"
+   ],
+   "lexi": [
+    "高血壓：起始 0.08 mg/kg/day（起始 max 5 mg/day），max 0.6 mg/kg/day 且 ≤40 mg/day。心衰竭：起始 0.1 mg/kg/day 分 1–2 次，2 週內調至 max 0.5 mg/kg/day。新生兒：0.04–0.1 mg/kg/day q24h，0.1 mg/kg 起始曾致低血壓與少尿。腎：仿單 GFR <30 不建議；另 GFR 10–50 給 75%、<10 或透析給 50%（判定：上限應為 /day 非 /dose；bid 給 0.1 mg/kg 已超過起始量）"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 降血壓 / 利尿",
+   "drug": "Nifedipine (Adalat)",
+   "form": "膠囊 10 mg",
+   "dose": "0.25 mg/kg/dose tid，單次 max 10 mg，每日 max 1–2 mg/kg/day",
+   "note": "",
+   "names": [
+    "nifedipine",
+    "adalat"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 降血壓 / 利尿",
+   "drug": "Propranolol (Inderal)",
+   "form": "錠 10 mg",
+   "dose": "起始 0.5–1 mg/kg/day ÷ tid–qid，漸增至 2–4 mg/kg/day",
+   "note": "高血壓、心律不整、TOF 缺氧發作、甲亢、HCM；氣喘慎用",
+   "names": [
+    "propranolol",
+    "inderal"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 降血壓 / 利尿",
+   "drug": "Furosemide (Lasix)",
+   "form": "針 20 mg/amp；錠 40 mg；液 10 mg/mL",
+   "dose": "IV 1 mg/kg/dose q6–12h；PO 1–2 mg/kg/dose qd–qid",
+   "note": "高血壓、心衰竭、水腫、少尿；脫水、電解質失衡",
+   "names": [
+    "furosemide",
+    "lasix"
+   ],
+   "mgPerMl": 10.0
+  },
+  {
+   "cat": "六、心血管藥物 / 降血壓 / 利尿",
+   "drug": "Spironolactone (Aldactone)",
+   "form": "錠 25 mg",
+   "dose": "PO 1–3 mg/kg/day ÷ qd–tid，max 400 mg/day（原書）",
+   "note": "心衰竭、水腫、少尿",
+   "names": [
+    "spironolactone",
+    "aldactone"
+   ],
+   "lexi": [
+    "水腫：起始 1–3 mg/kg/day q6–24h，max 4–6 mg/kg/day 且 ≤400 mg/day。高血壓：起始 1 mg/kg/day，max 3.3 mg/kg/day 且 ≤100 mg/day。BPD 嬰兒 1.5 mg/kg q12h。市售懸液與錠劑不等效（血中濃度高 15–37%），處方以 mg 開立。腎：輕中度延長間隔，重度避免；監測血鉀（判定：相符；補高血壓上限 100 mg/day 與懸液不等效）"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 降血壓 / 利尿",
+   "drug": "Dipyridamole (Persantin)",
+   "form": "錠 25、75 mg",
+   "dose": "2–6 mg/kg/day PO tid",
+   "note": "",
+   "names": [
+    "dipyridamole",
+    "persantin"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 強心 / 升壓（IV drip）",
+   "drug": "Dobutamine (Dobutrex)",
+   "form": "12.5 mg/mL",
+   "dose": "2–10 µg/kg/min，max 20 µg/kg/min",
+   "note": "心衰竭",
+   "names": [
+    "dobutamine",
+    "dobutrex"
+   ],
+   "lexi": [
+    "起始 0.5–1，常用 2–20 mcg/kg/min（判定：補起始劑量）"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 強心 / 升壓（IV drip）",
+   "drug": "Dopamine",
+   "form": "40 mg/mL",
+   "dose": "低 2–5（增加腎灌流）；中 5–15（增加心收縮力、CO）；高 >20（血管收縮），max 20 µg/kg/min",
+   "note": "心衰竭、休克",
+   "names": [
+    "dopamine"
+   ],
+   "lexi": [
+    "2–20 mcg/kg/min，以 5–10 遞增；兒童偏好低劑量端；成人敗血性休克已不作首選（判定：劑量相符；不宜再教「低劑量護腎」）"
+   ]
+  },
+  {
+   "cat": "六、心血管藥物 / 強心 / 升壓（IV drip）",
+   "drug": "Milrinone (Primacor)",
+   "form": "1 mg/mL（10 mL/amp）",
+   "dose": "Loading 50 µg/kg 輸注 15 分鐘；維持 0.25–0.75 µg/kg/min，漸調",
+   "note": "心衰竭",
+   "names": [
+    "milrinone",
+    "primacor"
+   ],
+   "lexi": [
+    "Loading 可省略（低血壓風險），若給 50 µg/kg 10–60 分鐘；維持 0.25–0.75；先心術後 LCOS 預防 75 µg/kg 60 分鐘 → 0.75；腎功能差需個別調整（判定：相符；補「loading 可省略」）"
+   ]
+  },
+  {
+   "cat": "七、神經科用藥 / 急性癲癇處理（IV）",
+   "drug": "Diazepam (Valium)",
+   "form": "5 mg/mL/amp",
+   "dose": "Loading：IV 0.1–0.3 mg/kg/dose（max 5 mg）；Rectal 0.5 mg/kg/dose（max 20 mg）；5 分鐘未停可再給一次；維持：—；目標 —",
+   "note": "嚴重換氣不足、CO2 滯留、昏迷、重症肌無力、神經肌肉疾病",
+   "names": [
+    "diazepam",
+    "valium"
+   ],
+   "lexi": [
+    "Diazepam IV：癲癇重積：0.15–0.2 mg/kg 緩推（兒童 ≤1–2 mg/min），max 10 mg/dose，5 分鐘後可重複一次（判定：上限需改 10 mg）",
+    "Diazepam 肛門：2–<6 歲 0.5 mg/kg；6–<12 歲 0.3 mg/kg；≥12 歲 0.2 mg/kg；皆 max 20 mg（判定：原書劑量只適用 2–6 歲）"
+   ]
+  },
+  {
+   "cat": "七、神經科用藥 / 急性癲癇處理（IV）",
+   "drug": "Lorazepam (Ativan)",
+   "form": "2 mg/mL/amp",
+   "dose": "Loading：IV 0.1 mg/kg/dose（max 5 mg）；5 分鐘未停可再給一次；維持：—；目標 —",
+   "note": "同上",
+   "names": [
+    "lorazepam",
+    "ativan"
+   ],
+   "lexi": [
+    "0.1 mg/kg 緩推，max 4 mg，5–10 分鐘後可重複一次；等量稀釋，≤2 mg/min（判定：上限需改 4 mg）"
+   ]
+  },
+  {
+   "cat": "七、神經科用藥 / 急性癲癇處理（IV）",
+   "drug": "Levetiracetam (Keppra)",
+   "form": "500 mg/5 mL/amp",
+   "dose": "Loading：10–20 mg/kg；稀釋至 ≥100 mL，15 分鐘輸注；維持：10 mg/kg/dose q8–12h（max 3,000 mg/day），IVF ≥30 min；追加 bolus 10 mg/kg IVF >30 min；目標 10–45 mcg/mL（自費）",
+   "note": "對本藥過敏",
+   "names": [
+    "levetiracetam",
+    "keppra"
+   ],
+   "lexi": [
+    "癲癇重積：AES 60 mg/kg（max 4,500 mg），NCS 20–60 mg/kg。濃度 ≤15 mg/mL 輸注 15 分鐘，重積時可 2–5 mg/kg/min；未稀釋 100 mg/mL 5 分鐘亦有報告。4–<16 歲維持 10 → 30 mg/kg/dose bid，max 3,000 mg/day；參考範圍 12–46 mcg/mL；GFR <50 給 50%（判定：Loading 偏低需更正；原書稀釋規定較保守）"
+   ]
+  },
+  {
+   "cat": "七、神經科用藥 / 急性癲癇處理（IV）",
+   "drug": "Phenobarbital (Luminal)",
+   "form": "100 mg/mL/amp",
+   "dose": "Loading：10–20 mg/kg，IVF ≥30 min；維持：5 mg/kg/24h ÷ q12h，IVF ≥30 min；依濃度追加 5 mg/kg；目標 15–40 µg/mL",
+   "note": "CNS 抑制、呼吸衰竭；>20 mg/kg 或與 diazepam 間隔太近注意 apnea",
+   "names": [
+    "phenobarbital",
+    "luminal"
+   ]
+  },
+  {
+   "cat": "七、神經科用藥 / 急性癲癇處理（IV）",
+   "drug": "Valproate (Depakine)",
+   "form": "400 mg/4 mL/amp",
+   "dose": "Loading：15 mg/kg，3–5 分鐘推注；維持：10 mg/kg/dose q8h 或 1 mg/kg/hr（max 60 mg/kg/day）；目標 Total 50–100 µg/mL；Free 5–20 µg/mL",
+   "note": "嚴重肝炎",
+   "names": [
+    "valproate",
+    "depakine"
+   ]
+  },
+  {
+   "cat": "七、神經科用藥 / 急性癲癇處理（IV）",
+   "drug": "Phenytoin (Dilantin)",
+   "form": "250 mg/5 mL/amp",
+   "dose": "Loading：10–20 mg/kg 緩慢 IV（1–3 mg/kg/min 或 ≤50 mg/min），避免低血壓及心律不整；維持：5 mg/kg/24h ÷ q8–12h；依濃度追加 5 mg/kg；目標 10–20 µg/mL",
+   "note": "竇性心搏過緩、SA block、二三度 AV block、Adams-Stokes；不可與含葡萄糖溶液混合（結晶）",
+   "names": [
+    "phenytoin",
+    "dilantin"
+   ],
+   "lexi": [
+    "重積 20 mg/kg（max 1,000 mg）；速率取 1–3 mg/kg/min 與 50 mg/min 較慢者（新生兒 0.5–1）。維持起始 5 mg/kg/day ÷ 2–3 次（常用 4–8，幼兒可 8–10），max 300 mg/day。Total 10–20（新生兒 8–15），free 1–2 mcg/mL。只用 NS 稀釋、4 小時內輸完、加 in-line filter；有 fosphenytoin 時優先；亞裔可考慮先驗 HLA-B*1502（判定：大致相符；補上限、低白蛋白看 free level、HLA-B*1502）"
+   ]
+  },
+  {
+   "cat": "七、神經科用藥 / 降腦壓",
+   "drug": "Glycerol",
+   "form": "",
+   "dose": "0.5 mL/kg/hr 或 10 mL/kg/day，continuous drip",
+   "note": "",
+   "names": [
+    "glycerol"
+   ]
+  },
+  {
+   "cat": "七、神經科用藥 / 降腦壓",
+   "drug": "Mannitol",
+   "form": "",
+   "dose": "2.5–5 mL/kg/dose IVF q6h（max 75 mL/dose）",
+   "note": "",
+   "names": [
+    "mannitol"
+   ]
+  },
+  {
+   "cat": "七、神經科用藥 / 抗發炎",
+   "drug": "Dexamethasone",
+   "form": "",
+   "dose": "0.15 mg/kg/dose IV q6h（max 5 mg/dose）",
+   "note": "",
+   "names": [
+    "dexamethasone"
+   ]
+  },
+  {
+   "cat": "七、神經科用藥 / 抗發炎",
+   "drug": "IVIG",
+   "form": "",
+   "dose": "2 g/kg 分 2–5 天；腸病毒重症 1 g/kg 單次立即給予",
+   "note": "",
+   "names": [
+    "ivig"
+   ]
+  },
+  {
+   "cat": "七、神經科用藥 / 神經修復",
+   "drug": "Pyridoxine（非活性 B6）",
+   "form": "僅口服",
+   "dose": "Pyridoxine-dependent seizures 50–200 mg/day；神經病變營養 50 mg/day",
+   "note": "",
+   "names": [
+    "pyridoxine"
+   ]
+  },
+  {
+   "cat": "七、神經科用藥 / 神經修復",
+   "drug": "Pyridoxal phosphate（PLP，活性 B6）",
+   "form": "針劑",
+   "dose": "30–50 mg/kg/day IV ÷ q6h，用於 PLP-dependent seizures",
+   "note": "",
+   "names": [
+    "pyridoxal phosphate"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Aluminum magnesia oral susp. (AMG)",
+   "form": "",
+   "dose": "1–2 mL/kg/day q2–6h；消化性潰瘍：兒童 5–10 mL q3–6h，或餐後 1–3 h 及 qhs",
+   "note": "制酸 / 抑酸",
+   "names": [
+    "aluminum magnesia",
+    "amg"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Cimetidine (Tagamet)",
+   "form": "",
+   "dose": "20–40 mg/kg/day ÷ q6h",
+   "note": "制酸 / 抑酸",
+   "names": [
+    "cimetidine",
+    "tagamet"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Fina",
+   "form": "",
+   "dose": "1–2#/40 kg/dose q4–6h",
+   "note": "制酸 / 抑酸",
+   "names": [
+    "fina"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Gasgel (Ditopax)",
+   "form": "",
+   "dose": "1–2#/40 kg/dose q4–6h",
+   "note": "制酸 / 抑酸",
+   "names": [
+    "gasgel",
+    "ditopax"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Magnesium oxide",
+   "form": "",
+   "dose": "0.5–1 g/40 kg/day q4–6h（制酸）；0.5–1 g/40 kg/day qid（緩瀉）",
+   "note": "制酸 / 抑酸",
+   "names": [
+    "magnesium oxide"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Omeprazole (Losec)",
+   "form": "",
+   "dose": "原書：2–8 m/g/kg/dose tid（疑誤植，見審閱節）",
+   "note": "制酸 / 抑酸",
+   "names": [
+    "omeprazole",
+    "losec"
+   ],
+   "lexi": [
+    "GERD：0.7–1 mg/kg/day qd 或分 bid（文獻至 3.5），max 40 mg/day；固定劑量 3–<5 kg 2.5 mg、5–<10 kg 5 mg、10–<20 kg 10 mg、≥20 kg 20 mg，qd。嗜酸性食道炎 1 mg/kg/dose bid（max 20 mg/dose）。H. pylori：15–<25 kg 20 mg bid、25–<35 kg 30 mg bid、≥35 kg 40 mg bid，共 14 天。早產兒不建議常規使用；CYP2C19 代謝；腎功能不需調整（判定：誤植確認；原書劑量與頻次皆需改）"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Ranitidine (Zantac)",
+   "form": "",
+   "dose": "2–4 mg/kg/day",
+   "note": "制酸 / 抑酸",
+   "names": [
+    "ranitidine",
+    "zantac"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Famotidine (Gaster)",
+   "form": "",
+   "dose": "1–2 mg/kg/day qd–q12h",
+   "note": "制酸 / 抑酸",
+   "names": [
+    "famotidine",
+    "gaster"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Sucralfate（錠 1 g；懸液 100 mg/mL）",
+   "form": "",
+   "dose": "2#/40 kg/dose qid；兒童 40–80 mg/kg/day ÷ q6h；成人 1 g qid（餐後 1 h 及 qhs）",
+   "note": "制酸 / 黏膜保護",
+   "names": [
+    "sucralfate"
+   ],
+   "mgPerMl": 100.0
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Ulcerin",
+   "form": "",
+   "dose": "2–4#/40 kg/dose q4–6h",
+   "note": "制酸",
+   "names": [
+    "ulcerin"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Dimethicone",
+   "form": "",
+   "dose": "2–4 mL/40 kg/dose q6h",
+   "note": "排氣",
+   "names": [
+    "dimethicone"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Dicyclomine (Bentyl)",
+   "form": "",
+   "dose": "1#/40 kg/dose qid",
+   "note": "抗膽鹼 / 止吐",
+   "names": [
+    "dicyclomine",
+    "bentyl"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Donnatal elixir",
+   "form": "",
+   "dose": "0.5–1 mL/kg/day qid",
+   "note": "抗膽鹼 / 止吐",
+   "names": [
+    "donnatal"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Hyoscine-N-butylbromide (Buscopan)",
+   "form": "",
+   "dose": "1–2#/40 kg/day tid–qid；0.5 mg/kg IM",
+   "note": "抗膽鹼 / 止吐",
+   "names": [
+    "hyoscine-n-butylbromide",
+    "buscopan"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Propantheline",
+   "form": "",
+   "dose": "0.375 mg/kg qid",
+   "note": "抗膽鹼 / 止吐",
+   "names": [
+    "propantheline"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Prochlorperazine (Novamin)",
+   "form": "",
+   "dose": "0.13 mg/kg IM；0.1–0.15 mg/kg/dose tid–qid，max 40 mg/day",
+   "note": "抗膽鹼 / 止吐",
+   "names": [
+    "prochlorperazine",
+    "novamin"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Mepenzolate (Trancolon)",
+   "form": "",
+   "dose": "1–2#/40 kg/day tid–qid",
+   "note": "抗膽鹼 / 止吐",
+   "names": [
+    "mepenzolate",
+    "trancolon"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Cholestyramine (Questran)",
+   "form": "",
+   "dose": "BW/40 包 qid；起始 4 g/day bid，維持 8–24 g/day",
+   "note": "止瀉",
+   "names": [
+    "cholestyramine",
+    "questran"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Galantase",
+   "form": "",
+   "dose": "0.25–0.5 g/dose qid",
+   "note": "止瀉",
+   "names": [
+    "galantase"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Lactobacillus casei (Biofermin)",
+   "form": "",
+   "dose": "1#/10 kg/dose qid",
+   "note": "止瀉",
+   "names": [
+    "lactobacillus casei",
+    "biofermin"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Biothree",
+   "form": "",
+   "dose": "0.5–1 tab tid",
+   "note": "止瀉",
+   "names": [
+    "biothree"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Kaolin-pectin (Kaopectin)",
+   "form": "",
+   "dose": "2 mL/kg/day qid",
+   "note": "止瀉",
+   "names": [
+    "kaolin-pectin",
+    "kaopectin"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Bisacodyl (Dulcolax)",
+   "form": "",
+   "dose": "1–2#/40 kg/dose；兒童 0.3 mg/kg/day 或 5–10 mg，max 30 mg/day",
+   "note": "緩瀉",
+   "names": [
+    "bisacodyl",
+    "dulcolax"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Calcium polycarbophil (Mitrolan)",
+   "form": "",
+   "dose": "1–2#/40 kg/dose tid",
+   "note": "緩瀉",
+   "names": [
+    "calcium polycarbophil",
+    "mitrolan"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Fleet enema",
+   "form": "",
+   "dose": "5–10 mL/kg/dose",
+   "note": "緩瀉",
+   "names": [
+    "fleet"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Lactulose 10 g/15 mL",
+   "form": "",
+   "dose": "0.5–2 mL/kg/day tid–qid；慢性便秘兒童 7.5 mL/day 早餐後；肝腦病變：嬰兒 2.5–10 mL/day、兒童 40–90 mL/day，tid–qid",
+   "note": "緩瀉",
+   "names": [
+    "lactulose"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Magnesium citrate oral soln",
+   "form": "",
+   "dose": "2–4 mL/kg/dose",
+   "note": "緩瀉",
+   "names": [
+    "magnesium citrate"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Sennoside A+B",
+   "form": "",
+   "dose": "1–2#/40 kg/dose qd",
+   "note": "緩瀉",
+   "names": [
+    "sennoside"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Bethanechol",
+   "form": "",
+   "dose": "0.3–0.6 mg/kg/day tid–qid",
+   "note": "促進蠕動",
+   "names": [
+    "bethanechol"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Mosapride",
+   "form": "",
+   "dose": "1–2#/40 kg/dose tid",
+   "note": "促進蠕動",
+   "names": [
+    "mosapride"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Metoclopramide (Primperan)",
+   "form": "",
+   "dose": "0.1 mL/kg/dose qid（PO）；0.2 mg/kg/dose IM",
+   "note": "促進蠕動",
+   "names": [
+    "metoclopramide",
+    "primperan"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Phenobarbital (Luminal)",
+   "form": "",
+   "dose": "1–6 mg/kg/day",
+   "note": "抗膽汁滯留",
+   "names": [
+    "phenobarbital",
+    "luminal"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Ursodeoxycholic acid (Urso)",
+   "form": "",
+   "dose": "新生兒 10–18 mg/kg/day qd–q8h；嬰兒 30 mg/kg/day q8–12h",
+   "note": "抗膽汁滯留",
+   "names": [
+    "ursodeoxycholic acid",
+    "urso"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Festal、Orogallium",
+   "form": "",
+   "dose": "1#/40 kg/dose tid",
+   "note": "胰酵素",
+   "names": [
+    "festal",
+    "orogallium"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥",
+   "drug": "Loperamide (Imodium)",
+   "form": "",
+   "dose": "一般：1–2#/40 kg/dose；急性腹瀉（首 24 h）：2–5 歲（13–20 kg）1 mg tid；6–8 歲（20–30 kg）2 mg tid；9–12 歲（>30 kg）2 mg tid；單次 max 2 mg；之後每次稀便給 0.1 mg/kg/dose；慢性腹瀉：0.08–0.24 mg/kg/day ÷ bid–tid，max 2 mg/dose",
+   "note": "",
+   "names": [
+    "loperamide",
+    "imodium"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥 / 其他（原書第 10 項）",
+   "drug": "Clarithromycin",
+   "form": "",
+   "dose": "7.5 mg/kg/dose bid",
+   "note": "",
+   "names": [
+    "clarithromycin"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥 / 其他（原書第 10 項）",
+   "drug": "Hepforte",
+   "form": "",
+   "dose": "1#/40 kg/dose tid",
+   "note": "",
+   "names": [
+    "hepforte"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥 / 其他（原書第 10 項）",
+   "drug": "Multivitamin S",
+   "form": "",
+   "dose": "1#/40 kg/dose qd",
+   "note": "",
+   "names": [
+    "multivitamin s"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥 / 其他（原書第 10 項）",
+   "drug": "Neomycin",
+   "form": "",
+   "dose": "12.5–25 mg/kg/dose q6h",
+   "note": "",
+   "names": [
+    "neomycin"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥 / 其他（原書第 10 項）",
+   "drug": "Penicillamine",
+   "form": "",
+   "dose": "5 mg/kg/dose qid",
+   "note": "",
+   "names": [
+    "penicillamine"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥 / 其他（原書第 10 項）",
+   "drug": "Propranolol (Inderal)",
+   "form": "",
+   "dose": "1 mg/kg/dose qid",
+   "note": "",
+   "names": [
+    "propranolol",
+    "inderal"
+   ]
+  },
+  {
+   "cat": "八、腸胃用藥 / 其他（原書第 10 項）",
+   "drug": "Octreotide (Sandostatin)",
+   "form": "",
+   "dose": "1–10 µg/kg/day IVF",
+   "note": "",
+   "names": [
+    "octreotide",
+    "sandostatin"
+   ]
+  },
+  {
+   "cat": "九、調節電解質藥劑",
+   "drug": "Albumin",
+   "form": "",
+   "dose": "0.5–1 g/kg/dose IVF 2–3 hr，qd–bid",
+   "note": "",
+   "names": [
+    "albumin"
+   ]
+  },
+  {
+   "cat": "九、調節電解質藥劑",
+   "drug": "Calcium gluconate",
+   "form": "",
+   "dose": "1 mL/kg/dose 稀釋後 IV，輸注 >15 min，qd–q8h",
+   "note": "需緩慢輸注",
+   "names": [
+    "calcium gluconate"
+   ]
+  },
+  {
+   "cat": "九、調節電解質藥劑",
+   "drug": "Calcium carbonate",
+   "form": "",
+   "dose": "100–300 mg/kg/day PO tid–qid",
+   "note": "空腹吃升鈣；隨餐吃降磷",
+   "names": [
+    "calcium carbonate"
+   ]
+  },
+  {
+   "cat": "九、調節電解質藥劑",
+   "drug": "Kayexalate",
+   "form": "",
+   "dose": "1 g/kg/dose PO；或 enema qid",
+   "note": "",
+   "names": [
+    "kayexalate"
+   ]
+  },
+  {
+   "cat": "九、調節電解質藥劑",
+   "drug": "Lactulose",
+   "form": "",
+   "dose": "1 mL/kg/day PO tid–qid",
+   "note": "",
+   "names": [
+    "lactulose"
+   ]
+  },
+  {
+   "cat": "九、調節電解質藥劑",
+   "drug": "Potassium supplement (Ultra-K)",
+   "form": "",
+   "dose": "2–3 mEq/kg/day PO",
+   "note": "15 mL 含 K+ 20 mEq",
+   "names": [
+    "potassium supplement",
+    "ultra-k"
+   ]
+  },
+  {
+   "cat": "十、麻醉止痛藥（鴉片類）",
+   "drug": "Codeine（30 mg/tab）；12 歲以下不建議",
+   "form": "",
+   "dose": "≥12 歲。止痛 0.5–1 mg/kg/dose q4–6h（max 60 mg/dose）；鎮咳 1–1.5 mg/kg/day ÷ q4–6h",
+   "note": "依賴、CNS 與呼吸抑制、便秘",
+   "names": [
+    "codeine"
+   ]
+  },
+  {
+   "cat": "十、麻醉止痛藥（鴉片類）",
+   "drug": "Fentanyl（0.5 mg/10 mL）",
+   "form": "",
+   "dose": "止痛 0.5–2 µg/kg/dose IV q1–2h，或 1–2 µg/kg/dose IV/IM q30–60 min prn；鎮靜 1–3 µg/kg/h 持續滴注",
+   "note": "成癮、CNS 與呼吸抑制",
+   "names": [
+    "fentanyl"
+   ],
+   "lexi": [
+    "急性疼痛 <50 kg：0.5–1 µg/kg/dose q1–2h（必要時 q30 min），max 50 µg/dose（ICU 可至 100）；≥50 kg：25–50 µg。滴注 <50 kg：0.5–2.5 µg/kg/h；ICU 先 bolus 1–2 µg/kg，再 1 µg/kg/h 起，常用 1–3，少數需 5。鼻噴 1.5–2 µg/kg（max 100 µg）。緩推 3–5 分鐘，>5 µg/kg 推 5–10 分鐘，以免胸壁僵直。GFR 10–50 給 75%、<10 給 50%（判定：大致相符；補單次上限、推注速率、腎調）"
+   ]
+  },
+  {
+   "cat": "十、麻醉止痛藥（鴉片類）",
+   "drug": "Meperidine (Demerol)（50 mg/mL/amp）；12 歲以下不建議",
+   "form": "",
+   "dose": "≥12 歲，IM/IV/SC：<50 kg 0.8–1 mg/kg/dose q4h（max 75 mg/dose）；≥50 kg 50–75 mg q4h",
+   "note": "成癮",
+   "names": [
+    "meperidine",
+    "demerol",
+    "pethidine"
+   ],
+   "lexi": [
+    ">6 個月：0.8–2 mg/kg q3–4h，max 50–75 mg/dose。但 APS 與 ISMP 不建議作為止痛藥，若用限 ≤48 小時；腎功能不全避免使用（normeperidine 蓄積致痙攣）；禁與 MAOI 併用；列入兒科 KIDs 不適當用藥名單。保留用途：術後顫抖 1–2 mg/kg 單次（判定：不宜作為常規止痛；建議改列「僅限術後顫抖」）"
+   ]
+  },
+  {
+   "cat": "十、麻醉止痛藥（鴉片類）",
+   "drug": "Morphine（10 mg/mL/amp）",
+   "form": "",
+   "dose": "≤6 個月：IV/SC 0.025–0.03 mg/kg/dose q4h。>6 個月且 <50 kg：IM/IV/SC 0.05 mg/kg/dose（max 嬰兒 2 mg、1–6 歲 4 mg、7–12 歲 8 mg、青少年 10 mg/dose）。≥50 kg：2–5 mg q4h",
+   "note": "成癮、便秘、膽道痙攣、呼吸抑制、IICP、周邊血管擴張",
+   "names": [
+    "morphine"
+   ],
+   "lexi": [
+    "≤6 個月 IV/SC 0.025–0.05 mg/kg q2–4h，滴注 8–20 µg/kg/h；>6 個月且 <50 kg 0.05–0.1 mg/kg q2–4h，滴注 10–40 µg/kg/h；≥50 kg 2–5 mg q2–4h。<3 個月呼吸抑制風險較高，需連續監測。腎功能差時 M6G／M3G 蓄積，宜改用其他鴉片類（判定：原書偏保守、間隔較長；補滴注劑量與腎功能警示）"
+   ]
   }
  ]
 }
