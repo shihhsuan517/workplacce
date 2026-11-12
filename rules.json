@@ -1,6 +1,6 @@
 {
- "version": "2026-11-11f",
- "updated": "2026-11-11",
+ "version": "2026-11-12a",
+ "updated": "2026-11-12",
  "rules": [
   {
    "id": "dexmedetomidine",
@@ -16,6 +16,12 @@
      "ref": "Lexicomp (UpToDate Lexidrug) — Dexmedetomidine",
      "sections": "Dosing: Adult; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity",
      "addedAt": "2026-11-11",
+     "by": "JC"
+    },
+    {
+     "ref": "ICU notebook（JC 整理自 Lexidrug, Lexi-Drugs Multinational）",
+     "sections": "Onset/Peak/Duration; ICU dosing; Bolus; Obesity; BP/HR; Organ; Preparation（更新 2026-11-04）",
+     "addedAt": "2026-11-12",
      "by": "JC"
     }
    ],
@@ -90,7 +96,19 @@
     "仿單建議輸注不超過 24 小時；RCT 顯示可安全使用至約 14 天。",
     "長時間、高累積劑量或高峰值使用後避免驟停。",
     "維持劑量單位是 mcg/kg/hour，曾發生單位誤解造成的錯誤。"
-   ]
+   ],
+   "info": {
+    "up": "2026-11-04",
+    "times": [
+     "5–10 min",
+     "15–30 min",
+     "60–240 min"
+    ],
+    "tnote": "Onset／Peak＝負荷劑量（連續輸注 Peak 60 min）；Duration＝停藥後",
+    "bp": "低血壓 24–56%、心搏過緩 5–42%、高血壓 11–16%（負荷劑量）；調整間隔 ≥ 30 分鐘可減少低血壓。",
+    "prep": "以 NS 稀釋至 4 µg/mL；仿單建議 ≤ 24 小時，試驗使用到約 14 天。",
+    "alert": "單獨使用無法達到深度鎮靜，也沒有可靠的失憶作用。"
+   }
   },
   {
    "id": "piperacillin-tazobactam",
@@ -513,6 +531,12 @@
      "sections": "Dosing: Adult（含 ICU analgesia and sedation）; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity",
      "addedAt": "2026-11-11",
      "by": "JC"
+    },
+    {
+     "ref": "ICU notebook（JC 整理自 Lexidrug, Lexi-Drugs Multinational）",
+     "sections": "Onset/Peak/Duration; ICU dosing; Bolus; Obesity; BP/HR; Organ; Preparation（更新 2026-11-07）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
     }
    ],
    "usual": {
@@ -588,6 +612,36 @@
     },
     "alerts": [],
     "loading": "Loading 25–100 mcg 或 1–2 mcg/kg；間歇維持 25–50 mcg 或 0.35–0.5 mcg/kg q30–60min PRN。"
+   },
+   "info": {
+    "up": "2026-11-07",
+    "times": [
+     "幾乎立即",
+     "數分鐘",
+     "0.5–1 hr"
+    ],
+    "tnote": "Peak＝最大鎮痛與呼吸抑制",
+    "bp": "可能嚴重低血壓、心搏過緩；休克或顯著不穩時避免使用。",
+    "prep": "推注 1–2 分鐘以上；避光室溫。",
+    "alert": "快速 IV 推注可致骨骼肌與胸壁僵直、通氣困難。與 benzodiazepine 併用有 boxed warning；CYP3A4 抑制劑會升高濃度。",
+    "bolus": {
+     "stockPerMl": 50,
+     "stockUnit": "mcg",
+     "items": [
+      {
+       "label": "RSI 前置（誘導前約 3 分鐘，推注 30–60 秒）",
+       "lo": 1,
+       "hi": 3,
+       "unit": "mcg/kg"
+      },
+      {
+       "label": "血流動力學不穩（休克時避免）",
+       "lo": 1,
+       "hi": 1,
+       "unit": "mcg/kg"
+      }
+     ]
+    }
    }
   },
   {
@@ -770,6 +824,513 @@
     "劑量以 amoxicillin 成分計；不同產品劑量與頻次不可互換。",
     "IV 劑型為加拿大產品（Lexicomp 標示）。"
    ]
+  },
+  {
+   "id": "propofol",
+   "label": "Propofol",
+   "names": [
+    "propofol",
+    "fresofol",
+    "diprivan",
+    "anesvan"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "ICU notebook（JC 整理自 Lexidrug, Lexi-Drugs Multinational）",
+     "sections": "Onset/Peak/Duration; ICU dosing; Bolus; Obesity; BP/HR; Organ; Preparation（更新 2026-11-10）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "weight": {
+    "basis": "TBW",
+    "obese": {
+     "def": "BMI>=30",
+     "basis": "AdjBW",
+     "text": "BMI ≥30：以 AdjBW 計算體重基準劑量。"
+    }
+   },
+   "infusion": {
+    "unit": "mcg/kg/min",
+    "ranges": [
+     {
+      "ind": "ICU 鎮靜",
+      "min": 5,
+      "max": 50,
+      "text": "起始 5 mcg/kg/min，每 5–10 分鐘加 5–10；上限約 60–80 mcg/kg/min。"
+     }
+    ],
+    "primary": 0,
+    "alt": {
+     "unit": "mg/kg/hr",
+     "min": 0.3,
+     "max": 3,
+     "text": "相當 0.3–3 mg/kg/hr"
+    },
+    "alerts": [
+     {
+      "gt": 80,
+      "level": "warn",
+      "text": "超過約 60–80 mcg/kg/min 上限。"
+     },
+     {
+      "gt": 50,
+      "level": "info",
+      "text": "≥ 50 mcg/kg/min：每 3–7 天驗三酸甘油酯，注意 PRIS（代謝性酸中毒、高血鉀、橫紋肌溶解）。"
+     }
+    ]
+   },
+   "renal": {
+    "none": true,
+    "text": "不需調整。"
+   },
+   "hepatic": {
+    "none": true,
+    "text": "Child-Pugh A–C 不需調整。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "誘導 0.5–1.5 mg/kg；調整間隔 3–5 分鐘。"
+   },
+   "notes": [
+    "使用 > 48 小時或 ≥ 50 mcg/kg/min 時，每 3–7 天驗三酸甘油酯；注意 PRIS。",
+    "脂肪乳劑提供熱量約 1.1 kcal/mL，需計入營養。"
+   ],
+   "info": {
+    "up": "2026-11-10",
+    "times": [
+     "9–51 秒",
+     "—",
+     "3–10 min"
+    ],
+    "tnote": "Onset 平均 30 秒",
+    "bp": "劑量相關低血壓、心搏過緩、低心輸出；併用 opioid 時下降更明顯。不穩者建議改用其他藥，若使用減量約 50% 或每次 10 mg 漸進。",
+    "prep": "開瓶與管路 12 小時內丟棄，嚴格無菌；不可與血品同管；濾器 ≥ 5 µm；vesicant。",
+    "alert": "使用 > 48 小時或 ≥ 50 µg/kg/min 時，每 3–7 天驗三酸甘油酯；注意 PRIS（代謝性酸中毒、高血鉀、橫紋肌溶解）。",
+    "bolus": {
+     "stockPerMl": 10,
+     "stockUnit": "mg",
+     "items": [
+      {
+       "label": "RSI",
+       "lo": 1.5,
+       "hi": 2,
+       "unit": "mg/kg"
+      },
+      {
+       "label": "血流動力學受損（建議改用他藥）",
+       "lo": 0.5,
+       "hi": 1.5,
+       "unit": "mg/kg"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "midazolam",
+   "label": "Midazolam",
+   "names": [
+    "midazolam",
+    "dormicum"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "ICU notebook（JC 整理自 Lexidrug, Lexi-Drugs Multinational）",
+     "sections": "Onset/Peak/Duration; ICU dosing; Bolus; Obesity; BP/HR; Organ; Preparation（更新 2026-11-10）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "weight": {
+    "basis": "TBW",
+    "obese": {
+     "def": "BMI>=30",
+     "basis": "TBW",
+     "text": "BMI ≥30：優先非體重劑量；需快速效果時用實際體重。"
+    }
+   },
+   "infusion": {
+    "unit": "mg/hr",
+    "ranges": [
+     {
+      "ind": "ICU 鎮靜（替代藥）",
+      "min": 1,
+      "max": 8,
+      "text": "間歇給藥優於連續輸注；一般優先非 benzodiazepine。"
+     }
+    ],
+    "primary": 0,
+    "alt": {
+     "unit": "mg/kg/hr",
+     "min": 0.01,
+     "max": 0.1,
+     "text": "體重基準 0.01–0.1 mg/kg/hr"
+    },
+    "alerts": [],
+    "loading": "間歇 0.5–5 mg（0.01–0.05 mg/kg）推注 ≥ 2 分鐘，每 10–15 分鐘可重複。"
+   },
+   "renal": {
+    "method": "CG",
+    "text": "初始不調整；CrCl < 30 慎用，活性代謝物蓄積。",
+    "bands": [
+     {
+      "min": 0,
+      "max": 30,
+      "level": "info",
+      "text": "慎用：活性代謝物（α-hydroxymidazolam glucuronide）蓄積，鎮靜可能延長。"
+     }
+    ],
+    "HD": {
+     "text": "活性代謝物蓄積，慎用並依效果調整。",
+     "level": "info"
+    },
+    "CRRT": {
+     "text": "活性代謝物蓄積，慎用並依效果調整。",
+     "level": "info"
+    }
+   },
+   "hepatic": {
+    "trigger": "cirrhosis|child|ctp|liver failure|hepatic failure|肝硬化",
+    "text": "肝硬化優先改用 propofol；避免連續輸注。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "Beers 避免使用（圍術期麻醉例外）；減量 20–50%。"
+   },
+   "concomitant": [
+    {
+     "re": "fentanyl|morphine|oxycodone|hydromorphone|pethidine|meperidine|tramadol|methadone",
+     "text": "併用 opioid：boxed warning，呼吸抑制與低血壓風險增加。"
+    },
+    {
+     "re": "fluconazole|voriconazole|posaconazole|itraconazole|ketoconazole|clarithromycin|erythromycin|ritonavir|cobicistat|diltiazem|verapamil",
+     "text": "CYP3A4 抑制劑會升高 midazolam 濃度，鎮靜延長。"
+    }
+   ],
+   "notes": [
+    "不可用於休克病人；無法抑制插管時顱內壓、心率、血壓的上升。"
+   ],
+   "info": {
+    "up": "2026-11-10",
+    "times": [
+     "1–5 min",
+     "3–5 min",
+     "7–75 min"
+    ],
+    "tnote": "單獨用於 RSI 起效可達 5 分鐘；Duration＝鎮靜",
+    "bp": "低血壓 ≤ 3%，血流動力學不穩、併用 opioid 時更常見。",
+    "prep": "誘導推注 5–15 秒，鎮靜推注 ≥ 2 分鐘；0.5 mg/mL 於 D5W 或 NS 可放 24 小時。",
+    "alert": "不可用於休克病人；與 opioid 併用有 boxed warning；CYP3A4 抑制劑會升高濃度。",
+    "bolus": {
+     "stockPerMl": 5,
+     "stockUnit": "mg",
+     "items": [
+      {
+       "label": "RSI 替代藥（off-label）",
+       "lo": 0.1,
+       "hi": 0.3,
+       "unit": "mg/kg"
+      },
+      {
+       "label": "血流動力學不穩（建議改用他藥）",
+       "lo": 0.1,
+       "hi": 0.1,
+       "unit": "mg/kg"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "cisatracurium",
+   "label": "Cisatracurium",
+   "names": [
+    "cisatracurium",
+    "nimbex"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "ICU notebook（JC 整理自 Lexidrug, Lexi-Drugs Multinational）",
+     "sections": "Onset/Peak/Duration; ICU dosing; Bolus; Obesity; BP/HR; Organ; Preparation（更新 2026-11-05）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "weight": {
+    "basis": "TBW",
+    "obese": {
+     "def": "BMI>=30",
+     "basis": "IBW",
+     "text": "BMI ≥30：以 IBW 計算；BMI ≥50 考慮 AdjBW。",
+     "severeDef": "BMI>=50",
+     "severeBasis": "AdjBW"
+    }
+   },
+   "infusion": {
+    "unit": "mcg/kg/min",
+    "ranges": [
+     {
+      "ind": "ICU 輸注",
+      "min": 0.5,
+      "max": 10,
+      "text": "起始 1–3 mcg/kg/min。"
+     }
+    ],
+    "primary": 0,
+    "alt": {
+     "unit": "mg/kg/hr",
+     "min": 0.03,
+     "max": 0.6,
+     "text": "相當 0.03–0.6 mg/kg/hr"
+    },
+    "alerts": [],
+    "loading": "負荷 0.1–0.2 mg/kg。"
+   },
+   "renal": {
+    "none": true,
+    "text": "不需調整；ESRD 插管前多等 ≥ 1 分鐘。"
+   },
+   "hepatic": {
+    "none": true,
+    "text": "不需調整。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "插管前多等 ≥ 1 分鐘。"
+   },
+   "notes": [
+    "使用 sugammadex 16 mg/kg 後 24 小時內需再麻痺時，可改用本品。",
+    "組織胺釋放。"
+   ],
+   "info": {
+    "up": "2026-11-05",
+    "times": [
+     "2–3 min",
+     "3–5 min",
+     "35–45 min"
+    ],
+    "tnote": "Duration＝0.1 mg/kg 單次；老年、ESRD 起效慢約 1 分鐘",
+    "bp": "低血壓、心搏過緩 < 1%；組織胺釋放。",
+    "prep": "只能 IV，推注 5–10 秒；不可與鹼性溶液同管，不可用 LR 稀釋；冷藏，室溫 21 天。",
+    "alert": "使用 sugammadex 16 mg/kg 後 24 小時內需再麻痺時，可改用本品。",
+    "bolus": {
+     "stockPerMl": 2,
+     "stockUnit": "mg",
+     "items": [
+      {
+       "label": "插管",
+       "lo": 0.15,
+       "hi": 0.2,
+       "unit": "mg/kg"
+      },
+      {
+       "label": "RSI（僅在 rocuronium、succinylcholine 禁忌或缺藥時）",
+       "lo": 0.4,
+       "hi": 0.4,
+       "unit": "mg/kg"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "rocuronium",
+   "label": "Rocuronium",
+   "names": [
+    "rocuronium",
+    "esmeron"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "ICU notebook（JC 整理自 Lexidrug, Lexi-Drugs Multinational）",
+     "sections": "Onset/Peak/Duration; ICU dosing; Bolus; Obesity; BP/HR; Organ; Preparation（更新 2026-11-05）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "weight": {
+    "basis": "TBW",
+    "obese": {
+     "def": "BMI>=30",
+     "basis": "IBW",
+     "text": "BMI ≥30：以 IBW 計算；BMI ≥50 考慮 AdjBW；RSI 急需時可用實際體重，很少需要 > 250 mg（美國仿單建議實際體重）。",
+     "severeDef": "BMI>=50",
+     "severeBasis": "AdjBW"
+    }
+   },
+   "infusion": {
+    "unit": "mcg/kg/min",
+    "ranges": [
+     {
+      "ind": "ICU 輸注",
+      "min": 3,
+      "max": 16,
+      "text": "起始 3–8 mcg/kg/min，每 60 分鐘調 0.5–1。"
+     }
+    ],
+    "primary": 0,
+    "alt": {
+     "unit": "mg/kg/hr",
+     "min": 0.18,
+     "max": 0.96,
+     "text": "相當 0.18–0.96 mg/kg/hr"
+    },
+    "alerts": [],
+    "loading": "負荷 0.6–1 mg/kg；或間歇 0.3–1 mg/kg q30–60 min。"
+   },
+   "renal": {
+    "method": "CG",
+    "text": "不調整；CrCl < 30、透析、CRRT 作用時間變異大。",
+    "bands": [
+     {
+      "min": 0,
+      "max": 30,
+      "level": "info",
+      "text": "不調整，但作用時間變異大；監測 TOF。CrCl < 30 不建議以 sugammadex 逆轉。"
+     }
+    ],
+    "HD": {
+     "text": "作用時間變異大；不建議以 sugammadex 逆轉。",
+     "level": "info"
+    },
+    "CRRT": {
+     "text": "作用時間變異大，監測 TOF。",
+     "level": "info"
+    }
+   },
+   "hepatic": {
+    "trigger": "cirrhosis|child|ctp|liver failure|hepatic failure|肝硬化|ascites|腹水",
+    "text": "作用延長；腹水者 RSI 需劑量高端。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "起效與作用略延長。"
+   },
+   "notes": [
+    "逆轉：sugammadex 16 mg/kg（rocuronium 1.2 mg/kg 後約 3 分鐘）；CrCl < 30 或透析不建議 sugammadex。",
+    "ISMP：肌鬆劑需隔離存放。"
+   ],
+   "info": {
+    "up": "2026-11-05",
+    "times": [
+     "45 秒–3 min",
+     "≤ 4 min",
+     "20–120 min"
+    ],
+    "tnote": "Onset＝良好插管條件（劑量依賴）；Peak＝最大阻斷",
+    "bp": "心搏過速 ≤ 5%、短暫低血壓或高血壓；無需因血壓調整。心血管疾病者起效延遲、作用延長。",
+    "prep": "稀釋 ≤ 5 mg/mL 可放 24 小時；多劑量瓶冷藏，室溫 60 天、開封後 30 天。",
+    "alert": "逆轉：sugammadex 16 mg/kg（rocuronium 1.2 mg/kg 後約 3 分鐘）；CrCl < 30 或透析不建議 sugammadex。",
+    "bolus": {
+     "stockPerMl": 10,
+     "stockUnit": "mg",
+     "cap": 250,
+     "items": [
+      {
+       "label": "RSI（部分專家用 1.5 mg/kg）",
+       "lo": 1,
+       "hi": 1.2,
+       "unit": "mg/kg"
+      },
+      {
+       "label": "一般插管",
+       "lo": 0.6,
+       "hi": 1,
+       "unit": "mg/kg"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "norepinephrine",
+   "label": "Norepinephrine",
+   "names": [
+    "norepinephrine",
+    "levophed",
+    "noradrenaline"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "ICU notebook（JC 整理自 Lexidrug, Lexi-Drugs Multinational）",
+     "sections": "Onset/Peak/Duration; ICU dosing; Bolus; Obesity; BP/HR; Organ; Preparation（更新 2026-10-10）",
+     "addedAt": "2026-11-12",
+     "by": "JC"
+    }
+   ],
+   "weight": {
+    "basis": "TBW",
+    "obese": {
+     "def": "BMI>=30",
+     "basis": "IBW",
+     "text": "肥胖：體重基準劑量以 IBW 計算。"
+    }
+   },
+   "infusion": {
+    "unit": "mcg/min",
+    "ranges": [
+     {
+      "ind": "常用",
+      "min": 2,
+      "max": 80,
+      "text": "起始 5–15 mcg/min；難治時 80–250 mcg/min。"
+     }
+    ],
+    "primary": 0,
+    "alt": {
+     "unit": "mcg/kg/min",
+     "min": 0.025,
+     "max": 1,
+     "text": "體重基準 0.025–1 mcg/kg/min（起始 0.05–0.15；難治 1–3）"
+    },
+    "alerts": [
+     {
+      "gt": 80,
+      "level": "info",
+      "text": "> 80 mcg/min 屬難治性休克範圍（80–250 mcg/min）；考慮加 vasopressin 等第二線升壓劑。"
+     }
+    ]
+   },
+   "renal": {
+    "none": true,
+    "text": "不需調整。"
+   },
+   "hepatic": {
+    "none": true,
+    "text": "無仿單調整。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "敗血性休克可考慮 MAP 目標 60–65 mmHg。"
+   },
+   "concomitant": [
+    {
+     "re": "linezolid|amitriptyline|imipramine|nortriptyline|clomipramine|doxepin|venlafaxine|duloxetine|milnacipran",
+     "text": "Linezolid、三環抗憂鬱劑、SNRI 會增強升壓反應。"
+    }
+   ],
+   "notes": [
+    "先矯正低血容；突然停藥可致嚴重低血壓。",
+    "中央靜脈優先；無中央靜脈時可由近端大靜脈短期（< 72 小時）給藥。外滲：phentolamine 5–10 mg/10 mL NS 局部注射。"
+   ],
+   "info": {
+    "up": "2026-10-10",
+    "times": [
+     "極快",
+     "5 min（穩定）",
+     "1–2 min"
+    ],
+    "tnote": "Duration＝停止輸注後升壓作用",
+    "bp": "先矯正低血容；低血容時使用會造成嚴重周邊與內臟血管收縮。突然停藥可致嚴重低血壓。",
+    "prep": "中央靜脈優先；無中央靜脈時可由近端大靜脈短期（< 72 小時）給藥。外滲：phentolamine 5–10 mg/10 mL NS 局部注射。常用濃度 4–64 µg/mL。",
+    "alert": "Linezolid、三環抗憂鬱劑、SNRI 會增強升壓反應。"
+   }
   }
  ]
 }
