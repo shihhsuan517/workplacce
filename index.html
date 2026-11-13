@@ -423,7 +423,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-13b';
+const APP_VER='2026-11-13c';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -3729,6 +3729,15 @@ function parseMicro(txt){
         });
       }
     }
+    // 病毒／分子等「檢驗項目 檢驗值 單位 H/L 參考值」表格
+    const vi=bl.findIndex(l=>/^\s*檢驗項目\s+檢驗值/.test(l));
+    if(vi>=0){rep.items=[];
+      for(let j=vi+1;j<bl.length;j++){const l=bl[j];if(/^\s*=+\s*$/.test(l)||!l.trim())continue;if(/^-{5,}/.test(l.trim())||/學門別|收件編號/.test(l))break;
+        const t=l.trim().split(/\s{2,}/);if(t.length<2)continue;
+        const it={name:t[0],value:t[1],unit:'',hl:'',ref:''};
+        if(t.length===3)it.ref=t[2];else if(t.length===4){if(/^(H|L|HH|LL|\*)$/.test(t[2])){it.hl=t[2];}else it.unit=t[2];it.ref=t[3];}else if(t.length>=5){it.unit=t[2];it.hl=t[3];it.ref=t.slice(4).join(' ');}
+        rep.items.push(it);}}
+    if(/病毒|分子|血清|免疫/.test(rep.dept)||(rep.items&&!rep.orgs.length&&i<0))rep.kind='virus';
     rep.unverified=/未驗證/.test(blk);
     if(acc||rep.orgs.length)out.reports.push(rep);
   });
@@ -3739,7 +3748,8 @@ function mergeMicro(p,res){
   res.reports.forEach(r=>{
     const key=r.acc||`${r.spec}-${r.collected}`;
     const R=M.reports[key]||(M.reports[key]={key,acc:r.acc,spec:'',collected:'',ordered:'',status:'',comment:'',orgs:[]});
-    ['spec','ordered','comment','dept'].forEach(k=>{if(r[k])R[k]=r[k];});
+    ['spec','ordered','comment','dept','kind'].forEach(k=>{if(r[k])R[k]=r[k];});
+    if(r.items&&(r.items.length||!R.items))R.items=r.items;
     if(r.collected&&(!R.collected||r.collected.length>=R.collected.length))R.collected=r.collected;
     if(r.status)R.status=r.status;
     if(r.src==='detail'){R.hasDetail=true;R.unverified=!!r.unverified;R.detailAt=new Date().toISOString();}
@@ -3758,6 +3768,9 @@ function mergeMicro(p,res){
   });
   M.pastedAt=new Date().toISOString();return n;
 }
+const isVirusRep=R=>R.kind==='virus';
+const virusTxt=R=>(R.items||[]).map(it=>`${it.name} ${it.value}${it.unit?' '+it.unit:''}`).join('、')||('（未列檢驗值）'+(R.comment?' '+R.comment.slice(0,60):''));
+const virusPos=v=>/positive|detected|陽性|reactive|\bpos\b/i.test(v)&&!/not\s*detected|negative|non-?reactive|陰性/i.test(v);
 const hasMicro=p=>!!(p&&p.micro&&p.micro.reports&&Object.keys(p.micro.reports).length);
 function microList(p){return hasMicro(p)?Object.values(p.micro.reports).sort((a,b)=>(b.collected||'').localeCompare(a.collected||'')):[];}
 const CONTAM=/staphylococcus\s+(capitis|epidermidis|hominis|haemolyticus|warneri|saprophyticus|lugdunensis)|coagulase.?negative|\bCoNS\b|corynebacterium|micrococcus|cutibacterium|propionibacterium|bacillus(?!\s+anthracis)|viridans/i;
@@ -3803,7 +3816,7 @@ function previewMicro(txt){
   let def=pasteTarget||(S.selId&&!S.archive?S.selId:'new');
   const opts=[['new','＋ 新增為新病患']].concat(sortedPatients().map(x=>[x.id,`加入：${x.bed||'（未填床號）'} ${x.code||''}`]));
   const rows=res.reports.map(r=>`<tr><td class="num">${esc(r.acc||'—')}</td><td>${esc(specName(r.spec))}</td><td class="num">${esc(r.collected)}</td><td>${esc(r.status||(r.src==='detail'?(r.unverified?'明細（未驗證）':'明細'):''))}</td>
-    <td>${r.orgs.map(o=>`${esc(o.name)}${Object.keys(o.ast||{}).length?` <span class="tag t-new">藥敏 ${Object.keys(o.ast).length} 項</span>`:o.summarySIR&&o.summarySIR.length?` <span class="tag t-warn">摘要 ${o.summarySIR.length} 欄（無藥名）</span>`:''}`).join('<br>')||'<span class="mute">—</span>'}</td></tr>`).join('');
+    <td>${r.kind==='virus'?`<span class="tag t-prn">病毒／分子</span> ${(r.items||[]).map(it=>esc(it.name+'：'+it.value)).join('；')||'<span class="mute">（無檢驗值，僅說明）</span>'}`:''}${r.orgs.map(o=>`${esc(o.name)}${Object.keys(o.ast||{}).length?` <span class="tag t-new">藥敏 ${Object.keys(o.ast).length} 項</span>`:o.summarySIR&&o.summarySIR.length?` <span class="tag t-warn">摘要 ${o.summarySIR.length} 欄（無藥名）</span>`:''}`).join('<br>')||'<span class="mute">—</span>'}</td></tr>`).join('');
   $('pastePreview').innerHTML=`<div class="card" style="margin-top:12px"><div class="row"><b>加入到</b>
     <select id="pasteTargetSel" style="width:auto;min-width:260px">${opts.map(([v,t])=>`<option value="${v}" ${v===def?'selected':''}>${esc(t)}</option>`).join('')}</select></div>
     <div class="small mute" style="margin-top:6px">依收件編號合併：摘要列和報告明細可以分開貼，初步報告之後再貼最後報告會自動更新。</div></div>
@@ -3842,15 +3855,20 @@ function renderMicro(p,ro){
     h+='</div>';
   }
   // 培養清單
-  const shown=list.filter(r=>U.spec==='all'||r.spec===U.spec);
-  h+=`<div class="card"><h3>培養結果</h3><div class="tblwrap"><table class="tbl"><thead><tr><th>採檢</th><th>檢體</th><th>收件編號</th><th>狀態</th><th>菌株</th><th>說明</th></tr></thead><tbody>`;
+  const shownAll=list.filter(r=>U.spec==='all'||r.spec===U.spec),shown=shownAll.filter(r=>!isVirusRep(r)),vir=shownAll.filter(isVirusRep);
+  if(vir.length){
+    h+=`<div class="card"><h3>病毒／分子檢驗 <span class="small mute">${vir.length} 筆</span></h3><div class="tblwrap"><table class="tbl"><thead><tr><th>採檢</th><th>檢體</th><th>收件編號</th><th>檢驗項目與結果</th><th>說明</th></tr></thead><tbody>${vir.map(R=>`<tr><td class="num">${S.editMode&&!ro?`<button class="xdel" data-del="micro" data-k="${esc(R.key||R.acc)}" title="刪除這筆">✕</button> `:''}${esc(R.collected||'')}${R.ordered?`<div class="small mute">醫囑 ${esc(R.ordered.slice(5))}</div>`:''}</td><td>${esc(specName(R.spec))}</td><td class="num">${esc(R.acc||'')}</td>
+      <td>${(R.items||[]).length?R.items.map(it=>`<div><b>${esc(it.name)}</b>：<span class="tag ${virusPos(it.value)||it.hl?'t-abx':'t-new'}">${esc(it.value)}${it.unit?' '+esc(it.unit):''}</span>${it.ref?` <span class="small mute">參考 ${esc(it.ref)}</span>`:''}</div>`).join(''):'<span class="mute">報告未列檢驗值（見說明）</span>'}</td>
+      <td class="small">${esc(R.comment||'')}</td></tr>`).join('')}</tbody></table></div></div>`;
+  }
+  if(shown.length)h+=`<div class="card"><h3>細菌／黴菌培養</h3><div class="tblwrap"><table class="tbl"><thead><tr><th>採檢</th><th>檢體</th><th>收件編號</th><th>狀態</th><th>菌株</th><th>說明</th></tr></thead><tbody>`;
   shown.forEach(R=>{
     h+=`<tr><td class="num">${S.editMode&&!ro?`<button class="xdel" data-del="micro" data-k="${esc(R.key||R.acc)}" title="刪除這筆培養">✕</button> `:''}${esc(R.collected||'')}${R.ordered?`<div class="small mute">醫囑 ${esc(R.ordered.slice(5))}</div>`:''}</td><td>${esc(specName(R.spec))}</td><td class="num">${esc(R.acc||'')}</td>
       <td>${esc(R.status||'')}${R.unverified?' <span class="tag t-warn">未驗證</span>':''}</td>
       <td>${R.orgs.length?R.orgs.map(o=>`${S.editMode&&!ro?`<button class="xdel" data-del="org" data-k="${esc(R.key||R.acc)}" data-n="${o.no}" title="刪除此菌株">✕</button> `:''}${o.no}. <b>${esc(o.name)}</b>${o.growth?` <span class="small mute">${esc(o.growth)}</span>`:''}${orgFlags(o,R).map(([t,c])=>` <span class="tag ${c==='bad'?'t-abx':'t-warn'}">${t}</span>`).join('')}${!Object.keys(o.ast||{}).length&&o.summarySIR&&o.summarySIR.length?' <span class="tag t-reg">藥敏待貼明細</span>':''}`).join('<br>'):(R.noGrowth?'無菌生長':R.noOrgYet?'<span class="mute">尚無菌株報告（培養中或無菌生長）</span>':'<span class="mute">—</span>')}</td>
       <td class="small">${esc(R.comment||'')}</td></tr>`;
   });
-  h+='</tbody></table></div></div>';
+  if(shown.length)h+='</tbody></table></div></div>';
   // 個人抗微生物圖譜矩陣
   const iso=[];shown.forEach(R=>R.orgs.forEach(o=>{if(Object.keys(o.ast||{}).length)iso.push({R,o});}));
   if(iso.length){
@@ -3864,7 +3882,8 @@ function renderMicro(p,ro){
   return h;
 }
 function microSoapTxt(p){
-  const list=microList(p);if(!list.length)return '';
+  const all=microList(p);if(!all.length)return '';const list=all.filter(R=>!isVirusRep(R)),vir=all.filter(isVirusRep);
+  const vtxt=vir.length?'\nVirus/PCR:\n'+vir.map(R=>`${(R.collected||'').slice(5,10).replace('-','/')} ${R.spec}: ${(R.items||[]).map(it=>`${it.name} ${it.value}${it.unit?' '+it.unit:''}`).join(', ')||(R.comment||'').slice(0,80)}`).join('\n'):'';
   return list.map(R=>{
     const head=`${(R.collected||'').slice(5,10).replace('-','/')} ${R.spec}${R.status&&/初步/.test(R.status)?' (prelim)':''}`;
     if(!R.orgs.length)return `${head}: ${R.noGrowth?'no growth':R.noOrgYet?'no isolate reported yet':'pending'}`;
@@ -3873,7 +3892,7 @@ function microSoapTxt(p){
       const ast=['R','I','D','S'].filter(k=>by[k].length).map(k=>`${sirTxt(k)}: ${by[k].join(', ')}`).join('; ');
       return `${o.name}${o.growth?` (${o.growth})`:''}${ast?` [${ast}]`:''}`;
     }).join(' / ');
-  }).join('\n');
+  }).join('\n')+vtxt;
 }
 function bindMicro(p,ro){
   if($('btnMicroPaste'))$('btnMicroPaste').onclick=()=>openPaste(p.id);
@@ -5341,7 +5360,7 @@ function aiPack(p,mark){
       if(other.length){L.push('- 其他最新值：'+other.map(it=>{const k=Object.keys(it.vals).sort().pop();const v=it.vals[k];return `${it.name}${it.sampleType!=='B'?'('+it.sampleType+')':''} ${String(v.value).replace(/\s*\(.*?\)/g,'')}${v.flag?' '+v.flag:''} ${relSk(p,k)}`;}).join('；'));}}
   }
   if(m.micro&&hasMicro(p)){H('微生物');const C=coverage(p);
-    microList(p).slice(0,full?12:6).forEach(R=>{L.push(`- ${R.collected?relIso(p,R.collected,true):'?'} ${specName(R.spec)}：${R.orgs.length?R.orgs.map(o=>`${o.name}${o.growth?' '+o.growth:''}${orgFlags(o,R).length?' ['+orgFlags(o,R).map(f=>f[0]).join(',')+']':''}`).join('；'):(R.noGrowth?'無菌生長':R.noOrgYet?'尚無菌株報告':'—')}${R.status?`（${R.status}）`:''}`);
+    microList(p).slice(0,full?12:6).forEach(R=>{if(isVirusRep(R)){L.push(`- ${R.collected?relIso(p,R.collected,true):'?'} ${specName(R.spec)}［病毒／分子］：${virusTxt(R)}`);return;}L.push(`- ${R.collected?relIso(p,R.collected,true):'?'} ${specName(R.spec)}：${R.orgs.length?R.orgs.map(o=>`${o.name}${o.growth?' '+o.growth:''}${orgFlags(o,R).length?' ['+orgFlags(o,R).map(f=>f[0]).join(',')+']':''}`).join('；'):(R.noGrowth?'無菌生長':R.noOrgYet?'尚無菌株報告':'—')}${R.status?`（${R.status}）`:''}`);
       R.orgs.forEach(o=>{const a=Object.entries(o.ast||{});if(!a.length)return;const g={};a.forEach(([d,v])=>(g[sirTxt(v.sir)]=g[sirTxt(v.sir)]||[]).push(d));L.push(`  - ${o.name} 藥敏：${['R','I','SDD','S'].filter(k=>g[k]).map(k=>`${k}: ${g[k].join(', ')}`).join('｜')}`);});});
     if(C.act.length&&C.rows.length)L.push(`- 目前抗生素（${C.act.map(a=>a.label).join('、')}）涵蓋：${C.rows.map(r=>`${r.o.name}（${specName(r.R.spec)}）${r.covered?'已涵蓋':r.sdd?'僅 SDD':'未涵蓋'}`).join('；')}`);
   }
@@ -5482,7 +5501,7 @@ function renderOverview(p){
   if(hasMicro(p)){
     const C=coverage(p),L=microList(p).slice(0,5);
     h+=`<div class="card" style="margin:0"><h3>培養</h3>${L.map(R=>kv(`${esc((R.collected||'').slice(5,10))} ${esc(R.spec)}`,
-      R.orgs.length?R.orgs.map(o=>{const cv=C.rows.find(x=>x.o===o);return `${esc(o.name)}${orgFlags(o,R).map(([t,c])=>` <span class="tag ${c==='bad'?'t-abx':'t-warn'}">${t}</span>`).join('')}${cv&&C.act.length&&!cv.flags.some(f=>f[0]==='可能污染菌')?(cv.covered?' <span class="tag t-new">已涵蓋</span>':cv.sdd?' <span class="tag t-warn">僅 SDD</span>':' <span class="tag t-abx">未涵蓋</span>'):''}`;}).join('<br>'):(R.noGrowth?'無菌生長':R.noOrgYet?'尚無菌株報告':'—'))).join('')}
+      isVirusRep(R)?`<span class="tag t-prn">病毒／分子</span> ${(R.items||[]).map(it=>`${esc(it.name)} <span class="tag ${virusPos(it.value)?'t-abx':'t-new'}">${esc(it.value)}</span>`).join('、')||'<span class="mute">未列檢驗值</span>'}`:R.orgs.length?R.orgs.map(o=>{const cv=C.rows.find(x=>x.o===o);return `${esc(o.name)}${orgFlags(o,R).map(([t,c])=>` <span class="tag ${c==='bad'?'t-abx':'t-warn'}">${t}</span>`).join('')}${cv&&C.act.length&&!cv.flags.some(f=>f[0]==='可能污染菌')?(cv.covered?' <span class="tag t-new">已涵蓋</span>':cv.sdd?' <span class="tag t-warn">僅 SDD</span>':' <span class="tag t-abx">未涵蓋</span>'):''}`;}).join('<br>'):(R.noGrowth?'無菌生長':R.noOrgYet?'尚無菌株報告':'—'))).join('')}
       <div style="margin-top:8px"><button class="small" onclick="S.tab='micro';renderMain()">查看抗微生物圖譜</button></div></div>`;
   }
   // 劑量巡查
