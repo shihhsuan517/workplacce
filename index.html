@@ -423,7 +423,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-13a';
+const APP_VER='2026-11-13b';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -3709,12 +3709,12 @@ function parseMicro(txt){
     const bl=blk.split('\n');
     // 菌株
     let i=bl.findIndex(l=>/細菌名稱/.test(l));
-    if(i>=0){for(let j=i+1;j<bl.length;j++){const l=bl[j];if(/^=+\s*$/.test(l.trim()))continue;if(/^-{5,}/.test(l.trim())||/藥敏試驗/.test(l))break;
+    if(i>=0){for(let j=i+1;j<bl.length;j++){const l=bl[j];if(/^=+\s*$/.test(l.trim()))continue;if(/^-{5,}/.test(l.trim())||/^\s*藥敏試驗/.test(l))break;
       const m=l.match(/^\s*(\d+)\s+(.+?)(?:\s{2,}(\S+))?(?:\s{2,}(.*?))?\s*$/);if(m)rep.orgs.push({no:+m[1],name:m[2].trim(),growth:m[3]||'',smear:(m[4]||'').trim(),ast:{}});}}
     if(/(?:無菌生長|No growth)/i.test(blk))rep.noGrowth=true;
     if(i>=0&&!rep.orgs.length)rep.noOrgYet=true;
     // 藥敏
-    const a=bl.findIndex(l=>/藥敏試驗/.test(l));
+    const a=bl.findIndex(l=>/^\s*藥敏試驗/.test(l));   // 只認行首；檢驗結果說明裡常有「藥敏試驗結果僅供參考」
     if(a>=0){
       const nos=[...bl[a].matchAll(/(\d+)\s*\(/g)].map(m=>+m[1]);const cols=nos.length?nos:[1];
       for(let j=a+1;j<bl.length;j++){
