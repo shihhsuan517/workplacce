@@ -423,7 +423,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-12f';
+const APP_VER='2026-11-13a';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -1170,6 +1170,7 @@ function parse(text){
     if(m){ curT=new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]); inDrug=false; pending=null; last=null; sheets++; sheetTimes.push(curT); curSheet={t:curT,drugs:[],other:[]}; sheetInfo.push(curSheet); return; }
     if(curT){
       if(/^類別\s+藥品名稱/.test(line)){ inDrug=true; pending=null; return; }
+      if(inDrug && !line.trim()) return;   // 藥品區內的空行（例如標題列後空一行）不結束藥品區
       if(/^類別\s/.test(line) || /醫師[:：]/.test(line) || !line.trim()){ if(pending){unrec.push("（無法解析的藥品行）"+pending.name);} inDrug=false; pending=null; return; }
       if(inDrug){
         const cm=line.match(D_CAT);
@@ -2509,7 +2510,7 @@ function parseOrderNotes(text){
   });
   flush();return out;
 }
-const TITR=/infusion rate|keep\s*MAP|keep\s*SBP|titrat|maximum|minimum|max\s*[:：]|\+\/-/i;
+const TITR=/infusion rate|keep\s*MAP|keep\s*SBP|titrat|maximum|minimum|max\s*[:：]|\+\/?-/i;
 function dripEvents(p){
   const seen=new Set(),notes=[];
   (p.orderSources||[]).forEach(x=>parseOrderNotes(x.text).forEach(n=>{const k=+n.t+'|'+n.cat+'|'+n.text;if(!seen.has(k)){seen.add(k);notes.push(n);}}));
@@ -2528,18 +2529,21 @@ function dripEvents(p){
     const dil=n.text.match(/\bin\s*(N\/S|N\.S\.?|NS|D5W|D5S|D10W)?\s*(\d{2,4})\s*(?:ml|cc)?\b/i);
     if(dil){e.dil=+dil[2];e.dilName=dil[1]?dil[1].toUpperCase().replace(/[\/.]/g,''):'';}
     const chg=n.text.match(/(\d+(?:\.\d+)?)\s*(?:ml|cc)?\s*(?:\/\s*hr?)?\s*(?:->|→|＞|>|改)\s*(\d+(?:\.\d+)?)\s*(?:ml|cc)/i);
-    const run=n.text.match(/\brun\s*(\d+(?:\.\d+)?)\s*(?:\+\/-\s*[\d.]+\s*)?(?:ml|cc)/i);
+    const run=n.text.match(/\brun\s*(\d+(?:\.\d+)?)\s*(?:\+\/?-\s*[\d.]+\s*)?(?:ml|cc)/i)||n.text.match(/IVF\s*[:：]\s*(\d+(?:\.\d+)?)\s*(?:ml|cc)\s*\/\s*h/i);
     if(chg)e.flow=+chg[2];else if(run)e.flow=+run[1];
+    if(e.flow==null&&/原劑量一半|half\s*(?:of\s*)?(?:the\s*)?(?:original|previous)?\s*(?:rate|dose)/i.test(n.text))e.half=true;
     if(/原劑量|as before/i.test(n.text))e.keepFlow=true;
     if(/下包/.test(n.text))e.nextBag=true;
     readTitr(e,n.text);
     ev.push(e);if(!e.dc)last=e;
   });
+  // 「原劑量一半」：依同藥前一次流速推算
+  const prev={};ev.forEach(e=>{if(e.dc)return;if(e.half&&prev[e.id]!=null){e.flow=+(prev[e.id]/2).toFixed(2);e.text+=`（平台推算：前次 ${prev[e.id]} mL/hr 的一半）`;}if(e.flow!=null)prev[e.id]=e.flow;});
   return ev;
 }
 function readTitr(e,txt){
   const mx=txt.match(/max(?:imum)?[^0-9]{0,22}(\d+(?:\.\d+)?)\s*(?:ml|cc)?/i);if(mx)e.max=+mx[1];
-  const st=txt.match(/\+\/-\s*([\d.]+)\s*(?:ml|cc)/i)||txt.match(/by\s*([\d.]+)\s*(?:ml|cc)/i);if(st)e.step=+st[1];
+  const st=txt.match(/\+\/?-\s*([\d.]+)\s*(?:ml|cc)/i)||txt.match(/by\s*([\d.]+)\s*(?:ml|cc)/i);if(st)e.step=+st[1];
   const tg=txt.match(/(MAP|SBP|DBP)\s*[>＞≧<＜≦]\s*\d+/i);if(tg)e.target=tg[0].replace(/\s+/g,'');
 }
 function applyDripNotes(p,meds){
