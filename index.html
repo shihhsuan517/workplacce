@@ -423,7 +423,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-13c';
+const APP_VER='2026-11-16a';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -784,7 +784,7 @@ function renderMain(){
     <button id="btnRestore">復原為在院病患</button><button id="btnCloseArchive">關閉</button></div>`;
   h+=`<div class="phead"><div><h2>${esc(p.bed||'（未填床號）')}${p.code?'　'+esc(p.code):''}</h2>
     <div class="meta"><span class="${hide()?'blur':''}">${esc(p.name)}${p.chartNo?' · '+esc(p.chartNo):''}</span>
-    ${p.sex?' · '+(p.sex==='M'?'男':'女'):''}${ageDisp(p)?' · '+esc(ageDisp(p)):''}${p.template==='peds'&&pmaTxt(p)?' · PMA '+pmaTxt(p):''}
+    ${p.attending?' · 主治 '+esc(p.attending):''}${p.sex?' · '+(p.sex==='M'?'男':'女'):''}${ageDisp(p)?' · '+esc(ageDisp(p)):''}${p.template==='peds'&&pmaTxt(p)?' · PMA '+pmaTxt(p):''}
     ${p.wt?' · '+esc(p.wt)+' kg':''}${bwMeta(p)?' · '+bwMeta(p):''} · ${TPL[p.template]} 範本</div></div>
     <span style="flex:1"></span>${ro?'':`<button id="btnEditMode" class="${S.editMode?'danger':''}">${S.editMode?'完成刪除':'✏️ 刪除模式'}</button><button id="btnDischarge">移到舊病患</button>${S.editMode?'<button id="btnDelPt" class="danger">刪除病患</button>':''}`}</div>
     ${S.editMode&&!ro?'<div class="banner">刪除模式：點各分頁的 ✕ 刪除單筆資料。誤刪可以按右上角「復原」。</div>':''}`;
@@ -879,8 +879,9 @@ function renderTab(p,ro){
       ${fld(p,'name','姓名',{ro,sens:true})}
       ${fld(p,'chartNo','病歷號',{ro,sens:true})}
       ${fld(p,'admitDate','入院日',{ro,type:'date'})}
+      ${fld(p,'attending','主治醫師',{ro,ph:'貼上入院紀錄或醫囑單會自動帶入'})}
       ${fld(p,'template','SOAP 範本',{ro,type:'select',opts:Object.entries(TPL)})}
-    </div></div>
+    </div>${p.attendingAuto?`<div class="small mute" style="margin-top:6px">主治醫師自動帶入來源：${esc(p.attendingAuto.src)}${p.attendingAuto.name!==p.attending?`（偵測到 ${esc(p.attendingAuto.name)}，因手動修改未覆蓋）`:''}${p.attendingAuto.note?`<span class="tag t-warn">${esc(p.attendingAuto.note)}</span>`:''}</div>`:''}</div>
     <div class="card"><h3>基本資料</h3><div class="grid">
       ${fld(p,'sex','性別',{ro,type:'select',opts:[['','—'],['M','男'],['F','女']]})}
       ${peds?fld(p,'ageText','年齡',{ro,ph:'例：3 個月 5 天'}):fld(p,'age','年齡（歲）',{ro,type:'number'})}
@@ -2641,6 +2642,7 @@ function previewOrders(txt){
     if(!p.orderSources.some(x=>x.text===txt))p.orderSources.push({addedAt:new Date().toISOString(),text:txt});
     const r=deriveFromOrders(p);
     const ad=admFromOrders(txt);let adTxt='';
+    const vs=attendingFromOrdersApply(p);if(vs)adTxt+='，主治醫師已帶入';
     if(ad.dx&&!p.dx){p.dx=ad.dx;adTxt+='，診斷已帶入基本資料';}
     if(ad.allergy&&(!p.allergy||/^no known food or drugs/i.test(p.allergy))&&!/^no known/i.test(ad.allergy)){p.allergy=ad.allergy;adTxt+='，過敏已帶入';}
     p.updatedAt=new Date().toISOString();
@@ -3943,6 +3945,7 @@ function mergeAdmission(p,secs,raw){
     if(/allerg/i.test(x.en)&&x.text&&(!p.allergy||/^no known/i.test(p.allergy)))p.allergy=x.text.replace(/\s+/g,' ').trim();
     if(/(impression|diagnos)/i.test(x.en)&&x.text&&!p.dx)p.dx=x.text;
   });
+  const vs=attendingFromAdm(raw||secs.map(x=>x.zh+':'+x.text).join('\n'));if(vs)applyAttending(p,vs,'入院紀錄');
   const ad=String(raw||'').match(/入院日期\s*[:：]\s*(\d{4})\/(\d{1,2})\/(\d{1,2})/);
   if(ad&&(!p.admitDate||p.admitDate===ymd()))p.admitDate=`${ad[1]}-${pad(+ad[2])}-${pad(+ad[3])}`;
   p.adm.neo=applyNeo(p,neoExtract(secs.map(x=>x.text).join('\n')+'\n'+(raw||''),(p.admitDate||ymd()).slice(0,4)));
@@ -4208,6 +4211,47 @@ function bindIssues(p,sec,ro){
 }
 
 /* ===================== 醫囑單內的 Admission order（診斷／過敏） ===================== */
+
+/* ===== 主治醫師：入院紀錄與醫囑單（Admit to the service of Dr.／轉主治） ===== */
+const CJK_NAME='[一-鿿][一-鿿○〇Ｏ0]{1,3}';
+function attendingFromAdm(raw){
+  const t=String(raw||'').replace(/\r/g,'');
+  const pats=[new RegExp('主治醫師\\s*[:：]\\s*(?:Dr\\.?\\s*)?(?:\\d{3,6}\\s*)?('+CJK_NAME+')'),new RegExp('主治醫生\\s*[:：]\\s*(?:Dr\\.?\\s*)?('+CJK_NAME+')'),
+    new RegExp('(?:Attending(?:\\s*(?:physician|doctor|staff))?|\\bV\\.?S\\.?)\\s*[:：]\\s*(?:Dr\\.?\\s*)?('+CJK_NAME+'|[A-Z][A-Za-z\\-]+(?:\\s+[A-Z][A-Za-z\\-]+){0,2})','i'),
+    new RegExp('Admit(?:ted)?\\s+to\\s+the\\s+service\\s+of\\s+Dr\\.?\\s*('+CJK_NAME+'|[A-Z][A-Za-z\\-]+(?:\\s+[A-Z][A-Za-z\\-]+){0,2})','i')];
+  for(const re of pats){const m=t.match(re);if(m)return m[1].trim();}
+  return '';
+}
+// 醫囑單：依列印時間排序，最後一筆收治／轉主治為準
+function attendingFromOrders(texts){
+  const ev=[];
+  (texts||[]).forEach(text=>{
+    const parts=String(text).replace(/\r/g,'').split(/(?=^.*列印時間[:：])/m);
+    parts.forEach(blk=>{const h=blk.match(/列印時間[:：]\s*(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})/);if(!h)return;
+      const T=new Date(+h[1],+h[2]-1,+h[3],+h[4],+h[5]);
+      const x=blk.replace(/-[ \t]*\n[ \t]*/g,'').replace(/[ \t]+/g,' ');   // 接回醫囑名稱的斷行
+      let m=x.match(new RegExp('Admit(?:ted)?\\s+to\\s+the\\s+service\\s+of\\s+Dr\\.?\\s*('+CJK_NAME+')'));if(m)ev.push({t:T,eff:T,name:m[1],kind:'收治'});
+      m=x.match(new RegExp('主治醫師\\s*[:：]\\s*(?:\\d{3,6}\\s*)?('+CJK_NAME+')(?:\\s*on\\s*(\\d{1,2})\\/(\\d{1,2})(?:\\s*at\\s*(\\d{1,2}):(\\d{2}))?)?'));
+      if(m){let eff=T;if(m[2])eff=new Date(T.getFullYear(),+m[2]-1,+m[3],m[4]?+m[4]:0,m[5]?+m[5]:0);ev.push({t:T,eff,name:m[1],kind:'轉主治'});}
+    });});
+  ev.sort((a,b)=>a.eff-b.eff||a.t-b.t);
+  const now=new Date(),cur=[...ev].reverse().find(e=>e.eff<=now)||null,next=ev.find(e=>e.eff>now)||null;
+  return {cur,next,all:ev};
+}
+function applyAttending(p,name,src,note){
+  if(!name)return false;
+  const auto=p.attendingAuto&&p.attendingAuto.name;
+  const manual=p.attending&&p.attending!==auto;   // 使用者手動改過就不覆蓋
+  p.attendingAuto={name,src,note:note||'',at:new Date().toISOString()};
+  if(!manual){p.attending=name;return true;}
+  return false;
+}
+function attendingFromOrdersApply(p){
+  const R=attendingFromOrders((p.orderSources||[]).map(x=>x.text));
+  if(!R.cur&&!R.next)return '';
+  const e=R.cur||R.next;const note=R.next&&R.cur?`預定 ${MT.fmt(R.next.eff)} 轉主治：${R.next.name}`:'';
+  return applyAttending(p,e.name,`醫囑 ${MT.fmt(e.t)}（${e.kind}${e.eff>new Date()?'，'+MT.fmt(e.eff)+' 起':''}）`,note)?e.name:'';
+}
 function admFromOrders(text){
   const N=parseOrderNotes(text);let best=null;
   N.forEach(n=>{const m=n.text.match(/^Diagnosis\s*\((\d+)\)\s*[:：]\s*\(?(.*?)\)?\s*$/i);if(!m)return;
@@ -5298,6 +5342,7 @@ function relTxt(p,t){
 function scrub(p,t,mark){
   const M=s=>mark?`\u0001${s}\u0002`:s;
   t=relTxt(p,t);
+  if(p.attending&&p.attending.trim().length>=2)t=t.split(p.attending.trim()).join(M('[主治醫師]'));
   if(p.name&&p.name.trim().length>=2){p.name.trim().split(/\s+/).filter(x=>x.length>=2).forEach(n=>{t=t.split(n).join(M('[姓名]'));});}
   if(p.chartNo)t=t.split(p.chartNo).join(M('[病歷號]'));
   t=t.replace(/\b[A-Z][12]\d{8}\b|\b[A-Z]\d{3}\*{2,}\d{2,4}\b/g,M('[身分證]'));
