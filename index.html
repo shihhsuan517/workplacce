@@ -423,7 +423,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-17a';
+const APP_VER='2026-11-17b';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -3989,7 +3989,7 @@ const EXAM_TYPES=[['CT',/\bCT\b|computed\s*tomograph|電腦斷層/i],['MRI',/\bM
 const EXAM_TYPE_NAMES=EXAM_TYPES.map(x=>x[0]).concat(['其他']);
 const EXAM_KEY=/^\s*(檢查日期|執行日期|報告日期|檢查時間|檢查項目|檢查名稱|醫令名稱|檢查單號|申請單號|Exam(?:ination)?\s*(?:Date|Name|Item)|Procedure)\s*[:：]/i;
 const EXAM_TITLE=/(?:檢查項目|檢查名稱|醫令名稱|Exam(?:ination)?\s*(?:Name|Item)|Procedure)\s*[:：]\s*([^\n]+)/i;
-const EXAM_IMP=/^\s*(?:\*\s*)?(impression|imp\.?|conclusion|結論|印象|診斷|summary|interpretation|判讀)\s*[:：]?\s*/i;
+const EXAM_IMP=/^\s*(?:\*\s*)?(impressions?|imp\.?|conclusions?|結論|印象|診斷|summary|interpretation|判讀)\s*[:：]?\s*/i;
 const EXAM_END=/(報告醫師|確認醫師|審核醫師|判讀醫師|Reported\s*by|Verified\s*by|打字|^\s*[-=_]{6,}\s*$)/i;
 function toISODate(s){
   if(!s)return '';let m=s.match(/(\d{3,4})[\/\-.年](\d{1,2})[\/\-.月](\d{1,2})(?:日)?(?:\s+(\d{1,2}):(\d{2}))?/);
@@ -3998,6 +3998,38 @@ function toISODate(s){
   return `${y}-${pad(+m[2])}-${pad(+m[3])}${m[4]!=null?` ${pad(+m[4])}:${m[5]}`:''}`;
 }
 const examType=t=>{const x=EXAM_TYPES.find(([,re])=>re.test(t||''));return x?x[0]:'其他';};
+
+/* ===== 兒科心臟超音波：量測值、分流病灶、異常句、Vmax、結論（只列數字，不做判斷） ===== */
+function isPedsEcho(t){return /echocardiograph/i.test(t)&&/\b(Ao|LA|LVED)\s*\(mm\)/i.test(t);}
+function parseEcho(t){
+  const raw=String(t||'').replace(/\r/g,'');
+  const E={meas:{},flags:{},lesions:[],neg:[],abn:[],vmax:[],concl:[]};
+  const num=re=>{const m=raw.match(re);return m?+m[m.length-1]:null;};
+  [['Ao',/\bAo\s*\(mm\)\s*[:：]\s*([\d.]+)/i],['LA',/\bLA\s*\(mm\)\s*[:：]\s*([\d.]+)/i],['LVED',/\bLVED[d]?\s*\(mm\)\s*[:：]\s*([\d.]+)/i],['LVES',/\bLVES[d]?\s*\(mm\)\s*[:：]\s*([\d.]+)/i],
+   ['IVS',/\bIVS[d]?\s*\(mm\)\s*[:：]\s*([\d.]+)/i],['LVPW',/\bLVPW[d]?\s*\(mm\)\s*[:：]\s*([\d.]+)/i],['LAAo',/LA\s*\/\s*Ao\s*[:：]?\s*([\d.]+)/i],
+   ['EF',/\bEF\s*(?:\([^)]*\))?\s*[:：]\s*([\d.]+)\s*%/i],['FS',/\bFS\s*(?:\([^)]*\))?\s*[:：]\s*([\d.]+)\s*%/i]].forEach(([k,re])=>{const v=num(re);if(v!=null)E.meas[k]=v;});
+  const efm=raw.match(/\bEF\s*\(([^)]*)\)/i);if(efm)E.meas.EFmethod=efm[1];
+  if(/LA\s*\/\s*Ao\s*[:：]?\s*[\d.]+\s*\*/i.test(raw))E.flags.LAAo=true;
+  if(E.meas.LAAo==null&&E.meas.LA&&E.meas.Ao)E.meas.LAAo=+(E.meas.LA/E.meas.Ao).toFixed(2);
+  // 合併斷行（下一行以小寫或括號開頭）
+  const body=raw.split(/Conclusions?\s*[:：]/i);
+  const sent=body[0].replace(/\n[ \t]*(?=[a-z(])/g,' ').split('\n').map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const LES=[['PDA',/patent ductus arteriosus|\bPDA\b/i],['PFO',/patent foramen ovale|\bPFO\b/i],['ASD',/atrial septal defect|\bASD\b/i],['VSD',/ventricular septal defect|\bVSD\b/i]];
+  sent.forEach(l=>{
+    const star=(l.match(/^(\*+)/)||[])[1];const c=l.replace(/^\*+\s*/,'');
+    if(star)E.abn.push(c);
+    const neg=/^(no\b|without\b|intact\b|closed\b)/i.test(c);
+    if(/intact ventricular septum/i.test(c)){E.neg.push('VSD');}
+    LES.forEach(([k,re])=>{if(!re.test(c))return;if(neg){if(!E.neg.includes(k))E.neg.push(k);return;}
+      const size=(c.match(/([\d.]+)\s*mm/i)||[])[1],vm=(c.match(/Vmax\s*[:：]?\s*([\d.]+)\s*m\s*\/\s*s/i)||[])[1];
+      const dir=/bidirection|bi-direction/i.test(c)?'雙向':/left\s*to\s*right|L\s*-?>\s*R|L-R/i.test(c)?'左→右':/right\s*to\s*left|R\s*-?>\s*L|R-L/i.test(c)?'右→左':'';
+      E.lesions.push({k,size:size!=null?+size:null,dir,vmax:vm!=null?+vm:null,text:c});});
+    const vre=/Vmax\s*([\d.]+)\s*m\s*\/\s*s\s*for\s*(?:the\s*)?([a-z ]+?)(?=\s+without|\s*,|\s*\.|$)/gi;let m;
+    while((m=vre.exec(c)))E.vmax.push({site:m[2].trim(),v:+m[1]});
+  });
+  if(body[1])E.concl=body[1].split('\n').map(l=>l.trim()).filter(Boolean);
+  return E;
+}
 function parseExams(text){
   const lines=String(text||'').replace(/\r/g,'').split('\n');
   // 以第一個出現的表頭欄位當作每份報告的起點
@@ -4016,7 +4048,8 @@ function parseExams(text){
     let imp='';const ii=L.findIndex(l=>EXAM_IMP.test(l));
     if(ii>=0){const out=[L[ii].replace(EXAM_IMP,'')];for(let j=ii+1;j<L.length;j++){if(EXAM_END.test(L[j]))break;out.push(L[j]);}
       imp=out.join('\n').replace(/^\n+|\s+$/g,'').trim();}
-    return {date:dt.slice(0,10),time:dt.slice(11,16),type:examType(title+' '+b.slice(0,300)),title:title.slice(0,120),imp,text:b};
+    const ec=isPedsEcho(b)?parseEcho(b):null;if(ec&&ec.concl.length)imp=ec.concl.join('\n');
+    return {date:dt.slice(0,10),time:dt.slice(11,16),type:examType(title+' '+b.slice(0,300)),title:title.replace(/[:：]\s*$/,'').slice(0,120),imp,text:b,echo:ec};
   });
 }
 function examStore(p){if(!Array.isArray(p.exams))p.exams=[];return p.exams;}
@@ -4024,7 +4057,7 @@ function mergeExams(p,list){
   const E=examStore(p);let add=0,upd=0;
   const sig=x=>x.text.replace(/\s+/g,'').slice(0,200);
   list.forEach(x=>{const ex=E.find(y=>sig(y)===sig(x)||(y.date===x.date&&y.title&&y.title===x.title&&y.time===x.time));
-    if(ex){Object.assign(ex,{text:x.text,imp:x.imp||ex.imp,type:ex.typeManual?ex.type:x.type});upd++;}
+    if(ex){Object.assign(ex,{text:x.text,imp:x.imp||ex.imp,type:ex.typeManual?ex.type:x.type,echo:x.echo||ex.echo});upd++;}
     else{E.push(Object.assign({id:'e'+uid().slice(1),addedAt:new Date().toISOString()},x));add++;}});
   return {add,upd};
 }
@@ -4040,6 +4073,7 @@ function renderExam(p,ro){
   let h=ro?'':`<div class="card"><h3>貼上檢查報告</h3>
     <textarea id="examText" rows="6" placeholder="從 HIS 複製影像、超音波、心電圖、內視鏡、病理等報告貼在這裡。一次可以貼多份，系統會依日期與檢查名稱分開，並抓出 Impression／結論。"></textarea>
     <div class="row" style="margin-top:8px;justify-content:flex-end"><button class="pri" id="btnExamAdd">解析並加入</button></div></div>`;
+  h+=echoTrackCard(p,E);
   h+=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">檢查報告 <span class="small mute">${E.length} 份</span></h3>
     <div class="row">${types.length>2?types.map(t=>`<button class="small ${t===f?'pri':''}" data-examf="${t}">${t}</button>`).join(''):''}${E.length?'<button class="small" id="btnExamSoap">複製檢查摘要（SOAP）</button>':''}</div></div>`;
   if(!shown.length)h+='<div class="small mute" style="margin-top:8px">尚未貼上檢查報告。</div>';
@@ -4050,10 +4084,39 @@ function renderExam(p,ro){
       <div class="fld"><label>類別</label><select data-ef="${x.id}|type">${EXAM_TYPE_NAMES.map(t=>`<option ${t===x.type?'selected':''}>${t}</option>`).join('')}</select></div>
       <div class="fld wide"><label>檢查名稱</label><input data-ef="${x.id}|title" value="${esc(x.title||'')}"></div>
       <div class="fld wide"><label>Impression／結論（帶入 SOAP）</label><textarea rows="3" data-ef="${x.id}|imp">${esc(x.imp||'')}</textarea></div></div>`}
+    ${x.echo?echoBlock(x.echo):''}
     ${ro?`<div style="white-space:pre-wrap"><b>Impression：</b>${esc(x.imp||'—')}</div>`:''}
     <details style="margin-top:6px"><summary class="small mute" style="cursor:pointer">完整報告</summary><div style="white-space:pre-wrap;font-size:13px;margin-top:6px">${esc(x.text)}</div></details>
     </div></details>`).join('');
   return h+'</div>';
+}
+
+const ECHO_MEAS=[['Ao','Ao','mm'],['LA','LA','mm'],['LAAo','LA/Ao',''],['LVED','LVED','mm'],['LVES','LVES','mm'],['IVS','IVS','mm'],['LVPW','LVPW','mm'],['EF','EF','%'],['FS','FS','%']];
+function echoBlock(E){
+  const m=E.meas,chips=ECHO_MEAS.filter(([k])=>m[k]!=null).map(([k,l,u])=>`<span class="tag t-reg" style="font-size:12.5px">${l} <b>${m[k]}</b>${u?' '+u:''}${k==='LAAo'&&E.flags.LAAo?' <span class="small">（報告標 **）</span>':''}${k==='EF'&&m.EFmethod?` <span class="small mute">${esc(m.EFmethod)}</span>`:''}</span>`).join(' ');
+  const les=E.lesions.length?`<table class="tbl" style="margin-top:6px"><thead><tr><th>病灶</th><th>大小</th><th>分流方向</th><th>Vmax</th></tr></thead><tbody>${E.lesions.map(x=>`<tr><td><b>${x.k}</b></td><td class="num">${x.size!=null?x.size+' mm':'—'}</td><td>${x.dir||'—'}</td><td class="num">${x.vmax!=null?x.vmax+' m/s':'—'}</td></tr>`).join('')}</tbody></table>`:'';
+  return `<div style="margin:6px 0 8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px"><div class="small mute" style="margin-bottom:4px">心臟超音波擷取（只列數字，不做判斷）</div>${chips}${les}
+    ${E.neg.length?`<div class="small mute" style="margin-top:4px">報告記載未見／完整：${E.neg.join('、')}</div>`:''}
+    ${E.abn.length?`<div class="small" style="margin-top:6px"><b>報告標記 * 的句子</b>${E.abn.map(a=>`<div>・${esc(a)}</div>`).join('')}</div>`:''}
+    ${E.vmax.length?`<details style="margin-top:4px"><summary class="small mute" style="cursor:pointer">其他血流速度（${E.vmax.length}）</summary><div class="small">${E.vmax.map(v=>`${esc(v.site)}：${v.v} m/s`).join('；')}</div></details>`:''}</div>`;
+}
+// PDA／心臟超音波追蹤表：依日期排列，對照同期 PDA 用藥
+function echoTrackCard(p,E){
+  const L=E.filter(x=>x.echo).sort((a,b)=>((a.date||'9')+(a.time||'')).localeCompare((b.date||'9')+(b.time||'')));if(!L.length)return '';
+  const dob=p.dob?new Date(p.dob+'T00:00:00'):null,adm=p.admitDate?new Date(p.admitDate+'T00:00:00'):null;
+  const dl=d=>{if(!d)return '';const x=new Date(d+'T00:00:00');return dob?`DOL${Math.round((x-dob)/864e5)+1}`:adm&&x>=adm?`HD${Math.round((x-adm)/864e5)+1}`:'';};
+  const R=ordersOf(p),PDA_RX=/ibuprofen|indomethacin|indometacin|acetaminophen|paracetamol/i;
+  const meds=d=>{if(!d||!R)return '—';const day=new Date(d+'T12:00:00'),out=[];
+    R.groups.filter(g=>PDA_RX.test(g.label+' '+g.name)).forEach(g=>g.eps.forEach(e=>{const st=e.start||e.stop,en=e.status==='open'?new Date():(e.stop||e.start);if(!st)return;
+      const s0=new Date(st);s0.setHours(0,0,0,0);const e0=new Date(en);e0.setHours(23,59,0,0);
+      if(day>=s0&&day<=e0)out.push(`${MT.drugLabel(g.name)} ${esc(e.freq||'')} ${e.route||''}（${MT.fmt(st).slice(0,5)} 起）`);
+      else if(day>e0&&(day-e0)<3*864e5)out.push(`<span class="mute">${MT.drugLabel(g.name)}（${MT.fmt(en).slice(0,5)} 停）</span>`);}));
+    return out.join('<br>')||'—';};
+  const les=(x,k)=>{const l=x.echo.lesions.find(y=>y.k===k);if(l)return `${l.size!=null?l.size+' mm':''} ${l.dir}${l.vmax!=null?`<div class="small mute">Vmax ${l.vmax}</div>`:''}`;return x.echo.neg.includes(k)?'<span class="mute">未見</span>':'—';};
+  const v=(x,k)=>x.echo.meas[k]!=null?x.echo.meas[k]+(k==='LAAo'&&x.echo.flags.LAAo?'**':''):'—';
+  return `<div class="card"><h3>心臟超音波追蹤 <span class="small mute">${L.length} 份・只列數字，不做判斷</span></h3><div class="tblwrap"><table class="tbl"><thead><tr><th>日期</th><th>PDA</th><th>PFO／ASD</th><th>LA/Ao</th><th>LVED／LVES</th><th>EF</th><th>同期 PDA 相關用藥</th></tr></thead><tbody>
+    ${L.map(x=>`<tr><td class="num">${x.date?esc(x.date.slice(5).replace('-','/')):'<span class="under">日期?</span>'}${dl(x.date)?`<div class="small mute">${dl(x.date)}</div>`:''}</td><td>${les(x,'PDA')}</td><td>${les(x,'PFO')}${x.echo.lesions.some(y=>y.k==='ASD')?'<br>ASD '+les(x,'ASD'):''}</td><td class="num">${v(x,'LAAo')}</td><td class="num">${v(x,'LVED')}／${v(x,'LVES')}</td><td class="num">${v(x,'EF')}</td><td class="small">${meds(x.date)}</td></tr>`).join('')}
+    </tbody></table></div><div class="small mute" style="margin-top:4px">同期用藥依醫囑紀錄（ibuprofen、indomethacin、acetaminophen；acetaminophen 也可能是退燒用）。報告沒有日期時請在下方該份報告填入日期。</div></div>`;
 }
 function bindExam(p,ro){
   document.querySelectorAll('[data-examf]').forEach(b=>b.onclick=()=>{S.examUI=b.dataset.examf;renderMain();});
