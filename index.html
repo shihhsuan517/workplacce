@@ -423,7 +423,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-17d';
+const APP_VER='2026-11-17e';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -3778,6 +3778,10 @@ function mergeMicro(p,res){
   M.pastedAt=new Date().toISOString();return n;
 }
 const isVirusRep=R=>R.kind==='virus';
+// TB／抗酸菌培養：手動標示，或報告文字提到 TB／AFB／抗酸菌／結核
+const TB_RE=/\bTB\b|tubercul|mycobact|\bAFB\b|acid.?fast|抗酸|結核|分枝桿菌/i;
+const isTbRep=R=>R.tb===true||(R.tb!==false&&TB_RE.test([R.comment,R.spec,R.dept,R.testName].join(' ')));
+const tbDays=R=>R.collected?Math.floor((Date.parse(ymd())-Date.parse(R.collected.slice(0,10)))/864e5):null;
 const virusTxt=R=>(R.items||[]).map(it=>`${it.name} ${it.value}${it.unit?' '+it.unit:''}`).join('、')||('（未列檢驗值）'+(R.comment?' '+R.comment.slice(0,60):''));
 const virusPos=v=>/positive|detected|陽性|reactive|\bpos\b/i.test(v)&&!/not\s*detected|negative|non-?reactive|陰性/i.test(v);
 const hasMicro=p=>!!(p&&p.micro&&p.micro.reports&&Object.keys(p.micro.reports).length);
@@ -3864,7 +3868,14 @@ function renderMicro(p,ro){
     h+='</div>';
   }
   // 培養清單
-  const shownAll=list.filter(r=>U.spec==='all'||r.spec===U.spec),shown=shownAll.filter(r=>!isVirusRep(r)),vir=shownAll.filter(isVirusRep);
+  const shownAll=list.filter(r=>U.spec==='all'||r.spec===U.spec),shown=shownAll.filter(r=>!isVirusRep(r)&&!isTbRep(r)),vir=shownAll.filter(isVirusRep),tbl=shownAll.filter(r=>!isVirusRep(r)&&isTbRep(r));
+  if(tbl.length){
+    h+=`<div class="card" style="border-left:4px solid #b8641e"><h3>TB／抗酸菌培養追蹤 <span class="small mute">${tbl.length} 筆・培養時間長，另列追蹤</span></h3><div class="tblwrap"><table class="tbl"><thead><tr><th>採檢</th><th>檢體</th><th>收件編號</th><th>已等待</th><th>結果</th><th>說明</th><th></th></tr></thead><tbody>${tbl.map(R=>{const d=tbDays(R);return `<tr><td class="num">${esc(R.collected||'')}${R.ordered?`<div class="small mute">醫囑 ${esc(R.ordered.slice(5))}</div>`:''}</td><td>${esc(specName(R.spec))}</td><td class="num">${esc(R.acc||'')}</td>
+      <td class="num">${d!=null?`<b>${d}</b> 天<div class="small mute">第 ${Math.floor(d/7)+1} 週</div>`:'—'}</td>
+      <td>${R.orgs.length?R.orgs.map(o=>`${o.no}. <b>${esc(o.name)}</b>${o.growth?` <span class="small mute">${esc(o.growth)}</span>`:''}`).join('<br>'):R.noGrowth?'無菌生長':'<span class="tag t-warn">尚無結果</span>'}</td>
+      <td class="small">${esc(R.comment||'')}</td><td>${ro?'':`<button class="ghost small" data-tb="${esc(R.key||R.acc)}" data-v="0">取消標示</button>`}</td></tr>`;}).join('')}</tbody></table></div>
+      <div class="small mute" style="margin-top:4px">依採檢日計算等待天數。報告文字提到 TB／AFB／抗酸菌／結核會自動列入；其他請在下方培養表按「標為 TB 培養」。</div></div>`;
+  }
   if(vir.length){
     h+=`<div class="card"><h3>病毒／分子檢驗 <span class="small mute">${vir.length} 筆</span></h3><div class="tblwrap"><table class="tbl"><thead><tr><th>採檢</th><th>檢體</th><th>收件編號</th><th>檢驗項目與結果</th><th>說明</th></tr></thead><tbody>${vir.map(R=>`<tr><td class="num">${S.editMode&&!ro?`<button class="xdel" data-del="micro" data-k="${esc(R.key||R.acc)}" title="刪除這筆">✕</button> `:''}${esc(R.collected||'')}${R.ordered?`<div class="small mute">醫囑 ${esc(R.ordered.slice(5))}</div>`:''}</td><td>${esc(specName(R.spec))}</td><td class="num">${esc(R.acc||'')}</td>
       <td>${(R.items||[]).length?R.items.map(it=>`<div><b>${esc(it.name)}</b>：<span class="tag ${virusPos(it.value)||it.hl?'t-abx':'t-new'}">${esc(it.value)}${it.unit?' '+esc(it.unit):''}</span>${it.ref?` <span class="small mute">參考 ${esc(it.ref)}</span>`:''}</div>`).join(''):'<span class="mute">報告未列檢驗值（見說明）</span>'}</td>
@@ -3874,7 +3885,7 @@ function renderMicro(p,ro){
   shown.forEach(R=>{
     h+=`<tr><td class="num">${S.editMode&&!ro?`<button class="xdel" data-del="micro" data-k="${esc(R.key||R.acc)}" title="刪除這筆培養">✕</button> `:''}${esc(R.collected||'')}${R.ordered?`<div class="small mute">醫囑 ${esc(R.ordered.slice(5))}</div>`:''}</td><td>${esc(specName(R.spec))}</td><td class="num">${esc(R.acc||'')}</td>
       <td>${esc(R.status||'')}${R.unverified?' <span class="tag t-warn">未驗證</span>':''}</td>
-      <td>${R.orgs.length?R.orgs.map(o=>`${S.editMode&&!ro?`<button class="xdel" data-del="org" data-k="${esc(R.key||R.acc)}" data-n="${o.no}" title="刪除此菌株">✕</button> `:''}${o.no}. <b>${esc(o.name)}</b>${o.growth?` <span class="small mute">${esc(o.growth)}</span>`:''}${orgFlags(o,R).map(([t,c])=>` <span class="tag ${c==='bad'?'t-abx':'t-warn'}">${t}</span>`).join('')}${!Object.keys(o.ast||{}).length&&o.summarySIR&&o.summarySIR.length?' <span class="tag t-reg">藥敏待貼明細</span>':''}`).join('<br>'):(R.noGrowth?'無菌生長':R.noOrgYet?'<span class="mute">尚無菌株報告（培養中或無菌生長）</span>':'<span class="mute">—</span>')}</td>
+      <td>${R.orgs.length?R.orgs.map(o=>`${S.editMode&&!ro?`<button class="xdel" data-del="org" data-k="${esc(R.key||R.acc)}" data-n="${o.no}" title="刪除此菌株">✕</button> `:''}${o.no}. <b>${esc(o.name)}</b>${o.growth?` <span class="small mute">${esc(o.growth)}</span>`:''}${orgFlags(o,R).map(([t,c])=>` <span class="tag ${c==='bad'?'t-abx':'t-warn'}">${t}</span>`).join('')}${!Object.keys(o.ast||{}).length&&o.summarySIR&&o.summarySIR.length?' <span class="tag t-reg">藥敏待貼明細</span>':''}`).join('<br>'):(R.noGrowth?'無菌生長':R.noOrgYet?'<span class="mute">尚無菌株報告（培養中或無菌生長）</span>':'<span class="mute">—</span>')}${!R.orgs.length&&!ro?` <button class="ghost small" data-tb="${esc(R.key||R.acc)}" data-v="1">標為 TB 培養</button>`:''}</td>
       <td class="small">${esc(R.comment||'')}</td></tr>`;
   });
   if(shown.length)h+='</tbody></table></div></div>';
@@ -3895,7 +3906,7 @@ function microSoapTxt(p){
   const vtxt=vir.length?'\nVirus/PCR:\n'+vir.map(R=>`${(R.collected||'').slice(5,10).replace('-','/')} ${R.spec}: ${(R.items||[]).map(it=>`${it.name} ${it.value}${it.unit?' '+it.unit:''}`).join(', ')||(R.comment||'').slice(0,80)}`).join('\n'):'';
   return list.map(R=>{
     const head=`${(R.collected||'').slice(5,10).replace('-','/')} ${R.spec}${R.status&&/初步/.test(R.status)?' (prelim)':''}`;
-    if(!R.orgs.length)return `${head}: ${R.noGrowth?'no growth':R.noOrgYet?'no isolate reported yet':'pending'}`;
+    if(!R.orgs.length)return `${head}: ${isTbRep(R)?`TB culture pending (day ${tbDays(R)??'?'})`:R.noGrowth?'no growth':R.noOrgYet?'no isolate reported yet':'pending'}`;
     return `${head}: `+R.orgs.map(o=>{
       const by={S:[],I:[],R:[],D:[]};Object.entries(o.ast||{}).forEach(([d,v])=>{if(by[v.sir])by[v.sir].push(d);});
       const ast=['R','I','D','S'].filter(k=>by[k].length).map(k=>`${sirTxt(k)}: ${by[k].join(', ')}`).join('; ');
@@ -3907,6 +3918,7 @@ function bindMicro(p,ro){
   if($('btnMicroPaste'))$('btnMicroPaste').onclick=()=>openPaste(p.id);
   if(!hasMicro(p))return;
   $('microSpec').onchange=e=>{S.microUI.spec=e.target.value;renderMain();};
+  document.querySelectorAll('[data-tb]').forEach(b=>b.onclick=()=>{const R=p.micro.reports[b.dataset.tb]||Object.values(p.micro.reports).find(x=>x.acc===b.dataset.tb);if(!R)return;R.tb=b.dataset.v==='1';p.updatedAt=new Date().toISOString();markDirty();renderMain();toast(R.tb?'已標為 TB 培養，移到追蹤區':'已取消 TB 標示');});
   $('btnMicroSoap').onclick=async()=>toast(await copyText('Culture：\n'+microSoapTxt(p))?'已複製 Culture 段落':'複製失敗');
   if($('btnMicroClear'))$('btnMicroClear').onclick=async()=>{if(!await confirmBox('清除培養資料','移除這位病人所有已貼上的培養與藥敏？','清除',true))return;p.micro={reports:{}};markDirty();renderMain();};
 }
@@ -5638,7 +5650,7 @@ function renderOverview(p){
   if(hasMicro(p)){
     const C=coverage(p),L=microList(p).slice(0,5);
     h+=`<div class="card" style="margin:0"><h3>培養</h3>${L.map(R=>kv(`${esc((R.collected||'').slice(5,10))} ${esc(R.spec)}`,
-      isVirusRep(R)?`<span class="tag t-prn">病毒／分子</span> ${(R.items||[]).map(it=>`${esc(it.name)} <span class="tag ${virusPos(it.value)?'t-abx':'t-new'}">${esc(it.value)}</span>`).join('、')||'<span class="mute">未列檢驗值</span>'}`:R.orgs.length?R.orgs.map(o=>{const cv=C.rows.find(x=>x.o===o);return `${esc(o.name)}${orgFlags(o,R).map(([t,c])=>` <span class="tag ${c==='bad'?'t-abx':'t-warn'}">${t}</span>`).join('')}${cv&&C.act.length&&!cv.flags.some(f=>f[0]==='可能污染菌')?(cv.covered?' <span class="tag t-new">已涵蓋</span>':cv.sdd?' <span class="tag t-warn">僅 SDD</span>':' <span class="tag t-abx">未涵蓋</span>'):''}`;}).join('<br>'):(R.noGrowth?'無菌生長':R.noOrgYet?'尚無菌株報告':'—'))).join('')}
+      isTbRep(R)&&!isVirusRep(R)&&!R.orgs.length?`<span class="tag t-warn">TB 培養・等待 ${tbDays(R)??'?'} 天</span>`:isVirusRep(R)?`<span class="tag t-prn">病毒／分子</span> ${(R.items||[]).map(it=>`${esc(it.name)} <span class="tag ${virusPos(it.value)?'t-abx':'t-new'}">${esc(it.value)}</span>`).join('、')||'<span class="mute">未列檢驗值</span>'}`:R.orgs.length?R.orgs.map(o=>{const cv=C.rows.find(x=>x.o===o);return `${esc(o.name)}${orgFlags(o,R).map(([t,c])=>` <span class="tag ${c==='bad'?'t-abx':'t-warn'}">${t}</span>`).join('')}${cv&&C.act.length&&!cv.flags.some(f=>f[0]==='可能污染菌')?(cv.covered?' <span class="tag t-new">已涵蓋</span>':cv.sdd?' <span class="tag t-warn">僅 SDD</span>':' <span class="tag t-abx">未涵蓋</span>'):''}`;}).join('<br>'):(R.noGrowth?'無菌生長':R.noOrgYet?'尚無菌株報告':'—'))).join('')}
       <div style="margin-top:8px"><button class="small" onclick="S.tab='micro';renderMain()">查看抗微生物圖譜</button></div></div>`;
   }
   // 劑量巡查
