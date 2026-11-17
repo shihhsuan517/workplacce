@@ -423,7 +423,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-17c';
+const APP_VER='2026-11-17d';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -3402,6 +3402,13 @@ function soapLabLines(p,kind){
   if(t==='peds')L.push(`  * Total Bili(MIC): ${V(latestLab(p,'72-365','MIC'))} mg/dL`);
   return L;
 }
+// SOAP 用：每個使用中抗生素一行「Betamycin 11/16 16:34- (D1)」
+function abxDurationBlk(p){
+  const R=ordersOf(p);let L=[];
+  if(R)L=R.groups.filter(g=>g.abx&&g.open&&!g.local).map(g=>`${MT.drugLabel(g.name)} ${g.course.start?MT.fmt(g.course.start):'?'}- (D${g.course.dot})`);
+  else L=(p.medList||[]).filter(m=>m.abx&&!m.expired).map(m=>{const Lg=p.medLog[m.key],st=Lg&&(Lg.start||Lg.first);return `${m.display.replace(/\s*[（(].*[）)]\s*$/,'')} ${st?st.slice(5).replace('-','/'):'?'}- (D${m.dot||(Lg?abxDay(Lg,true):'?')})`;});
+  return L.length?'\n'+L.join('\n'):'(no)';
+}
 function abxDurationTxt(p){
   const R=ordersOf(p);
   if(R){const a=R.groups.filter(g=>g.abx&&g.open);return a.length?a.map(g=>`D${g.course.dot} ${g.label}`).join(', '):'no';}
@@ -3412,7 +3419,7 @@ function abxDurationTxt(p){
 function buildSoap(p){
   const t=p.template,sex=p.sex==='M'?'male':p.sex==='F'?'female':'male/female';
   const age=p.age||'';const meds=medsSoapText(p)||'';const dx=p.dx||'';const allergy=p.allergy||'no known food or drugs allergic history';
-  const ht=p.ht||'',wt=p.wt||'';const labs=soapLabLines(p).join('\n');const abx=abxDurationTxt(p);
+  const ht=p.ht||'',wt=p.wt||'';const labs=soapLabLines(p).join('\n');const abx=abxDurationTxt(p),abxBlk=abxDurationBlk(p);
   const ct=microSoapTxt(p),cult=ct?'\n'+ct.split('\n').map(l=>'  - '+l).join('\n'):'no';
   const exT=examSoapTxt(p),coT=consultSoapTxt(p),ind=t=>t?'\n'+t.split('\n').map(l=>'  - '+l).join('\n'):'';
   const rrT=rrtSoapTxt(p);
@@ -3445,7 +3452,7 @@ ${meds}
 # Duplication: (no)
 # Adverse drug reactions: (no)
 # Compatiable with NG feeding: (yes)
-# Duration of Abx: (${abx})
+# Duration of Abx: ${abxBlk}
 
 <Plan>
 Medication therapeutic monitoring : Keep current therapy.
@@ -3541,7 +3548,7 @@ ${meds}
 * Adverse drug reactions: (no)
 * Compatiable with NG feeding: (yes)
 * Identified medication discrepancies via Pharm-Cloud: (no)
-* Duration of Abx: (${abx})
+* Duration of Abx: ${abxBlk}
 
 <Plan>
 Medication therapeutic monitoring : Keep current therapy.
