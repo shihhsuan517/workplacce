@@ -288,6 +288,7 @@ tr.old td{opacity:.5;text-decoration:line-through}
       <div class="top">
         <button class="pri" id="btnPaste">📋 一鍵貼上病人資料／醫囑</button>
         <button id="btnAddPt">＋ 手動新增病患</button>
+        <button id="btnExportSum">⇩ 匯出去識別摘要</button>
         <input id="ptSearch" placeholder="搜尋床號、代號、姓名…">
         <label class="small mute" style="display:flex;gap:6px;align-items:center">
           <input type="checkbox" id="chkHide" style="width:auto"> 遮蔽姓名與病歷號
@@ -301,6 +302,7 @@ tr.old td{opacity:.5;text-decoration:line-through}
 </div>
 
 <div id="modal" class="ov hidden"><div class="mbox"><h4 id="mT"></h4><div class="mb" id="mB"></div><div class="ma" id="mA"></div></div></div>
+<div id="expOv" class="ov hidden"><div class="pbox" id="expBox"></div></div>
 <div id="pasteOv" class="ov hidden"><div class="pbox">
   <h4>一鍵貼上病人資料／醫囑</h4>
   <div class="small mute" style="margin-bottom:8px">把 HIS 的病人資訊列與醫囑整段貼上（可以只貼其中一種）。解析後先預覽，確認才匯入。</div>
@@ -423,7 +425,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-17f';
+const APP_VER='2026-11-17g';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -2406,6 +2408,47 @@ function openPaste(targetId){
   $('pasteOv').classList.remove('hidden');setTimeout(()=>$('pasteText').focus(),40);
 }
 function closePaste(){$('pasteOv').classList.add('hidden');$('pasteText').value='';$('pastePreview').innerHTML='';lastParse=null;}
+
+/* ===== 多病人去識別摘要匯出（沿用 AI 判讀包的去識別與內容設定，不含 AI 提問） ===== */
+S.expUI={sel:null,fmt:'md'};
+function sumPack(p,mark){
+  let t=aiPack(p,mark);const i=t.indexOf('\n---\n## 請協助判讀');if(i>=0)t=t.slice(0,i);
+  return t.replace(/｜AI 判讀包/,'｜病患摘要').replace(/\s+$/,'');
+}
+function expPatients(){return sortedPatients();}
+function renderExport(){
+  const P=expPatients(),U=S.expUI;if(!U.sel)U.sel=new Set(P.map(p=>p.id));
+  const sel=P.filter(p=>U.sel.has(p.id));
+  const pv=sel.map(p=>sumPack(p,true)).join('\n\n---\n\n');const nRed=(pv.match(/\u0001/g)||[]).length;
+  const noBed=sel.filter(p=>!p.bed).length;
+  const cb=(k,t)=>`<label class="small" style="display:inline-flex;align-items:center;gap:4px;margin:3px 10px 3px 0"><input type="checkbox" style="width:auto" data-expmod="${k}" ${S.aiUI.mods[k]?'checked':''}> ${t}</label>`;
+  $('expBox').innerHTML=`<div class="row" style="justify-content:space-between"><h3 style="margin:0">匯出去識別摘要</h3><button class="ghost" id="expClose">✕</button></div>
+    <div class="small mute" style="margin:4px 0 10px">以床號為代號、日期改為住院第幾天（HD）；不含姓名、病歷號、主治與醫護人員。內容選項與「AI 判讀包」分頁共用。</div>
+    <div class="card" style="margin:0 0 10px"><div class="row" style="justify-content:space-between"><b>病人（已選 ${sel.length}／${P.length}）</b><span><button class="small" id="expAll">全選</button> <button class="small" id="expNone">全不選</button></span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:2px 12px;margin-top:6px">${P.map(p=>`<label style="display:flex;gap:6px;align-items:center;font-size:14px"><input type="checkbox" style="width:auto" data-expp="${p.id}" ${U.sel.has(p.id)?'checked':''}> <b>${esc(p.bed||'（未填床號）')}</b> <span class="small mute">${esc(p.code||'')}</span></label>`).join('')}</div>
+      ${noBed?`<div class="small under" style="margin-top:6px">⚠ ${noBed} 位未填床號，摘要中無法區分，建議先補床號。</div>`:''}</div>
+    <div class="card" style="margin:0 0 10px"><b class="small">內容</b><div>${AI_MODS.map(([k,t])=>cb(k,t)).join('')}</div>
+      <div class="row" style="margin-top:6px"><select id="expDetail" style="width:auto"><option value="brief" ${S.aiUI.detail==='brief'?'selected':''}>精簡（查房用）</option><option value="full" ${S.aiUI.detail==='full'?'selected':''}>完整</option></select>
+      <span style="flex:1"></span><span class="small mute">約 ${pv.length.toLocaleString()} 字・自由文字遮蔽 ${nRed} 處</span>
+      <button id="expPrint" ${sel.length?'':'disabled'}>列印／存 PDF</button><button id="expDl" ${sel.length?'':'disabled'}>下載 .md</button><button class="pri" id="expCopy" ${sel.length?'':'disabled'}>複製</button></div></div>
+    <details open><summary class="small" style="cursor:pointer;font-weight:700">預覽（<mark>標色</mark>為自動遮蔽處；匯出前請再看一次）</summary>
+      <pre style="white-space:pre-wrap;font-size:12.5px;max-height:46vh;overflow:auto;background:var(--bg);padding:10px;border-radius:8px;border:1px solid var(--line)">${esc(pv).replace(/\u0001/g,'<mark>').replace(/\u0002/g,'</mark>')||'（未選病人）'}</pre></details>`;
+  const txt=()=>sel.map(p=>sumPack(p,false)).join('\n\n---\n\n');
+  $('expClose').onclick=()=>$('expOv').classList.add('hidden');
+  $('expAll').onclick=()=>{U.sel=new Set(P.map(p=>p.id));renderExport();};
+  $('expNone').onclick=()=>{U.sel=new Set();renderExport();};
+  document.querySelectorAll('[data-expp]').forEach(el=>el.onchange=()=>{el.checked?U.sel.add(el.dataset.expp):U.sel.delete(el.dataset.expp);renderExport();});
+  document.querySelectorAll('[data-expmod]').forEach(el=>el.onchange=()=>{S.aiUI.mods[el.dataset.expmod]=el.checked?1:0;renderExport();});
+  $('expDetail').onchange=e=>{S.aiUI.detail=e.target.value;renderExport();};
+  $('expCopy').onclick=()=>copyMsg(txt(),`已複製 ${sel.length} 位病人摘要`);
+  const fname=ext=>`病患摘要_${sel.length}人_${ymd()}.${ext}`;
+  $('expDl').onclick=()=>{const t=txt();if(IS_IOS){downloadText(t,fname('md'));return;}const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/markdown'}));a.download=fname('md');document.body.appendChild(a);a.click();a.remove();};
+  $('expPrint').onclick=()=>{const t=txt();const f=document.createElement('iframe');f.style.cssText='position:fixed;width:0;height:0;border:0';document.body.appendChild(f);
+    const body=t.split('\n\n---\n\n').map(x=>`<section>${esc(x).replace(/^# (.*)$/m,'<h1>$1</h1>').replace(/^## (.*)$/gm,'<h2>$1</h2>').replace(/^### (.*)$/gm,'<h3>$1</h3>')}</section>`).join('');
+    f.contentDocument.write(`<!doctype html><meta charset="utf-8"><title>${fname('pdf')}</title><style>body{font:12px/1.5 system-ui,'Noto Sans TC',sans-serif;white-space:pre-wrap;margin:14mm}h1{font-size:16px;margin:0 0 4px}h2{font-size:13px;margin:8px 0 2px;border-bottom:1px solid #ccc}h3{font-size:12px;margin:6px 0 2px}section{page-break-after:always}section:last-child{page-break-after:auto}</style>${body}`);
+    f.contentDocument.close();setTimeout(()=>{f.contentWindow.focus();f.contentWindow.print();setTimeout(()=>f.remove(),1500);},200);};
+}
+$('btnExportSum').onclick=()=>{if(!S.data||!S.data.patients.length){toast('目前沒有病人');return;}S.expUI.sel=null;renderExport();$('expOv').classList.remove('hidden');};
 $('btnPaste').onclick=()=>openPaste(null);
 $('btnClosePaste').onclick=closePaste;
 const CLS_TAG={pn:['t-new','靜脈營養'],fluid:['t-reg','稀釋液'],drip:['t-drip','輸注'],abx:['t-abx','抗生素'],reg:['t-reg','常規'],prn:['t-prn','PRN'],once:['t-reg','單次'],exp:['t-exp','已到期']};
