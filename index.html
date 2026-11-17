@@ -423,7 +423,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-16a';
+const APP_VER='2026-11-17a';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -4626,17 +4626,39 @@ function tpnLine(r){
   return a.join('; ');
 }
 function tpnSoapTxt(p){const R=tpnOf(p);if(!R||!R.rows.length)return '';const r=R.rows[R.rows.length-1];return `# Nutrition (${tFmt(r.t).slice(0,5)}): ${tpnLine(r)}`;}
-function tpnChart(rows){
+function tpnChart(rows,p){
   const pts=rows.filter(r=>(r.pn&&r.pn.aa!=null)||(r.lipid&&r.lipid.g!=null));if(pts.length<2)return '';
-  const W=640,H=180,L=34,B=24,t0=+pts[0].t,t1=+pts[pts.length-1].t,span=Math.max(t1-t0,1);
-  const ymax=Math.max(4,...pts.map(r=>Math.max(r.pn&&r.pn.aa||0,r.lipid&&r.lipid.g||0)))*1.1;
-  const X=t=>L+(W-L-10)*(+t-t0)/span,Y=v=>(H-B)-(H-B-10)*v/ymax;
-  const step=(sel,col)=>{let d='',pv=null;pts.forEach(r=>{const v=sel(r);if(v==null)return;const x=X(r.t),y=Y(v);d+=pv==null?`M${x},${y}`:`H${x}V${y}`;pv=v;});if(pv!=null)d+=`H${W-10}`;return `<path d="${d}" fill="none" stroke="${col}" stroke-width="2.2"/>`;};
-  const grid=[0,1,2,3,4].filter(v=>v<=ymax).map(v=>`<line x1="${L}" x2="${W-10}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(v)+4}" font-size="10" text-anchor="end" fill="var(--mute)">${v}</text>`).join('');
-  const days=[];for(let d=new Date(t0);+d<=t1;d.setDate(d.getDate()+1)){const x=new Date(d);x.setHours(0,0,0,0);if(+x>=t0)days.push(x);}
-  const xl=days.map(d=>`<text x="${X(d)}" y="${H-6}" font-size="10" text-anchor="middle" fill="var(--mute)">${d.getMonth()+1}/${d.getDate()}</text>`).join('');
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto">${grid}${xl}${step(r=>r.pn&&r.pn.aa,'var(--accent)')}${step(r=>r.lipid&&r.lipid.g,'var(--warn)')}</svg>
-    <div class="small"><span style="color:var(--accent)">━ AA g/kg/day</span>　<span style="color:var(--warn)">━ 脂肪 g/kg/day</span></div>`;
+  const dk=t=>ymdOf(new Date(t)),byDay={};pts.forEach(r=>(byDay[dk(r.t)]=byDay[dk(r.t)]||[]).push(r));
+  const d0=new Date(dk(pts[0].t)+'T00:00:00'),d1=new Date(dk(pts[pts.length-1].t)+'T00:00:00');
+  const days=[];let carry={aa:null,lip:null,kcal:null,dex:true};
+  for(let d=new Date(d0);+d<=+d1;d.setDate(d.getDate()+1)){
+    const k=ymdOf(d),L=byDay[k]||[],last=f=>{for(let i=L.length-1;i>=0;i--){const v=f(L[i]);if(v!=null)return v;}return null;};
+    const own=L.length>0,aa=last(r=>r.pn&&r.pn.aa),lip=last(r=>r.lipid&&r.lipid.g),kc=last(r=>r.calc&&r.calc.kcal?r.calc.kcal:null);
+    if(own){if(aa!=null)carry.aa=aa;if(lip!=null)carry.lip=lip;if(kc!=null){carry.kcal=kc;carry.dex=!!L[L.length-1].calc.dexKnown;}}
+    days.push({d:new Date(d),k,own,aa:carry.aa,lip:carry.lip,kcal:carry.kcal,dex:carry.dex,rows:L});
+  }
+  const dob=p&&p.dob?new Date(p.dob+'T00:00:00'):null;
+  const sub=d=>dob?`DOL${Math.round((d-dob)/864e5)+1}`:(p&&p.admitDate&&d>=new Date(p.admitDate+'T00:00:00')?`HD${Math.round((d-new Date(p.admitDate+'T00:00:00'))/864e5)+1}`:'');
+  const n=days.length,cw=Math.max(34,Math.min(70,680/n)),L=40,R=12,W=L+R+cw*n,PH=96,GAP=24,TOP=4;
+  const hasK=days.some(x=>x.kcal!=null);
+  const panels=[['aa','AA g/kg/day','var(--accent)'],['lip','脂肪 g/kg/day','var(--warn)']].concat(hasK?[['kcal','熱量 kcal/kg/day','#8a6fd1']]:[]);
+  let svg='';
+  panels.forEach(([key,title,col],pi)=>{
+    const y0=TOP+pi*(PH+GAP),vals=days.map(x=>x[key]).filter(v=>v!=null);const mx=Math.max(key==='kcal'?40:4,...vals)*1.15;
+    const step=key==='kcal'?(mx>90?30:20):1,Y=v=>y0+PH-(PH-24)*v/mx;
+    svg+=`<text x="2" y="${y0+11}" font-size="11.5" font-weight="700" fill="${col}">${title}${key==='kcal'&&days.some(x=>x.kcal!=null&&!x.dex)?' <tspan font-weight="400" fill="var(--mute)">（部分未含葡萄糖）</tspan>':''}</text>`;
+    for(let v=0;v<=mx;v+=step)svg+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-opacity=".6"/><text x="${L-5}" y="${Y(v)+3.5}" font-size="9.5" text-anchor="end" fill="var(--mute)">${v}</text>`;
+    let prev=null;
+    days.forEach((x,i)=>{const v=x[key];if(v==null){prev=null;return;}const bx=L+i*cw;
+      const tip=`${x.d.getMonth()+1}/${x.d.getDate()} ${sub(x.d)}：${title} ${fmtN(+(+v).toFixed(2))}${x.own?'':'（沿用前日處方）'}${x.rows.length>1?'\n當日處方異動：\n'+x.rows.map(r=>`${tFmt(r.t).slice(-5)} ${r.kind}：AA ${r.pn&&r.pn.aa!=null?r.pn.aa:'—'}，脂肪 ${r.lipid&&r.lipid.g!=null?r.lipid.g:'—'}`).join('\n'):''}`;
+      svg+=`<g><title>${esc(tip)}</title><rect x="${bx+3}" y="${Y(v)}" width="${cw-6}" height="${Math.max(0,y0+PH-Y(v))}" rx="3" fill="${col}" opacity="${x.own?.85:.35}"/>${x.rows.length>1?`<circle cx="${bx+cw-7}" cy="${Y(v)+6}" r="2.4" fill="#fff"/>`:''}</g>`;
+      const lab=key==='kcal'?Math.round(v):+(+v).toFixed(2);
+      if(prev==null||Math.abs(v-prev)>1e-9)svg+=`<text x="${bx+cw/2}" y="${Y(v)-4}" font-size="10.5" font-weight="600" text-anchor="middle" fill="${col}">${lab}</text>`;prev=v;});
+  });
+  const yb=TOP+panels.length*(PH+GAP)-GAP+15;
+  days.forEach((x,i)=>{const cx=L+i*cw+cw/2;svg+=`<text x="${cx}" y="${yb}" font-size="10" text-anchor="middle" fill="var(--text,#444)">${x.d.getMonth()+1}/${x.d.getDate()}</text>${sub(x.d)?`<text x="${cx}" y="${yb+12}" font-size="9" text-anchor="middle" fill="var(--mute)">${sub(x.d)}</text>`:''}`;});
+  return `<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${yb+18}" width="${W}" style="max-width:none;display:block">${svg}</svg></div>
+    <div class="small mute" style="margin-top:4px">每日取當天最後生效處方；淡色＝當天無新處方、沿用前日；長條右上白點＝當天有多筆修改／更正（滑鼠移上去看明細）。</div>`;
 }
 function renderTPN(p,ro){
   const R=tpnOf(p);if(!R||!R.rows.length)return '<div class="todo">醫囑單中沒有找到「IVF 醫囑」區塊。到「用藥」分頁貼上醫囑列印紀錄後，TPN 處方會自動整理到這裡。</div>';
@@ -4662,7 +4684,7 @@ function renderTPN(p,ro){
   const tg=hasLabs(p)?latestLab(p,'72-310'):null;
   if(last.lipid&&last.lipid.g){const days=tg?Math.floor((Date.parse(ymd())-Date.parse(skDate(tg.sk)))/864e5):null;
     h+=`<div class="notice ${days==null||days>7?'warn':''}" style="margin-bottom:12px">TPN routine：${tg?`最近 TG ${esc(String(tg.value))}（${skMD(tg.sk)}，${days} 天前）`:'尚無 TG 檢驗'}${days==null||days>7?'，使用脂肪中，建議每週追蹤 TG／BUN／電解質／肝功能':''}</div>`;}
-  h+=`<div class="card"><h3>AA／脂肪進展</h3>${tpnChart(rows)||'<div class="small mute">至少兩筆處方後顯示</div>'}</div>`;
+  h+=`<div class="card"><h3>AA／脂肪進展</h3>${tpnChart(rows,p)||'<div class="small mute">至少兩筆處方後顯示</div>'}</div>`;
   // 時間軸
   h+=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">TPN 處方時間軸 <span class="small mute">${rows.length} 筆</span></h3><button class="small" id="btnTpnCopy">複製時間軸文字</button></div>
     <div class="tblwrap" style="margin-top:6px"><table class="tbl"><thead><tr><th>時間</th><th>TDF<br>mL/kg/d</th><th>PN 品項／特調</th><th>AA g/kg/d<br>@mL/hr（≈%）</th><th>脂肪 g/kg/d<br>@mL/hr×h</th><th>其他輸液</th><th>餵食 mL/d</th><th>液量加總<br>vs TDF</th><th>kcal/kg/d<br>GIR</th><th>同期檢驗</th></tr></thead><tbody>
