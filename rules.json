@@ -1,6 +1,6 @@
 {
- "version": "2026-11-12g",
- "updated": "2026-11-12",
+ "version": "2026-11-17a",
+ "updated": "2026-11-17",
  "rules": [
   {
    "id": "dexmedetomidine",
@@ -5472,6 +5472,121 @@
     ]
    },
    "excludeRe": "eye|oph|眼"
+  },
+  {
+   "id": "chloral-hydrate",
+   "label": "Chloral hydrate",
+   "names": [
+    "chloral hydrate",
+    "chloral"
+   ],
+   "status": "verified",
+   "pedsOnly": true,
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Chloral hydrate",
+     "sections": "Dosing: Neonatal; Pediatric; Altered Kidney Function; Altered Liver Function",
+     "addedAt": "2026-11-17",
+     "by": "JC"
+    }
+   ],
+   "peds": {
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Chloral hydrate",
+      "sections": "Dosing: Neonatal; Pediatric; Altered Kidney Function; Altered Liver Function",
+      "addedAt": "2026-11-17",
+      "by": "JC"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "呼吸器病人鎮靜（資料有限）",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PR",
+       "RECT"
+      ],
+      "when": "sched",
+      "lo": 8,
+      "hi": 50,
+      "unit": "mg/kg",
+      "max": {
+       "v": 1000,
+       "unit": "mg"
+      },
+      "freq": "起始 8–25 mg/kg q6–8h，依反應可調至 50 mg/kg q6h"
+     },
+     {
+      "ind": "程序鎮靜（心臟超音波、EEG；資料有限）",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PR",
+       "RECT"
+      ],
+      "when": "stat",
+      "lo": 25,
+      "hi": 100,
+      "unit": "mg/kg",
+      "max": {
+       "v": 1000,
+       "unit": "mg"
+      },
+      "freq": "程序前 10–30 分鐘；30 分鐘後可再給 25–50 mg/kg",
+      "text": "每次程序總量 max 100 mg/kg 或 2,000 mg；<3 歲效果最好"
+     }
+    ],
+    "renal": {
+     "text": "仿單無調整建議；明顯腎功能不全禁用。可被透析。"
+    },
+    "hepatic": {
+     "text": "仿單無調整建議；明顯肝功能不全禁用。"
+    },
+    "notes": [
+     "明顯腎功能或肝功能不全禁用。",
+     "有顯著藥物交互作用，需調整或避免（請查交互作用資料庫）。",
+     "美國已無市售商品。",
+     "呼吸器鎮靜劑量依據為 44 位病人（1 天–15 歲）的 RCT：promethazine 併用 chloral hydrate 25 mg/kg q6h，與 midazolam 連續輸注比較。",
+     "青少年較少使用；較大兒童做心臟超音波可能不需鎮靜，EEG 宜改用其他藥。"
+    ],
+    "info": {
+     "alert": "明顯腎功能或肝功能不全禁用；單次 max 1,000 mg；程序鎮靜總量 max 100 mg/kg 或 2,000 mg。"
+    }
+   },
+   "neo": {
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Chloral hydrate",
+      "sections": "Dosing: Neonatal; Pediatric; Altered Kidney Function; Altered Liver Function",
+      "addedAt": "2026-11-17",
+      "by": "JC"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "程序鎮靜（心臟超音波、EEG；資料有限）",
+      "routes": [
+       "PO",
+       "NG",
+       "OG",
+       "PR",
+       "RECT"
+      ],
+      "when": "stat",
+      "lo": 25,
+      "hi": 50,
+      "unit": "mg/kg",
+      "freq": "程序前單次"
+     }
+    ],
+    "notes": [
+     "美國已無市售商品。"
+    ]
+   }
   }
  ],
  "pedsRef": [
