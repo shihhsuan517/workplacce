@@ -425,7 +425,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-19a';
+const APP_VER='2026-11-19b';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -754,15 +754,43 @@ function enterApp(){
 function sortedPatients(){return [...S.data.patients].sort((a,b)=>(a.bed||'~').localeCompare(b.bed||'~','zh-Hant',{numeric:true}));}
 const hide=()=>S.data&&S.data.settings.hideNames;
 
+
+/* ===== 病患清單：目前全身性抗微生物製劑（學名短名＋DOT） ===== */
+const ABX_NONSYS=new Set(['INHA','ITV','IT','IS','ISB','ISL','ISR','IL','ID','EPID','IVE','ENEM','IRRI']);
+const ABX_SALT=/^(sodium|disodium|potassium|calcium|hcl|hydrochloride|dihydrochloride|methanesulfonate|mesylate|mesilate|trihydrate|monohydrate|dihydrate|sulfate|sulphate|phosphate|acetate|tartrate|maleate|succinate|hyclate|base)$/i;
+function abxShort(name){
+  const gen=MT.genericOf(name);
+  const clean=t=>t.split(/\s+/).filter(w=>w&&!ABX_SALT.test(w)).join(' ').replace(/\s+\d.*$/,'').replace(/\b([a-z])\b/g,c=>c.toUpperCase());
+  if(gen)return gen.split('/').filter(w=>!ABX_SALT.test(w)).map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join('/');
+  const b=clean(MT.drugLabel(name));return b.charAt(0).toUpperCase()+b.slice(1);
+}
+const PT_ABX_CACHE=new WeakMap();
+function ptAbx(p){
+  const R=ordersOf(p);
+  if(R){if(PT_ABX_CACHE.has(R))return PT_ABX_CACHE.get(R);
+    const out=R.groups.filter(g=>g.abx&&g.open).map(g=>{const e=g.eps.filter(x=>x.status==='open').slice(-1)[0];return {g,e};})
+      .filter(({e})=>e&&!MT.isLocal(e)&&!ABX_NONSYS.has((e.route||'').toUpperCase()))
+      .map(({g})=>({name:abxShort(g.name),dot:g.course&&g.course.dot||null}));
+    out.sort((a,b)=>(b.dot||0)-(a.dot||0));PT_ABX_CACHE.set(R,out);return out;}
+  return (p.medList||[]).filter(m=>m.abx&&!m.expired&&!ABX_NONSYS.has((m.route||'').toUpperCase())&&!['TOPI','GARG','OD','OS','OU','AD','AS','AU','WETT','VAG','NASA','SPRA','LOC'].includes((m.route||'').toUpperCase()))
+    .map(m=>({name:m.generic?String(m.generic).split(/\s*[\/+,]\s*/).map(w=>w.split(/\s+/).filter(x=>x&&!ABX_SALT.test(x)&&!/\d/.test(x)).join(' ')).filter(Boolean).map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join('/'):abxShort(m.name||m.display),dot:m.dot||null})).sort((a,b)=>(b.dot||0)-(a.dot||0));
+}
+function ptAbxHTML(p){
+  const L=ptAbx(p);if(!L.length)return '';
+  const tag=x=>`<span class="tag t-abx" style="font-size:11.5px;padding:1px 6px">${esc(x.name)}${x.dot?' D'+x.dot:''}</span>`;
+  return `<div class="ab" style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px" title="${esc(L.map(x=>x.name+(x.dot?' D'+x.dot:'')).join('、'))}">${L.slice(0,3).map(tag).join('')}${L.length>3?`<span class="tag t-abx" style="font-size:11.5px;padding:1px 6px">+${L.length-3}</span>`:''}</div>`;
+}
+const ptAbxSig=()=>S.data?S.data.patients.map(p=>p.id+':'+ptAbx(p).map(x=>x.name+x.dot).join(',')).join('|'):'';
 function renderList(){
   const q=$('ptSearch').value.trim().toLowerCase();
   const list=sortedPatients().filter(p=>!q||[p.bed,p.code,p.name,p.chartNo,p.dx].join(' ').toLowerCase().includes(q));
   $('ptList').innerHTML=list.map(p=>`
     <div class="pitem ${p.id===S.selId&&!S.archive?'on':''}" data-id="${p.id}">
       <div class="b">${esc(p.bed||'（未填床號）')}${p.code?'　'+esc(p.code):''}${(p.issues||[]).some(x=>x.status==='待討論')?` <span class="tag t-warn" title="待與醫師討論">📌 ${p.issues.filter(x=>x.status==='待討論').length}</span>`:''}</div>
-      <div class="c ${hide()?'blur':''}">${esc(p.name||'')}${p.chartNo?' · '+esc(p.chartNo):''}</div>
+      <div class="c ${hide()?'blur':''}">${esc(p.name||'')}${p.chartNo?' · '+esc(p.chartNo):''}</div>${ptAbxHTML(p)}
     </div>`).join('')||`<div class="small mute" style="padding:12px">${q?'找不到符合的病患':'尚無在院病患'}</div>`;
   $('ptCount').textContent=`在院 ${S.data.patients.length} 位`;
+  S._abxSig=ptAbxSig();
 }
 $('ptList').onclick=e=>{const it=e.target.closest('.pitem');if(!it)return;S.selId=it.dataset.id;S.archive=null;renderList();renderMain();};
 $('ptSearch').oninput=renderList;
@@ -793,6 +821,7 @@ function renderMain(){
   h+=`<div class="tabs">${TABS.filter(([k])=>k!=='tpn'||hasTPN(p)||S.tab==='tpn').map(([k,t])=>`<button class="tab ${S.tab===k?'on':''}" data-tab="${k}">${t}</button>`).join('')}</div>`;
   h+=`<div id="tabBody">${renderIssueBar(p,S.tab,ro)}${renderTab(p,ro)}</div>`;
   m.innerHTML=h;
+  if(!ro&&S._abxSig!==undefined&&ptAbxSig()!==S._abxSig)renderList();
   m.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;renderMain();});
   if($('btnDischarge'))$('btnDischarge').onclick=()=>discharge(p);
   if($('btnEditMode'))$('btnEditMode').onclick=()=>{S.editMode=!S.editMode;renderMain();};
