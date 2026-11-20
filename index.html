@@ -425,7 +425,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-20a';
+const APP_VER='2026-11-20b';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -4368,7 +4368,7 @@ const IO_DIU=/furosemide|lasix|bumetanide|burinex|torsemide|hydrochlorothiazide|
 const ioT=s=>new Date(String(s).replace(' ','T'));
 const ioLocal=d=>`${ymdOf(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 function ioStore(p){if(!p.io||typeof p.io!=='object')p.io={};const o=p.io;o.shifts=o.shifts||{};o.items=o.items||{};o.wts=o.wts||[];o.ev=o.ev||[];return o;}
-const hasIO=p=>!!(p&&p.io&&(Object.keys(p.io.shifts||{}).length||Object.keys(p.io.items||{}).length));
+const hasIO=p=>!!(p&&p.io&&(Object.keys(p.io.shifts||{}).length||Object.keys(p.io.items||{}).length||(p.io.ev||[]).some(e=>/^bm/.test(e.kind))));
 const ioDayOf=d=>{d=new Date(d);if(d.getHours()<7)d.setDate(d.getDate()-1);return ymdOf(d);};
 const ioShOf=d=>{const h=new Date(d).getHours();return h>=7&&h<15?0:h>=15&&h<23?1:2;};
 function isNurseRecord(t){t=String(t||'');return /護理記錄單|護理紀錄單/.test(t)||/攝入總計[^\n]{0,60}排出總計/.test(t);}
@@ -4399,6 +4399,7 @@ function parseNurseIO(t){
     let g;const gr=/依醫囑給予\s*(.+?)(?=，告知|，|；|\n|$)/g;
     while((g=gr.exec(e.text))){const s=g[1].trim();if(IO_DIU.test(s))R.ev.push({t:ioLocal(e.t),kind:'diu',text:s.slice(0,90)});}
     const h=e.text.match(/Hold one meal|暫停一餐|暫停管灌|暫停灌食|禁食|\bNPO\b/i);if(h)R.ev.push({t:ioLocal(e.t),kind:'hold',text:h[0]});
+    nurseBM(e).forEach(x=>R.ev.push(x));
   });
   return R;
 }
@@ -4430,7 +4431,7 @@ function ioImport(p,txt,day){
   if(isNurseRecord(txt)){const R=parseNurseIO(txt);
     R.shifts.forEach(s=>{o.shifts[s.day+'|'+s.sh]=s;ns++;});
     R.wts.forEach(w=>{if(!o.wts.some(x=>x.t===w.t))o.wts.push(w);});
-    R.ev.forEach(e=>{if(!o.ev.some(x=>x.t===e.t&&x.text===e.text))o.ev.push(e);});
+    R.ev.forEach(e=>{if(!o.ev.some(x=>x.t===e.t&&x.kind===e.kind&&x.text===e.text))o.ev.push(e);});
     o.wts.sort((a,b)=>a.t.localeCompare(b.t));o.ev.sort((a,b)=>a.t.localeCompare(b.t));
     return {ns,ni,nw:R.wts.length,ne:R.ev.length,kind:'nurse'};}
   const d=ioRecDate(txt)||day,L=parseIOHourly(txt,d);if(L.length){o.items[d]=L;ni=L.length;}
@@ -4496,10 +4497,10 @@ function ioChart(p,D){
 function renderIO(p,ro){
   const D=ioDays(p),w=ioWt(p),o=ioStore(p),peds=p.template==='peds';
   let h=ro?'':`<div class="card"><h3>貼上 I/O</h3>
-    <textarea id="ioText" rows="5" placeholder="可貼：①護理記錄單（抓班別 I/O 小計、體重、利尿劑實際給藥時間、暫停管灌）②攝入排出細項統計的每小時明細（時間／項目／量）。原文不保存，只存數值。"></textarea>
+    <textarea id="ioText" rows="5" placeholder="可貼：①護理記錄單（抓班別 I/O 小計、體重、利尿劑實際給藥時間、暫停管灌、排便）②攝入排出細項統計的每小時明細（時間／項目／量）。原文不保存，只存數值。"></textarea>
     <div class="row" style="margin-top:8px;justify-content:space-between"><label class="small">每小時明細的記錄日期 <input type="date" id="ioDay" style="width:auto" value="${ymdOf(new Date(Date.now()-864e5))}"></label><button class="pri" id="btnIOAdd">解析並加入</button></div>
     <div class="small mute" style="margin-top:4px">記錄日期 11/19 涵蓋 11/19 07:00～11/20 07:00；明細裡 00:00–06:59 的紀錄會歸到隔天早上。</div></div>`;
-  if(!D.length)return h+'<div class="todo">尚無 I/O 資料。貼上護理記錄單或攝入排出每小時明細後顯示。</div>';
+  if(!D.length)return h+bmCard(p)+'<div class="todo">尚無 I/O 資料。貼上護理記錄單或攝入排出每小時明細後顯示。</div>';
   const last=D[D.length-1],lastFull=[...D].reverse().find(x=>x.full)||last,kv=(k,v)=>`<div class="kv"><span class="k">${k}</span><span style="text-align:right">${v}</span></div>`;
   const fo=peds&&w.kg?last.cum/1000/w.kg*100:null;
   h+=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">I/O 摘要 <span class="small mute">只列數字，不做判斷</span></h3><button class="small" id="btnIOSoap">複製 SOAP I/O 段落</button></div>
@@ -4520,6 +4521,7 @@ function renderIO(p,ro){
       ${x.L.map(s=>`<tr><td></td><td>${IO_SH[s.sh]}</td><td class="num">${fmtN(s.in)}</td><td class="num">${fmtN(s.out)}</td><td class="num">${ioSign(s.in-s.out)}</td><td class="num">${s.urine!=null?fmtN(s.urine):'—'}</td><td class="num">${s.urine!=null&&w.kg?(s.urine/w.kg/8).toFixed(2):'—'}</td>
         <td class="small mute" colspan="2">${s.pairs.length?s.pairs.map(([k,v])=>`${esc(k)} ${fmtN(v)}`).join('、'):Object.entries(s.cat).map(([c,v])=>`${IO_CATS[c][1]} ${fmtN(v)}`).join('、')}${s.unc?`<div class="under">未分類 ${fmtN(s.unc)}（${esc(s.uncN.join('、'))}）</div>`:''}</td></tr>`).join('')}`).join('')}
     </tbody></table></div><div class="small mute" style="margin-top:4px">尿 mL/kg/h：每班以 8 小時計，全天以「有紀錄的班數 × 8 小時」計。</div></div>`;
+  h+=bmCard(p);
   // 未分類項目
   const unc=new Set();Object.values(o.items).forEach(L=>L.forEach(it=>{if(!ioCat(it.name))unc.add(it.name);}));
   const known=new Set();Object.values(o.items).forEach(L=>L.forEach(it=>known.add(it.name)));
@@ -4534,17 +4536,66 @@ function bindIO(p,ro){
   if($('btnIOAdd'))$('btnIOAdd').onclick=()=>{const t=$('ioText').value;if(!t.trim()){toast('沒有內容');return;}
     if(!isNurseRecord(t)&&!isIOHourly(t)){toast('看不出是護理記錄或 I/O 明細');return;}
     snapshot(p,'加入 I/O');const r=ioImport(p,t,$('ioDay').value);markDirty();renderMain();
-    toast(r.kind==='nurse'?`已加入 ${r.ns} 班 I/O 小計${r.nw?`、${r.nw} 筆體重`:''}${r.ne?`、${r.ne} 筆給藥／管灌事件`:''}`:`已加入 ${ioMD(r.day)} 明細 ${r.ni} 筆`);};
+    toast(r.kind==='nurse'?`已加入 ${r.ns} 班 I/O 小計${r.nw?`、${r.nw} 筆體重`:''}${r.ne?`、${r.ne} 筆事件（利尿劑／管灌／排便）`:''}`:`已加入 ${ioMD(r.day)} 明細 ${r.ni} 筆`);};
   document.querySelectorAll('[data-iomap]').forEach(el=>el.onchange=()=>{const st=S.data.settings;st.ioMap=st.ioMap||{};if(el.value)st.ioMap[el.dataset.iomap]=el.value;else st.ioMap[el.dataset.iomap]='';markDirty();renderMain();});
   document.querySelectorAll('[data-iodel]').forEach(b=>b.onclick=async e=>{e.preventDefault();const d=b.dataset.iodel;if(!await confirmBox('刪除 I/O',`刪除 ${esc(ioMD(d))} 這一天的 I/O（班別小計與明細）？`,'刪除',true))return;
     snapshot(p,'刪除 I/O');const o=ioStore(p);Object.keys(o.shifts).forEach(k=>{if(k.startsWith(d+'|'))delete o.shifts[k];});delete o.items[d];markDirty();renderMain();});
 }
 function ioSoapTxt(p,rel){
-  if(!hasIO(p))return '';const D=ioDays(p);if(!D.length)return '';
+  if(!hasIO(p))return '';const D=ioDays(p),bm=bmSoapTxt(p,rel);if(!D.length)return bm?bm.charAt(0).toUpperCase()+bm.slice(1):'';
   const x=[...D].reverse().find(d=>d.full)||D[D.length-1],w=ioWt(p),fo=p.template==='peds'&&w.kg?D[D.length-1].cum/1000/w.kg*100:null;
   const dl=rel?rel(x.day):ioMD(x.day);
-  return `${dl} I/O ${fmtN(x.in)}/${fmtN(x.out)} (${ioSign(x.bal)})${x.full?'':` [${x.L.length}/3 shifts]`}, UO ${x.urine!=null?fmtN(x.urine)+' mL':'N/A'}${x.uokh!=null?` (${x.uokh.toFixed(2)} mL/kg/h)`:''}, cumulative ${ioSign(D[D.length-1].cum)} mL since ${rel?rel(D[0].day):ioMD(D[0].day)}${fo!=null?`, FO ${fo.toFixed(1)}%`:''}`;
+  return `${dl} I/O ${fmtN(x.in)}/${fmtN(x.out)} (${ioSign(x.bal)})${x.full?'':` [${x.L.length}/3 shifts]`}, UO ${x.urine!=null?fmtN(x.urine)+' mL':'N/A'}${x.uokh!=null?` (${x.uokh.toFixed(2)} mL/kg/h)`:''}, cumulative ${ioSign(D[D.length-1].cum)} mL since ${rel?rel(D[0].day):ioMD(D[0].day)}${fo!=null?`, FO ${fo.toFixed(1)}%`:''}${bm?'; '+bm:''}`;
 }
+/* ===== 排便：護理記錄（有／無解便、大便型態、灌腸／塞劑）＋每小時明細的大便量 ===== */
+const BM_LAX=/sennoside|senokot|sennapur|bisacodyl|dulcolax|lactulose|duphalac|magnesium oxide|\bMgO\b|macrogol|forlax|\bPEG\b|glycerin|fleet|docusate|prucalopride|lubiprostone|methylnaltrexone|relistor|naloxegol|picosulfate|enema/i;
+const BM_ANTI=/smecta|smectite|diosmectite|loperamide|imodium|kaolin|racecadotril|bismuth|biofermin|lactobac|probiotic|saccharomyces/i;
+const BM_OPI=/fentanyl|morphine|oxycodone|hydromorphone|tramadol|codeine|pethidine|meperidine|methadone|tapentadol|buprenorphine/i;
+function nurseBM(e){
+  const T=e.text,t=ioLocal(e.t),out=[];
+  const f=T.match(/大便型態\s*[:：]\s*([^、，,;；\n]+)/);
+  if(f){const v=f[1].trim();out.push(/尚未解便|未解便|無解便|^無$/.test(v)?{t,kind:'bmNo',text:v}:{t,kind:'bmType',text:v});}
+  if(/無解便|未解便|尿布淨|尿布乾淨/.test(T.replace(/大便型態\s*[:：][^、，\n]*/,'')))out.push({t,kind:'bmNo',text:(T.match(/尿布無解便|尚未解便|未解便|無解便|尿布淨|尿布乾淨/)||[''])[0]});
+  const re=/(解|排)出?([^，。；、,\n]{0,12}?)便/g;let m;
+  while((m=re.exec(T))){const pre=T.slice(Math.max(0,m.index-5),m.index);
+    if(/(是否有?|有無|無|未|沒有|檢查|觀察|評估|訓練|協助)$/.test(pre)||/[無未]/.test(m[2])||/訓練/.test(T.slice(m.index,m.index+8)))continue;
+    const amt=(T.slice(m.index+m[0].length,m.index+m[0].length+10).match(/少量|中量|大量|微量|約?\s*\d+\s*(?:ml|mL|毫升|g|克|公克)/)||[''])[0];
+    out.push({t,kind:'bm',text:(m[2]+'便').trim(),amt});}
+  const d=T.match(/腹瀉|水瀉|水便|稀便/);if(d&&!/(無|未|沒有)$/.test(T.slice(Math.max(0,d.index-3),d.index))&&!out.some(x=>x.kind==='bm'))out.push({t,kind:'bm',text:d[0],amt:''});
+  const a=T.match(/灌腸|甘油球|塞劑|Glycerin\s*(?:ball|enema)|Dulcolax\s*supp|Fleet|手挖便|digital\s*(?:evacuation|disimpaction)/i);if(a)out.push({t,kind:'bmAid',text:a[0]});
+  return out;
+}
+function bmDays(p){
+  const o=ioStore(p),ev=o.ev.filter(e=>/^bm/.test(e.kind)).map(e=>Object.assign({},e));
+  Object.values(o.items).forEach(L=>L.forEach(it=>{if(ioCat(it.name)!=='stool')return;ev.push(it.ml>0?{t:it.t,kind:'bm',text:it.name,amt:`${fmtN(it.ml)} mL`}:{t:it.t,kind:'bmZero',text:`${it.name} 0`});}));
+  if(!ev.length)return null;ev.sort((a,b)=>a.t.localeCompare(b.t));
+  const days={};ev.forEach(e=>{const d=ioDayOf(ioT(e.t));(days[d]=days[d]||[]).push(e);});
+  ioDays(p).forEach(x=>{days[x.day]=days[x.day]||[];});
+  const rows=Object.keys(days).sort().map(day=>{const E=days[day],pos=E.filter(e=>e.kind==='bm');
+    return {day,pos,no:E.filter(e=>e.kind==='bmNo'||e.kind==='bmZero'),types:[...new Set(E.filter(e=>e.kind==='bmType').map(e=>e.text))],aid:E.filter(e=>e.kind==='bmAid'),
+      st:pos.length?'有':E.some(e=>e.kind==='bmNo'||e.kind==='bmZero')?'無':'未記錄',
+      lax:medsOnDay(p,day,BM_LAX,true),anti:medsOnDay(p,day,BM_ANTI,true),opi:medsOnDay(p,day,BM_OPI,true)};});
+  const allT=ev.map(e=>e.t).concat(...Object.values(o.items).map(L=>L.map(x=>x.t))).sort(),lastRec=allT[allT.length-1];
+  const lastBM=[...ev].reverse().find(e=>e.kind==='bm');
+  const gap=a=>{const h=(ioT(lastRec)-ioT(a))/36e5;return h<48?`${Math.round(h)} 小時`:`${Math.floor(h/24)} 天`;};
+  return {rows,lastBM,lastRec,first:allT[0],since:lastBM?gap(lastBM.t):gap(allT[0])};
+}
+function bmCard(p){
+  const B=bmDays(p);if(!B)return '';
+  const md=t=>t.slice(5,16).replace('-','/');
+  const head=B.lastBM?`最後一次解便：<b>${md(B.lastBM.t)}</b> ${esc(B.lastBM.text)}${B.lastBM.amt?' '+esc(B.lastBM.amt):''}・距最後一筆紀錄（${md(B.lastRec)}）<b>${B.since}</b>`
+    :`記錄期間（${md(B.first)}～${md(B.lastRec)}，<b>${B.since}</b>）<b>未見解便紀錄</b>`;
+  return `<div class="card"><h3>排便 <span class="small mute">只列紀錄，不做判斷</span></h3><div>${head}</div>
+    <div class="tblwrap" style="margin-top:6px"><table class="tbl"><thead><tr><th>日期</th><th>解便</th><th>次數</th><th>性狀／量（時間）</th><th>大便型態欄位</th><th>灌腸／塞劑</th><th>同期緩瀉劑</th><th>同期止瀉劑</th><th>同期鴉片類</th></tr></thead><tbody>
+    ${[...B.rows].reverse().map(x=>`<tr><td class="num"><b>${ioMD(x.day)}</b>${ioHD(p,x.day)?`<div class="small mute">${ioHD(p,x.day)}</div>`:''}</td>
+      <td>${x.st==='有'?'<b>有</b>':x.st==='無'?'無':'<span class="mute">未記錄</span>'}</td><td class="num">${x.pos.length||'—'}</td>
+      <td class="small">${x.pos.map(e=>`${e.t.slice(11)} ${esc(e.text)}${e.amt?' '+esc(e.amt):''}`).join('<br>')||(x.no.length?`<span class="mute">${esc([...new Set(x.no.map(e=>e.text))].join('、'))}</span>`:'—')}</td>
+      <td class="small">${esc(x.types.join('、'))||'—'}</td><td class="small">${x.aid.map(e=>`${e.t.slice(11)} ${esc(e.text)}`).join('<br>')||'—'}</td>
+      <td class="small">${x.lax.join('、')||'—'}</td><td class="small">${x.anti.join('、')||'—'}</td><td class="small">${x.opi.join('、')||'—'}</td></tr>`).join('')}
+    </tbody></table></div><div class="small mute" style="margin-top:4px">次數只算有寫出解便內容的紀錄（例如「解黃色軟便中量」）與明細中量 &gt; 0 的大便項目；「大便型態」評估欄位每班重複填寫，不計次數。同期用藥依醫囑（當天使用中或 3 天內停用）。</div></div>`;
+}
+function bmSoapTxt(p,rel){const B=bmDays(p);if(!B)return '';const d=t=>rel?rel(t.slice(0,10)):t.slice(5,10).replace('-','/');
+  const en=B.since.replace(' 小時',' h').replace(' 天',' d');return B.lastBM?`last BM ${d(B.lastBM.t)} (${en} before last record)`:`no BM recorded ${d(B.first)}–${d(B.lastRec)} (${en})`;}
 function previewIO(txt){
   const nurse=isNurseRecord(txt),R=nurse?parseNurseIO(txt):null,rd=nurse?'':ioRecDate(txt);
   let def=pasteTarget||(S.selId&&!S.archive?S.selId:'');
@@ -4553,9 +4604,9 @@ function previewIO(txt){
   $('pastePreview').innerHTML=`<div class="card" style="margin-top:12px"><div class="row"><b>加入到</b>
     <select id="pasteTargetSel" style="width:auto;min-width:260px">${opts.map(([v,t])=>`<option value="${v}" ${v===def?'selected':''}>${esc(t)}</option>`).join('')}</select>
     ${nurse?'':`<label class="small">記錄日期 <input type="date" id="pasteIODay" style="width:auto" value="${rd||ymdOf(new Date(Date.now()-864e5))}"></label>`}</div>
-    <div class="small mute" style="margin-top:6px">判斷為${nurse?'護理記錄單：只取 I/O 小計、體重、利尿劑給藥時間與暫停管灌，原文不保存':'攝入排出每小時明細'}。</div>
+    <div class="small mute" style="margin-top:6px">判斷為${nurse?'護理記錄單：只取 I/O 小計、體重、利尿劑給藥時間、暫停管灌與排便，原文不保存':'攝入排出每小時明細'}。</div>
     ${nurse?`<div class="small" style="margin-top:6px">${R.shifts.length?R.shifts.map(s=>`${ioMD(s.day)} ${IO_SH[s.sh]}：${s.pairs.map(([k,v])=>`${esc(k)} ${fmtN(v)}`).join('、')}`).join('<br>'):'<span class="under">沒有找到 I/O 小計</span>'}
-      ${R.wts.length?`<br>體重：${R.wts.map(w=>w.kg+' kg').join('、')}`:''}${R.ev.length?`<br>事件：${R.ev.map(e=>`${e.t.slice(5,16).replace('-','/')} ${esc(e.text)}`).join('；')}`:''}</div>`:''}</div>
+      ${R.wts.length?`<br>體重：${R.wts.map(w=>w.kg+' kg').join('、')}`:''}${R.ev.filter(e=>!/^bm(No|Type)$/.test(e.kind)).length?`<br>事件：${R.ev.filter(e=>!/^bm(No|Type)$/.test(e.kind)).map(e=>`${e.t.slice(5,16).replace('-','/')} ${esc(e.text)}${e.amt?' '+esc(e.amt):''}`).join('；')}`:''}${R.ev.some(e=>e.kind==='bmNo')?`<br>未解便紀錄 ${R.ev.filter(e=>e.kind==='bmNo').length} 筆`:''}</div>`:''}</div>
     <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="pri" id="btnDoImport">確認加入</button></div>`;
   $('btnDoImport').onclick=()=>{const p=S.data.patients.find(x=>x.id===$('pasteTargetSel').value);if(!p)return;ensurePatient(p);snapshot(p,'加入 I/O');
     const r=ioImport(p,txt,nurse?'':$('pasteIODay').value);p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab='io';markDirty();renderList();renderMain();
