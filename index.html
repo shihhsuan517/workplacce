@@ -425,7 +425,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-20c';
+const APP_VER='2026-11-20d';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -4093,7 +4093,7 @@ const copyMsg=async(t,m)=>toast(await copyText(t)?m:'複製失敗');
 /* =====================================================================
    檢查報告
    ===================================================================== */
-const EXAM_TYPES=[['CT',/\bCT\b|computed\s*tomograph|電腦斷層/i],['MRI',/\bMRI\b|\bMRA\b|magnetic\s*resonance|核磁/i],
+const EXAM_TYPES=[['心導管',/cardiac\s*cath|coronary\s*angiogra|\bPTCA\b|\bPCI\b|心導管/i],['CT',/\bCT\b|computed\s*tomograph|電腦斷層/i],['MRI',/\bMRI\b|\bMRA\b|magnetic\s*resonance|核磁/i],
   ['超音波',/echo|sono|ultrasound|超音波|doppler|duplex/i],['心電圖',/\bEKG\b|\bECG\b|心電圖|holter/i],
   ['內視鏡',/endoscop|gastroscop|colonoscop|bronchoscop|\bEGD\b|\bPES\b|內視鏡|支氣管鏡|胃鏡|大腸鏡/i],
   ['核醫',/scintig|\bSPECT\b|\bPET\b|核醫|bone\s*scan|thallium|gallium/i],['病理',/patholog|biopsy|cytolog|病理|切片|細胞學/i],
@@ -4102,7 +4102,7 @@ const EXAM_TYPE_NAMES=EXAM_TYPES.map(x=>x[0]).concat(['其他']);
 const EXAM_KEY=/^\s*(姓名|檢查日期|執行日期|報告日期|檢查時間|檢查項目|檢查名稱|醫令名稱|檢查單號|申請單號|Exam(?:ination)?\s*(?:Date|Name|Item)|Procedure)\s*[:：]/i;
 const EXAM_TITLE=/(?:檢查項目|檢查名稱|醫令名稱|Exam(?:ination)?\s*(?:Name|Item)|Procedure)\s*[:：]\s*([^\n]+)/i;
 const EXAM_IMP=/^\s*(?:\*\s*)?(impressions?|imp\.?|conclusions?|結論|印象|診斷|summary|interpretation|判讀)\s*[:：]?\s*/i;
-const EXAM_END=/(報告醫師|確認醫師|審核醫師|判讀醫師|Reported\s*by|Verified\s*by|打字|^\s*[-=_]{6,}\s*$)/i;
+const EXAM_END=/(報告醫師|確認醫師|審核醫師|判讀醫師|判讀主治醫師|檢查醫師|Worksheet\s*:|Reported\s*by|Verified\s*by|打字|^\s*[-=_]{6,}\s*$)/i;
 function toISODate(s){
   if(!s)return '';let m=s.match(/(\d{3,4})[\/\-.年](\d{1,2})[\/\-.月](\d{1,2})(?:日)?(?:\s+(\d{1,2}):(\d{2}))?/);
   if(!m){m=s.match(/\b(20\d{2})(\d{2})(\d{2})(?:\s*(\d{2}):?(\d{2}))?\b/);}
@@ -4146,7 +4146,7 @@ function parseExams(text){
   const lines=String(text||'').replace(/\r/g,'').split('\n');
   // 以第一個出現的表頭欄位當作每份報告的起點
   let startKey=null;const starts=[];
-  lines.forEach((l,i)=>{const m=l.match(EXAM_KEY);if(!m)return;const k=m[1].replace(/\s+/g,'').toLowerCase();if(!startKey)startKey=k;if(k===startKey)starts.push(i);});
+  lines.forEach((l,i)=>{const m=l.match(EXAM_KEY);if(!m)return;const k=m[1].replace(/\s+/g,'').toLowerCase();if(k==='姓名'&&/^\s/.test(l))return;if(!startKey)startKey=k;if(k===startKey)starts.push(i);});
   let blocks=[];
   if(starts.length>1){starts.forEach((s,j)=>blocks.push(lines.slice(j?s:0,starts[j+1]??lines.length).join('\n')));}
   else blocks=[lines.join('\n')];
@@ -4213,7 +4213,7 @@ function echoBlock(E){
     ${E.vmax.length?`<details style="margin-top:4px"><summary class="small mute" style="cursor:pointer">其他血流速度（${E.vmax.length}）</summary><div class="small">${E.vmax.map(v=>`${esc(v.site)}：${v.v} m/s`).join('；')}</div></details>`:''}</div>`;
 }
 /* ===== 檢查報告去識別：移除姓名、病歷號、床號、醫師、單號、影像號（只存檢查日期與項目） ===== */
-const EXAM_PII=/(姓\s*名|病歷號碼?|病\s*床\s*號|床\s*號|開單醫師|判讀主治醫師|判讀醫師|主治醫師|報告醫師|確認醫師|審核醫師|醫囑單號|檔\s*區|影\s*像\s*號|身分證(?:字號)?|年\s*齡)\s*[:：][ \t　]*[^\s　]*/g;
+const EXAM_PII=/(姓\s*名|病歷號碼?|病\s*床\s*號|床\s*號|開單醫師|判讀主治醫師|判讀醫師|主治醫師|報告醫師|確認醫師|審核醫師|檢查醫師|手術醫師|第一助手醫師|助手醫師|電\s*話|\bCI|醫囑單號|檔\s*區|影\s*像\s*號|身分證(?:字號)?|年\s*齡)\s*[:：][ \t　]*[^\s　]*/g;
 function examScrub(t){
   return String(t||'').replace(/^\s*\(本內容僅供參考\)\s*$/gm,'').replace(/^\n+/,'').split('\n').map(l=>{if(!EXAM_PII.test(l))return l;EXAM_PII.lastIndex=0;const r=l.replace(EXAM_PII,'');return r.trim()?r.replace(/\s+$/,''):null;}).filter(l=>l!==null).join('\n');
 }
