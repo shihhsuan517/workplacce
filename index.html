@@ -425,7 +425,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-20h';
+const APP_VER='2026-11-20i';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -4665,6 +4665,7 @@ function ioDays(p){
       uokh:ur!=null&&wt?ur/wt/hrs:null,diu,hold,diuOrd:diu.length?[]:medsOnDay(p,day,IO_DIU,true),
       unc:L.reduce((a,s)=>a+(s.unc||0),0)};});
 }
+const ioShTxt=x=>x.full?'全天':x.L.map(s=>IO_SH[s.sh]).join('＋'),ioShEn=x=>x.full?'':` (${x.L.map(s=>['day','evening','night'][s.sh]).join('+')} shift only)`;
 const ioSign=v=>(v>0?'+':'')+fmtN(Math.round(v));
 const ioMD=d=>d.slice(5).replace('-','/');
 function ioHD(p,day){const adm=p.admitDate?new Date(p.admitDate+'T00:00:00'):null,dob=p.template==='peds'&&p.dob?new Date(p.dob+'T00:00:00'):null,x=new Date(day+'T00:00:00');
@@ -4787,14 +4788,14 @@ function renderIO(p,ro){
   h+=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">I/O 摘要 <span class="small mute">只列數字，不做判斷</span></h3><button class="small" id="btnIOSoap">複製 SOAP I/O 段落</button></div>
     <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:4px 18px;margin-top:6px">
     ${kv('計算體重',w.kg?`<b>${w.kg}</b> kg <span class="small mute">${esc(w.src)}</span>`:'<span class="under">未填體重，無法算 mL/kg/h</span>')}
-    ${kv(`最近完整一日 ${ioMD(lastFull.day)}`,`${fmtN(lastFull.in)}／${fmtN(lastFull.out)}（<b>${ioSign(lastFull.bal)}</b>）`)}
+    ${kv(lastFull.full?`最近完整一日 ${ioMD(lastFull.day)}`:`${ioMD(lastFull.day)}（只有${ioShTxt(lastFull)}，尚無完整一日）`,`${fmtN(lastFull.in)}／${fmtN(lastFull.out)}（<b>${ioSign(lastFull.bal)}</b>）`)}
     ${kv('尿量',lastFull.urine!=null?`${fmtN(lastFull.urine)} mL${lastFull.uokh!=null?`・<b>${lastFull.uokh.toFixed(2)}</b> mL/kg/h`:''}`:'—')}
     ${kv(`累積平衡（${ioMD(D[0].day)} 起）`,`<b>${ioSign(last.cum)}</b> mL${fo!=null?`・FO% <b>${fo.toFixed(1)}</b>%`:''}`)}
     </div>${fo!=null?'<div class="small mute" style="margin-top:4px">FO% =（累積攝入 − 累積排出, L）÷ 計算體重 kg × 100。</div>':''}
     ${D.some(x=>x.iwl!=null)?'<div class="small mute" style="margin-top:4px">排出含 IWL（體表流失，估算值），與 HIS 差異量算法一致；表格另列不含 IWL 的平衡。</div>':'<div class="small mute" style="margin-top:4px">平衡依 HIS 小計（其他排出量可能含 IWL 估算值）。</div>'}</div>`;
   h+=`<div class="card"><h3>I/O 趨勢</h3>${ioChart(p,D)}</div>`+wtCard(p,ro);
   h+=`<div class="card"><h3>每日／每班明細</h3><div class="tblwrap"><table class="tbl"><thead><tr><th>日期</th><th>班別</th><th>攝入</th><th>排出</th><th>平衡</th><th>尿量</th><th>尿 mL/kg/h</th><th>利尿劑／管灌</th><th>來源</th></tr></thead><tbody>
-    ${[...D].reverse().map(x=>`<tr style="background:var(--chip)"><td class="num"><b>${ioMD(x.day)}</b>${ioHD(p,x.day)?`<div class="small mute">${ioHD(p,x.day)}</div>`:''}</td><td><b>全天</b>${x.full?'':`<div class="small under">${x.L.length}/3 班</div>`}${S.editMode&&!ro?` <button class="xdel" data-iodel="${x.day}">✕</button>`:''}</td>
+    ${[...D].reverse().map(x=>`<tr style="background:var(--chip)"><td class="num"><b>${ioMD(x.day)}</b>${ioHD(p,x.day)?`<div class="small mute">${ioHD(p,x.day)}</div>`:''}</td><td><b>${x.full?'全天':'合計（只有'+ioShTxt(x)+'）'}</b>${x.full?'':`<div class="small under">${x.L.length}/3 班</div>`}${S.editMode&&!ro?` <button class="xdel" data-iodel="${x.day}">✕</button>`:''}</td>
       <td class="num"><b>${fmtN(x.in)}</b></td><td class="num"><b>${fmtN(x.out)}</b></td><td class="num"><b>${ioSign(x.bal)}</b>${x.iwl!=null?`<div class="small mute">不含 IWL ${ioSign(x.bal+x.iwl)}</div>`:''}<div class="small mute">累積 ${ioSign(x.cum)}</div></td>
       <td class="num">${x.urine!=null?fmtN(x.urine):'—'}</td><td class="num">${x.uokh!=null?`<b>${x.uokh.toFixed(2)}</b>`:'—'}</td>
       <td class="small">${x.diu.map(e=>`${e.t.slice(11)} ${esc(e.text)}`).join('<br>')||(x.diuOrd.length?`<span class="mute">醫囑：${x.diuOrd.join('、')}</span>`:'—')}${x.hold.map(e=>`<div class="under">${e.t.slice(11)} ${esc(e.text)}</div>`).join('')}</td><td class="small mute">${[...new Set(x.L.map(s=>s.src))].join('、')}</td></tr>
@@ -4830,7 +4831,7 @@ function ioSoapTxt(p,rel){
   const bm=[wt,bmSoapTxt(p,rel)].filter(Boolean).join('; ');if(!D.length)return bm?bm.charAt(0).toUpperCase()+bm.slice(1):'';
   const x=[...D].reverse().find(d=>d.full)||D[D.length-1],w=ioWt(p),fo=p.template==='peds'&&w.kg?D[D.length-1].cum/1000/w.kg*100:null;
   const dl=rel?rel(x.day):ioMD(x.day);
-  return `${dl} I/O ${fmtN(x.in)}/${fmtN(x.out)} (${ioSign(x.bal)})${x.full?'':` [${x.L.length}/3 shifts]`}, UO ${x.urine!=null?fmtN(x.urine)+' mL':'N/A'}${x.uokh!=null?` (${x.uokh.toFixed(2)} mL/kg/h)`:''}, cumulative ${ioSign(D[D.length-1].cum)} mL since ${rel?rel(D[0].day):ioMD(D[0].day)}${fo!=null?`, FO ${fo.toFixed(1)}%`:''}${bm?'; '+bm:''}`;
+  return `${dl} I/O ${fmtN(x.in)}/${fmtN(x.out)} (${ioSign(x.bal)})${ioShEn(x)}, UO ${x.urine!=null?fmtN(x.urine)+' mL':'N/A'}${x.uokh!=null?` (${x.uokh.toFixed(2)} mL/kg/h)`:''}, cumulative ${ioSign(D[D.length-1].cum)} mL since ${rel?rel(D[0].day):ioMD(D[0].day)}${fo!=null?`, FO ${fo.toFixed(1)}%`:''}${bm?'; '+bm:''}`;
 }
 /* ===== 排便：護理記錄（有／無解便、大便型態、灌腸／塞劑）＋每小時明細的大便量 ===== */
 const BM_LAX=/sennoside|senokot|sennapur|bisacodyl|dulcolax|lactulose|duphalac|magnesium oxide|\bMgO\b|macrogol|forlax|\bPEG\b|glycerin|fleet|docusate|prucalopride|lubiprostone|methylnaltrexone|relistor|naloxegol|picosulfate|enema/i;
