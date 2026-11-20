@@ -426,7 +426,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-20k';
+const APP_VER='2026-11-20l';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -4621,9 +4621,15 @@ const IO_KEY={注射量:'inj',飲食量:'diet',尿量:'urine',糞便量:'stool',
 function parseNurseIO(t){
   const E=nurseEntries(t),R={shifts:[],wts:[],ev:[],dx:[],vs:[]};
   E.forEach(e=>{
-    if(/攝入總計|排出總計/.test(e.text)){const pairs=[];let m;const re=/([一-龥()（）A-Za-z]{1,10}?(?:量|總計))\s*(-?[\d.]+)/g;
-      while((m=re.exec(e.text)))pairs.push([m[1],+m[2]]);
-      if(pairs.length){const v={};pairs.forEach(([k,x])=>{if(IO_KEY[k])v[IO_KEY[k]]=x;});const s=ioSummaryShift(e.t);R.shifts.push(Object.assign(s,{at:ioLocal(e.t),v,pairs}));if(v.stool>0)R.ev.push({t:ioLocal(e.t),day:s.day,kind:'bmVol',text:`${IO_SH[s.sh]}小計 糞便量`,amt:`${fmtN(v.stool)} mL`});}}
+    if(/攝入總計|排出總計/.test(e.text)){const T=e.text;let st=0;const ends=[...T.matchAll(/差異量\s*[:：]?\s*-?[\d.]+/g)].map(m=>m.index+m[0].length);if(!ends.length)ends.push(T.length);
+      ends.forEach(end=>{const seg=T.slice(st,end);st=end;const pairs=[];let m;const re=/([一-龥()（）A-Za-z]{1,10}?(?:量|總計))\s*[:：]?\s*(-?[\d.]+)/g;
+        while((m=re.exec(seg)))pairs.push([m[1],+m[2]]);if(!pairs.length)return;
+        const v={};pairs.forEach(([k,x])=>{if(IO_KEY[k])v[IO_KEY[k]]=x;});
+        const fp=seg.search(/[一-龥()（）A-Za-z]{1,10}?(?:量|總計)\s*[:：]?\s*-?[\d.]+/),head=seg.slice(Math.max(0,fp-40),Math.max(0,fp));
+        const lab=/24\s*小時|二十四小時|全天|總量/.test(head)?'24h':/大夜/.test(head)?2:/小夜/.test(head)?1:/白班/.test(head)?0:null;
+        const s=ioSummaryShift(e.t);if(lab!==null&&lab!=='24h')s.sh=lab;
+        R.shifts.push(Object.assign(s,{at:ioLocal(e.t),v,pairs,lab}));
+        if(v.stool>0)R.ev.push({t:ioLocal(e.t),day:s.day,kind:'bmVol',text:lab==='24h'?'24 小時小計 糞便量':`${IO_SH[s.sh]}小計 糞便量`,amt:`${fmtN(v.stool)} mL`});});}
     nurseWeights(e.text).forEach(w=>R.wts.push(Object.assign({t:ioLocal(e.t)},w)));
     const vs=nurseVitals(e.text);if(vs)R.vs.push(Object.assign({t:ioLocal(e.t)},vs));
     let g;const gr=/依醫囑給予\s*(.+?)(?=，告知|，|；|\n|$)/g;
@@ -4660,7 +4666,7 @@ function ioCat(name){
 function ioImport(p,txt,day){
   const o=ioStore(p);let ns=0,ni=0;
   if(isNurseRecord(txt)){const R=parseNurseIO(txt);
-    R.shifts.forEach(s=>{o.shifts[s.day+'|'+s.sh]=s;ns++;});
+    R.shifts.forEach(s=>{o.shifts[s.day+'|'+(s.lab==='24h'?'24':s.sh)]=s;ns++;});
     R.wts.forEach(w=>{if(!o.wts.some(x=>x.t===w.t&&x.kg===w.kg))o.wts.push(w);});
     R.ev.forEach(e=>{if(!o.ev.some(x=>x.t===e.t&&x.kind===e.kind&&x.text===e.text))o.ev.push(e);});
     o.vs=o.vs||[];R.vs.forEach(v=>{const i=o.vs.findIndex(x=>x.t===v.t);if(i>=0)o.vs[i]=Object.assign(o.vs[i],v);else o.vs.push(v);});
@@ -4671,27 +4677,43 @@ function ioImport(p,txt,day){
   return {ns,ni,kind:'hourly',day:d};
 }
 // 每班彙整：同一天有每小時明細就用明細，否則用護理記錄小計
+function ioBlkVal(s){const v=s.v||{};return {in:v.inTot!=null?v.inTot:(v.inj||0)+(v.diet||0),out:v.outTot!=null?v.outTot:(v.urine||0)+(v.otherOut||0)+(v.stool||0),urine:v.urine!=null?v.urine:null,oth:v.otherOut};}
 function ioShifts(p){
-  const o=ioStore(p),R={},iDays=new Set(Object.keys(o.items).filter(d=>(o.items[d]||[]).length));
-  Object.values(o.shifts).forEach(s=>{if(iDays.has(s.day))return;const v=s.v||{};
-    const inn=v.inTot!=null?v.inTot:(v.inj||0)+(v.diet||0),out=v.outTot!=null?v.outTot:(v.urine||0)+(v.otherOut||0);
-    R[s.day+'|'+s.sh]={day:s.day,sh:s.sh,src:'護理記錄',in:inn,out,urine:v.urine!=null?v.urine:null,iwl:null,cat:{},pairs:s.pairs||[],unc:0};});
+  const o=ioStore(p),R={},d24={},iDays=new Set(Object.keys(o.items).filter(d=>(o.items[d]||[]).length)),ov=o.blkType||{};
+  const ent=Object.entries(o.shifts).filter(([k,s])=>!iDays.has(s.day));
+  // 每班「其他排出量」基準（多為 IWL，固定每班）：取較低四分位
+  const oths=ent.filter(([k,s])=>s.lab!=='24h'&&s.v&&s.v.otherOut>0).map(([k,s])=>s.v.otherOut).sort((a,b)=>a-b),base=oths.length?oths[Math.floor((oths.length-1)/4)]:null;
+  const byDay={};ent.forEach(([k,s])=>(byDay[s.day]=byDay[s.day]||[]).push([k,s]));
+  ent.forEach(([k,s])=>{const V=ioBlkVal(s);let t='shift',why='';
+    if(ov[k]){t=ov[k];why='手動指定';}
+    else if(s.lab==='24h'){t='24h';why='紀錄寫明 24 小時／全天';}
+    else if(s.lab==null){
+      const others=(byDay[s.day]||[]).filter(([k2,s2])=>k2!==k&&s2.lab!=='24h'&&!(ov[k2]==='24h')).map(([,s2])=>ioBlkVal(s2));
+      const geSum=V.in>=others.reduce((a,x)=>a+x.in,0)&&V.out>=others.reduce((a,x)=>a+x.out,0);
+      if(base&&oths.length>=3&&V.oth!=null&&V.oth>=base*2.5&&(!others.length||geSum)){t='24h';why=`其他排出量 ${fmtN(V.oth)} ≈ ${fmtN(+(V.oth/base).toFixed(1))} × 每班基準 ${fmtN(base)}${others.length?'，且 ≥ 同日其他班合計':''}`;}
+      else if(others.length>=2&&geSum){t='24h';why='數值 ≥ 同日其他兩班合計';}}
+    if(t==='24h'){d24[s.day]=Object.assign({key:k,at:s.at,pairs:s.pairs||[],why,auto:!ov[k]&&s.lab!=='24h'},V);return;}
+    const sh=s.lab!=null&&s.lab!=='24h'?s.lab:s.sh;
+    R[s.day+'|'+sh]={day:s.day,sh,src:'護理記錄',in:V.in,out:V.out,urine:V.urine,iwl:null,cat:{},pairs:s.pairs||[],unc:0,key:k,at:s.at,auto:s.lab==null&&!ov[k]};});
   iDays.forEach(d=>o.items[d].forEach(it=>{const t=ioT(it.t),sh=ioShOf(new Date(+t-60000)),k=d+'|'+sh;
     const r=R[k]=R[k]||{day:d,sh,src:'每小時明細',in:0,out:0,urine:0,iwl:0,cat:{},pairs:[],unc:0,uncN:[]};
     const c=ioCat(it.name);if(!c){r.unc+=it.ml;if(!r.uncN.includes(it.name))r.uncN.push(it.name);return;}
     r[IO_CATS[c][0]]+=it.ml;r.cat[c]=(r.cat[c]||0)+it.ml;if(c==='urine')r.urine+=it.ml;if(c==='iwl')r.iwl+=it.ml;}));
+  Object.defineProperty(R,'d24',{value:d24,enumerable:false});
   return R;
 }
 function ioWt(p){const w=parseFloat(p.wt);if(w>0)return {kg:w,src:'基本資料體重'};const L=wtSeries(p).slice(-1)[0];return L?{kg:L.kg,src:`護理記錄體重（${L.t.slice(5,10).replace('-','/')}）`}:{kg:null,src:''};}
 function ioDays(p){
-  const S_=ioShifts(p),by={};Object.values(S_).forEach(s=>(by[s.day]=by[s.day]||[]).push(s));
+  const S_=ioShifts(p),by={},D24=S_.d24||{};Object.values(S_).forEach(s=>(by[s.day]=by[s.day]||[]).push(s));Object.keys(D24).forEach(d=>{by[d]=by[d]||[];});
   const wt=ioWt(p).kg,o=ioStore(p);let cum=0;
-  return Object.keys(by).sort().map(day=>{const L=by[day].sort((a,b)=>a.sh-b.sh);
-    const sum=k=>L.reduce((a,s)=>a+(s[k]||0),0),inn=sum('in'),out=sum('out'),ur=L.some(s=>s.urine!=null)?sum('urine'):null,iwl=L.some(s=>s.iwl)?sum('iwl'):null;
-    cum+=inn-out;const hrs=8*L.length;
+  return Object.keys(by).sort().map(day=>{const L=by[day].sort((a,b)=>a.sh-b.sh),T=D24[day];
+    if(T&&L.length&&L.length<3){const miss=[0,1,2].filter(x=>!L.some(s=>s.sh===x));if(miss.length===1){const dv=k=>(T[k]!=null?T[k]:0)-L.reduce((a,s)=>a+(s[k]||0),0);
+      if(dv('in')>=-1&&dv('out')>=-1)L.push({day,sh:miss[0],src:'由 24 小時小計推算',in:dv('in'),out:dv('out'),urine:T.urine!=null&&L.every(s=>s.urine!=null)?dv('urine'):null,cat:{},pairs:[],unc:0,derived:true});L.sort((a,b)=>a.sh-b.sh);}}
+    const sum=k=>L.reduce((a,s)=>a+(s[k]||0),0),inn=T?T.in:sum('in'),out=T?T.out:sum('out'),ur=T?T.urine:L.some(s=>s.urine!=null)?sum('urine'):null,iwl=L.some(s=>s.iwl)?sum('iwl'):null;
+    cum+=inn-out;const hrs=T?24:8*L.length;
     const d0=new Date(day+'T07:00:00'),d1=new Date(+d0+864e5);
     const diu=o.ev.filter(e=>e.kind==='diu'&&ioT(e.t)>=d0&&ioT(e.t)<d1),hold=o.ev.filter(e=>e.kind==='hold'&&ioT(e.t)>=d0&&ioT(e.t)<d1);
-    return {day,L,in:inn,out,bal:inn-out,cum,urine:ur,iwl,hrs,full:L.length===3,
+    return {day,L,T,in:inn,out,bal:inn-out,cum,urine:ur,iwl,hrs,full:!!T||L.length===3,
       uokh:ur!=null&&wt?ur/wt/hrs:null,diu,hold,diuOrd:diu.length?[]:medsOnDay(p,day,IO_DIU,true),
       unc:L.reduce((a,s)=>a+(s.unc||0),0)};});
 }
@@ -4825,11 +4847,11 @@ function renderIO(p,ro){
     ${D.some(x=>x.iwl!=null)?'<div class="small mute" style="margin-top:4px">排出含 IWL（體表流失，估算值），與 HIS 差異量算法一致；表格另列不含 IWL 的平衡。</div>':'<div class="small mute" style="margin-top:4px">平衡依 HIS 小計（其他排出量可能含 IWL 估算值）。</div>'}</div>`;
   h+=`<div class="card"><h3>I/O 趨勢</h3>${ioChart(p,D)}</div>`+wtCard(p,ro);
   h+=`<div class="card"><h3>每日／每班明細</h3><div class="tblwrap"><table class="tbl"><thead><tr><th>日期</th><th>班別</th><th>攝入</th><th>排出</th><th>平衡</th><th>尿量</th><th>尿 mL/kg/h</th><th>利尿劑／管灌</th><th>來源</th></tr></thead><tbody>
-    ${[...D].reverse().map(x=>`<tr style="background:var(--chip)"><td class="num"><b>${ioMD(x.day)}</b>${ioHD(p,x.day)?`<div class="small mute">${ioHD(p,x.day)}</div>`:''}</td><td><b>${x.full?'全天':'合計（只有'+ioShTxt(x)+'）'}</b>${x.full?'':`<div class="small under">${x.L.length}/3 班</div>`}${S.editMode&&!ro?` <button class="xdel" data-iodel="${x.day}">✕</button>`:''}</td>
+    ${[...D].reverse().map(x=>`<tr style="background:var(--chip)"><td class="num"><b>${ioMD(x.day)}</b>${ioHD(p,x.day)?`<div class="small mute">${ioHD(p,x.day)}</div>`:''}</td><td><b>${x.T?'全天（24 小時小計）':x.full?'全天':'合計（只有'+ioShTxt(x)+'）'}</b>${x.full?'':`<div class="small under">${x.L.length}/3 班</div>`}${x.T?`<div class="small mute">${esc(x.T.at.slice(5).replace('-','/'))} 小計・${esc(x.T.why)}</div>${ro?'':`<button class="small" data-blk="${esc(x.T.key)}|shift" style="padding:0 6px">改為單班小計</button>`}`:''}${S.editMode&&!ro?` <button class="xdel" data-iodel="${x.day}">✕</button>`:''}</td>
       <td class="num"><b>${fmtN(x.in)}</b></td><td class="num"><b>${fmtN(x.out)}</b></td><td class="num"><b>${ioSign(x.bal)}</b>${x.iwl!=null?`<div class="small mute">不含 IWL ${ioSign(x.bal+x.iwl)}</div>`:''}<div class="small mute">累積 ${ioSign(x.cum)}</div></td>
       <td class="num">${x.urine!=null?fmtN(x.urine):'—'}</td><td class="num">${x.uokh!=null?`<b>${x.uokh.toFixed(2)}</b>`:'—'}</td>
       <td class="small">${x.diu.map(e=>`${e.t.slice(11)} ${esc(e.text)}`).join('<br>')||(x.diuOrd.length?`<span class="mute">醫囑：${x.diuOrd.join('、')}</span>`:'—')}${x.hold.map(e=>`<div class="under">${e.t.slice(11)} ${esc(e.text)}</div>`).join('')}</td><td class="small mute">${[...new Set(x.L.map(s=>s.src))].join('、')}</td></tr>
-      ${x.L.map(s=>`<tr><td></td><td>${IO_SH[s.sh]}</td><td class="num">${fmtN(s.in)}</td><td class="num">${fmtN(s.out)}</td><td class="num">${ioSign(s.in-s.out)}</td><td class="num">${s.urine!=null?fmtN(s.urine):'—'}</td><td class="num">${s.urine!=null&&w.kg?(s.urine/w.kg/8).toFixed(2):'—'}</td>
+      ${x.L.map(s=>`<tr><td></td><td>${IO_SH[s.sh]}${s.derived?'<div class="small mute">由 24h 推算</div>':''}${!ro&&s.key&&s.sh===2&&s.auto?`<div><button class="small" data-blk="${esc(s.key)}|24h" style="padding:0 6px">其實是 24 小時</button></div>`:''}</td><td class="num">${fmtN(s.in)}</td><td class="num">${fmtN(s.out)}</td><td class="num">${ioSign(s.in-s.out)}</td><td class="num">${s.urine!=null?fmtN(s.urine):'—'}</td><td class="num">${s.urine!=null&&w.kg?(s.urine/w.kg/8).toFixed(2):'—'}</td>
         <td class="small mute" colspan="2">${s.pairs.length?s.pairs.map(([k,v])=>`${esc(k)} ${fmtN(v)}`).join('、'):Object.entries(s.cat).map(([c,v])=>`${IO_CATS[c][1]} ${fmtN(v)}`).join('、')}${s.unc?`<div class="under">未分類 ${fmtN(s.unc)}（${esc(s.uncN.join('、'))}）</div>`:''}</td></tr>`).join('')}`).join('')}
     </tbody></table></div><div class="small mute" style="margin-top:4px">尿 mL/kg/h：每班以 8 小時計，全天以「有紀錄的班數 × 8 小時」計。</div></div>`;
   h+=bmCard(p);
@@ -4851,6 +4873,7 @@ function bindIO(p,ro){
     if(!isNurseRecord(t)&&!isIOHourly(t)){const v=nurseVitals(t);if(v&&Object.keys(v).length>=2){snapshot(p,'加入生命徵象');const o=ioStore(p);o.vs=o.vs||[];o.vs.push(Object.assign({t:ioLocal(new Date()),manual:true},v));markDirty();renderMain();toast('已加入一筆生命徵象（沒有日期，時間記為現在）');return;}toast('看不出是護理記錄、I/O 明細或生命徵象');return;}
     snapshot(p,'加入 I/O');const r=ioImport(p,t,$('ioDay').value);markDirty();renderMain();
     toast(r.kind==='nurse'?`已加入 ${r.ns} 班 I/O 小計${r.nv?`、${r.nv} 筆生命徵象`:''}${r.nw?`、${r.nw} 筆體重`:''}${r.ne?`、${r.ne} 筆事件（利尿劑／管灌／排便）`:''}`:`已加入 ${ioMD(r.day)} 明細 ${r.ni} 筆`);};
+  document.querySelectorAll('[data-blk]').forEach(b=>b.onclick=()=>{const [k1,k2,t]=b.dataset.blk.split('|');const o=ioStore(p);o.blkType=o.blkType||{};o.blkType[k1+'|'+k2]=t;markDirty();renderMain();});
   document.querySelectorAll('[data-iomap]').forEach(el=>el.onchange=()=>{const st=S.data.settings;st.ioMap=st.ioMap||{};if(el.value)st.ioMap[el.dataset.iomap]=el.value;else st.ioMap[el.dataset.iomap]='';markDirty();renderMain();});
   document.querySelectorAll('[data-iodel]').forEach(b=>b.onclick=async e=>{e.preventDefault();const d=b.dataset.iodel;if(!await confirmBox('刪除 I/O',`刪除 ${esc(ioMD(d))} 這一天的 I/O（班別小計與明細）？`,'刪除',true))return;
     snapshot(p,'刪除 I/O');const o=ioStore(p);Object.keys(o.shifts).forEach(k=>{if(k.startsWith(d+'|'))delete o.shifts[k];});delete o.items[d];markDirty();renderMain();});
