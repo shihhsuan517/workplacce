@@ -425,7 +425,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-20g';
+const APP_VER='2026-11-20h';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -827,7 +827,7 @@ function renderMain(){
   if($('btnEditMode'))$('btnEditMode').onclick=()=>{S.editMode=!S.editMode;renderMain();};
   if($('btnDelPt'))$('btnDelPt').onclick=async()=>{
     if(!await confirmBox('刪除病患',`刪除「${esc((p.bed||'')+' '+(p.code||''))}」的所有資料？<br><br>這適用於建錯或貼錯的病人；正常出院請用「移到舊病患」。刪除後可在本次開啟期間按「復原」救回。`,'刪除',true))return;
-    snapshot(p,'刪除病患');S.data.patients=S.data.patients.filter(x=>x.id!==p.id);S.selId=sortedPatients()[0]?.id||null;S.editMode=false;markDirty();renderList();renderMain();toast('已刪除病患');};
+    snapshot(p,'刪除病患');S.data.deletedIds=[...new Set([...(S.data.deletedIds||[]),p.id])].slice(-500);S.data.patients=S.data.patients.filter(x=>x.id!==p.id);S.selId=sortedPatients()[0]?.id||null;S.editMode=false;markDirty();renderList();renderMain();toast('已刪除病患');};
   const tb=$('tabBody');if(tb&&!ro)tb.addEventListener('click',e=>{const b=e.target.closest('[data-del]');if(b){e.preventDefault();e.stopPropagation();doDelete(p,b.dataset.del,b.dataset.k,b.dataset.n);}});
   if($('btnRestore'))$('btnRestore').onclick=restoreArchive;
   if($('btnCloseArchive'))$('btnCloseArchive').onclick=()=>{S.archive=null;renderList();renderMain();};
@@ -1037,7 +1037,7 @@ async function restoreArchive(){
   const p=JSON.parse(JSON.stringify(S.archive.patient));
   const ok=await confirmBox('復原為在院病患',`把「${esc((p.bed||'')+' '+(p.code||''))}」加回工作檔？舊病患檔本身不會刪除。`,'復原');
   if(!ok)return;
-  if(S.data.patients.some(x=>x.id===p.id))p.id=uid();
+  if(S.data.patients.some(x=>x.id===p.id)||(S.data.archivedIds||[]).includes(p.id)||(S.data.deletedIds||[]).includes(p.id))p.id=uid();
   delete p.dischargedAt;S.data.patients.push(p);S.selId=p.id;S.archive=null;markDirty();renderList();renderMain();toast('已復原');
 }
 
@@ -1049,7 +1049,8 @@ $('btnUndo').onclick=()=>{
   const u=S.undo.pop();if(!u||!S.data)return;
   const old=JSON.parse(u.json),cur=S.data.patients.find(x=>x.id===u.pid);
   if(cur){Object.keys(cur).forEach(k=>delete cur[k]);Object.assign(cur,old);}
-  else{S.data.patients.splice(Math.max(0,Math.min(u.idx,S.data.patients.length)),0,old);S.selId=old.id;}
+  else{if((S.data.deletedIds||[]).includes(old.id)||(S.data.archivedIds||[]).includes(old.id)){const nid=uid();S.undo.forEach(x=>{if(x.pid===old.id)x.pid=nid;});old.id=nid;u.pid=nid;}
+    S.data.patients.splice(Math.max(0,Math.min(u.idx,S.data.patients.length)),0,old);S.selId=old.id;}
   ensurePatient(S.data.patients.find(x=>x.id===u.pid));
   markDirty();renderUndo();renderList();renderMain();toast('已復原：'+u.label);
 };
@@ -1116,7 +1117,8 @@ async function mergeWorkText(text,fileName){
 }
 function mergeCore(O){
   const mine=new Map(S.data.patients.map(p=>[p.id,p]));
-  const arch=new Set([...(S.data.archivedIds||[]),...(O.archivedIds||[])]);
+  const delIds=new Set([...(S.data.deletedIds||[]),...(O.deletedIds||[])]);
+  const arch=new Set([...(S.data.archivedIds||[]),...(O.archivedIds||[]),...delIds]);
   let add=0,upd=0,keep=0,skip=0;const det=[];
   (O.patients||[]).forEach(op=>{
     if(arch.has(op.id)){skip++;return;}
@@ -1126,7 +1128,7 @@ function mergeCore(O){
     else keep++;
   });
   S.data.patients=S.data.patients.filter(p=>!arch.has(p.id));
-  S.data.archivedIds=[...arch];
+  S.data.deletedIds=[...delIds].slice(-500);S.data.archivedIds=[...arch].filter(id=>!delIds.has(id));
   const P=(O.settings&&O.settings.pnProd)||{};if(Object.keys(P).length){S.data.settings.pnProd=Object.assign({},P,S.data.settings.pnProd||{});}
   if(add||upd)S.dirty=true;
   return {add,upd,keep,skip,det};
