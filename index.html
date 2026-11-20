@@ -426,7 +426,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-20n';
+const APP_VER='2026-11-20o';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -828,7 +828,7 @@ $('btnAddPt').onclick=()=>{
 };
 
 const TPL={adult:'成人一般',peds:'兒科',ami:'AMI',hf:'HF'};
-const TABS=[['overview','總覽'],['basic','基本資料'],['prog','病程'],['lines','管路'],['meds','用藥'],['drip','輸注速算'],['tpn','TPN'],['io','I/O・VS'],['lab','檢驗'],['micro','抗微生物圖譜'],['exam','檢查報告'],['consult','會診'],['rt','呼吸治療'],['soap','SOAP'],['rules','劑量規則'],['ai','AI 判讀']];
+const TABS=[['overview','總覽'],['basic','基本資料'],['prog','病程'],['lines','管路'],['meds','用藥'],['drip','輸注速算'],['tpn','TPN／營養'],['vs','生命徵象'],['io','I/O'],['lab','檢驗'],['micro','抗微生物圖譜'],['exam','檢查報告'],['consult','會診'],['rt','呼吸治療'],['soap','SOAP'],['rules','劑量規則'],['ai','AI 判讀']];
 
 function curPatient(){return S.archive?S.archive.patient:S.data.patients.find(p=>p.id===S.selId)||null;}
 
@@ -845,7 +845,7 @@ function renderMain(){
     ${p.wt?' · '+esc(p.wt)+' kg':''}${bwMeta(p)?' · '+bwMeta(p):''} · ${TPL[p.template]} 範本</div></div>
     <span style="flex:1"></span>${ro?'':`<button id="btnEditMode" class="${S.editMode?'danger':''}">${S.editMode?'完成刪除':'✏️ 刪除模式'}</button><button id="btnDischarge">移到舊病患</button>${S.editMode?'<button id="btnDelPt" class="danger">刪除病患</button>':''}`}</div>
     ${S.editMode&&!ro?'<div class="banner">刪除模式：點各分頁的 ✕ 刪除單筆資料。誤刪可以按右上角「復原」。</div>':''}`;
-  h+=`<div class="tabs">${TABS.filter(([k])=>k!=='tpn'||hasTPN(p)||S.tab==='tpn').map(([k,t])=>`<button class="tab ${S.tab===k?'on':''}" data-tab="${k}">${t}</button>`).join('')}</div>`;
+  h+=`<div class="tabs">${TABS.filter(([k])=>k!=='tpn'||hasTPN(p)||hasFeed(p)||S.tab==='tpn').map(([k,t])=>`<button class="tab ${S.tab===k?'on':''}" data-tab="${k}">${t}</button>`).join('')}</div>`;
   h+=`<div id="tabBody">${renderIssueBar(p,S.tab,ro)}${renderTab(p,ro)}</div>`;
   m.innerHTML=h;
   if(!ro&&S._abxSig!==undefined&&ptAbxSig()!==S._abxSig)renderList();
@@ -873,6 +873,7 @@ function renderMain(){
   if(S.tab==='lines')bindLines(p,ro);
   if(S.tab==='tpn')bindTPN(p,ro);
   if(S.tab==='io')bindIO(p,ro);
+  if(S.tab==='vs'&&$('btnVSCopy'))$('btnVSCopy').onclick=()=>copyMsg(vsSoapTxt(p),'已複製 Vital sign');
   if(S.tab==='lab')bindLabNotes(p,ro);
   if(S.tab==='consult')bindConsult(p,ro);
   bindIssues(p,S.tab,ro);
@@ -968,7 +969,7 @@ function renderTab(p,ro){
     return h;
   }
   if(S.tab==='overview')return renderOverview(p);
-  if(S.tab==='meds')return renderMeds(p,ro)+prnCard(p)+renderCloud(p,ro);
+  if(S.tab==='meds')return renderMeds(p,ro)+prnCard(p)+insGlyCard(p)+sedCard(p)+renderCloud(p,ro);
   if(S.tab==='drip')return renderDrip(p,ro);
   if(S.tab==='lab')return renderLab(p,ro);
   if(S.tab==='soap')return renderSoap(p,ro);
@@ -981,6 +982,7 @@ function renderTab(p,ro){
   if(S.tab==='lines')return renderLines(p,ro);
   if(S.tab==='tpn')return renderTPN(p,ro);
   if(S.tab==='io')return renderIO(p,ro);
+  if(S.tab==='vs')return renderVSTab(p,ro);
   if(S.tab==='consult')return renderConsult(p,ro);
   const todo={
     lab:'貼上 HIS 檢驗報告，依系統分類並累積成時間序列（重複貼上會自動合併去重）。',
@@ -2789,9 +2791,10 @@ function ordRows(R){
 const ST_CHIP={open:['t-new','使用中'],stopped:['t-abx','停藥'],expired:['t-exp','到期'],once:['t-prn','單次']};
 function epEnd(e){return e.status==='open'?(e.exp?`有效至 ${MT.fmt(e.exp)}`:'使用中'):e.status==='once'?'—':(e.stop?MT.fmt(e.stop):'?');}
 function courseTxt(g){const c=g.course;return `療程 ${c.start?MT.fmtDay(c.start):'?'}–${c.open?'使用中':c.end?MT.fmtDay(c.end):'?'}｜${g.abx&&!g.local?'DOT':'累計'} ${c.dot} 天${c.gaps.length?`｜空窗 ${c.gaps.length} 段`:''}`;}
-function ganttHTML(rows,hdDays){
+function ganttHTML(rows,hdDays,marks){
   const T=[];rows.forEach(r=>r.eps.forEach(e=>{if(e.start)T.push(+e.start);T.push(e.status==='open'?Date.now():+(e.stop||e.start||Date.now()));}));
   if(!T.length)return '';
+  {const t0=Math.min(...T),t1=Math.max(...T);(marks||[]).forEach(m=>m.pts.forEach(x=>{if(x.t>=t0-7*864e5&&x.t<=t1+7*864e5)T.push(x.t);}));}
   const U=S.ordUI;
   const a0=U.from?Date.parse(U.from+'T00:00:00'):Math.min(...T);
   const b0=U.to?Date.parse(U.to+'T00:00:00')+864e5:Math.max(...T);
@@ -2812,7 +2815,8 @@ function ganttHTML(rows,hdDays){
     return `<div class="grow"><div class="gname" title="${esc(r.g.label)}">${esc(r.g.label)}</div><div class="gtrack">${lines}${nowL}${bars}</div></div>`;
   };
   const hdRow=(hdDays||[]).length?`<div class="grow"><div class="gname" style="color:var(--bad)">透析日</div><div class="gtrack">${lines}${nowL}${hdDays.map(d=>{const t=Date.parse(d+'T00:00:00');if(t+864e5<a||t>b)return '';return `<span class="gbar" style="left:${X(t)}%;width:${Math.max(0.6,X(t+864e5)-X(t))}%;background:var(--bad);opacity:.35" title="透析 ${d.slice(5).replace('-','/')}"></span>`;}).join('')}</div></div>`:'';
-  return `<div class="gantt"><div class="grow gaxis"><div class="gname"></div><div class="gtrack">${ticks}</div></div>${hdRow}${rows.map(row).join('')}</div>`;
+  const mkRows=(marks||[]).filter(m=>m.pts.some(x=>x.t>=a&&x.t<=b)).map(m=>`<div class="grow"><div class="gname" style="color:${m.color}" title="${esc(m.title||m.label)}">${esc(m.label)}</div><div class="gtrack">${lines}${nowL}${m.pts.filter(x=>x.t>=a&&x.t<=b).map(x=>`<span class="gbar" style="left:${X(x.t)}%;width:0.9%;background:${m.color};border-radius:50%;height:10px;top:5px" title="${esc(x.tip)}"></span>`).join('')}</div></div>`).join('');
+  return `<div class="gantt"><div class="grow gaxis"><div class="gname"></div><div class="gtrack">${ticks}</div></div>${hdRow}${mkRows}${rows.map(row).join('')}</div>`;
 }
 function renderOrders(p,ro){
   const R=ordersOf(p),U=S.ordUI,rows=ordRows(R);
@@ -2839,7 +2843,7 @@ function renderOrders(p,ro){
       ${ro?'':'<button class="small ghost" id="btnClearOrd">清除醫囑紀錄</button>'}
     </div>`;
   if(!rows.length)return h+'<div class="small mute">沒有符合篩選條件的藥品。</div></div>';
-  h+=ganttHTML(rows,rrtHdDays(p));
+  h+=ganttHTML(rows,rrtHdDays(p),[{label:'發燒 BT≥38',color:'var(--bad)',title:'護理記錄 BT ≥ 38',pts:feverEvents(p).map(x=>({t:+x.t,tip:`${MT.fmt(x.t)} BT ${x.v}`}))},{label:'皮疹／過敏',color:'#8a5cc2',title:'護理記錄提到皮疹或過敏字眼',pts:hasIO(p)?ioStore(p).ev.filter(e=>e.kind==='adr').map(e=>({t:+ioT(e.t),tip:`${e.t.slice(5).replace('-','/')} ${e.text}`})):[]}]);
   h+=`<div class="tblwrap" style="margin-top:12px"><table class="tbl"><thead><tr><th>處方</th><th>開始</th><th>停止</th><th>狀態</th><th>原因／備註</th></tr></thead><tbody>`;
   rows.forEach(({g,eps})=>{
     h+=`<tr class="ghead"><td colspan="5">${S.editMode&&!ro?`<button class="xdel" data-del="ordgrp" data-k="${esc(g.key)}" data-n="${esc(g.label)}" title="隱藏此藥（誤貼時用）">✕</button> `:''}<b>${esc(g.label)}</b> ${g.abx?`<span class="tag t-abx">${esc(g.abx)}</span>`:''}${g.restricted?'<span class="tag t-warn">需感控審核</span>':''}${g.local&&g.abx?'<span class="tag t-reg">局部，不計 DOT</span>':''}${g.isDrip?'<span class="tag t-drip">輸注</span>':''}
@@ -4632,7 +4636,7 @@ function ioSummaryShift(t){
 }
 const IO_KEY={注射量:'inj',飲食量:'diet',尿量:'urine',糞便量:'stool',大便量:'stool',其他排出量:'otherOut',攝入總計:'inTot',排出總計:'outTot',差異量:'diff'};
 function parseNurseIO(t){
-  const E=nurseEntries(t),R={shifts:[],wts:[],ev:[],dx:[],vs:[]};
+  const E=nurseEntries(t),R={shifts:[],wts:[],ev:[],dx:[],vs:[],lines:[]};
   E.forEach(e=>{
     if(/攝入總計|排出總計/.test(e.text)){const T=e.text;let st=0;const ends=[...T.matchAll(/差異量\s*[:：]?\s*-?[\d.]+/g)].map(m=>m.index+m[0].length);if(!ends.length)ends.push(T.length);
       ends.forEach(end=>{const seg=T.slice(st,end);st=end;const pairs=[];let m;const re=/([一-龥()（）A-Za-z]{1,10}?(?:量|總計))\s*[:：]?\s*(-?[\d.]+)/g;
@@ -4648,7 +4652,7 @@ function parseNurseIO(t){
     let g;const gr=/依醫囑給予\s*(.+?)(?=，告知|，|；|\n|$)/g;
     while((g=gr.exec(e.text))){const s=g[1].trim();if(IO_DIU.test(s))R.ev.push({t:ioLocal(e.t),kind:'diu',text:s.slice(0,90)});if(/\bPRN\b/i.test(s)){const why=(e.text.match(/因([^，。；,\n]{2,30})/)||[])[1]||'',cond=(e.text.match(/\(PRN[^)]*\)/i)||[''])[0];R.ev.push({t:ioLocal(e.t),kind:'prn',text:s.slice(0,120),why:why.trim(),cond});}if(BM_LAX.test(s))R.ev.push({t:ioLocal(e.t),kind:'bmLax',text:s.slice(0,90)});else if(BM_ANTI.test(s))R.ev.push({t:ioLocal(e.t),kind:'bmAnti',text:s.slice(0,90)});}
     const h=e.text.match(/Hold one meal|暫停一餐|暫停管灌|暫停灌食|禁食|\bNPO\b/i);if(h)R.ev.push({t:ioLocal(e.t),kind:'hold',text:h[0]});
-    nurseBM(e).forEach(x=>R.ev.push(x));
+    nurseBM(e).forEach(x=>R.ev.push(x));nurseMore(e,R);nurseADR(e,R);
     [...e.text.matchAll(/Diagnosis\s*\(\d+\)\s*[:：]\s*-?\s*([^\n]+)/gi)].forEach(m=>{const t=m[1].trim();if(t&&!R.dx.includes(t))R.dx.push(t);});
   });
   return R;
@@ -4679,15 +4683,18 @@ function ioCat(name){
 function ioImport(p,txt,day,opt){
   const o=ioStore(p);let ns=0,ni=0;opt=opt||{};
   if(isNurseRecord(txt)){const R=parseNurseIO(txt);
-    if(opt.io===false){R.shifts=[];R.wts=[];R.vs=[];R.dx=[];R.ev=R.ev.filter(e=>e.kind==='prn');}
-    if(opt.prn===false)R.ev=R.ev.filter(e=>e.kind!=='prn');
+    const MEDK=/^(prn|ins|d50|adr)$/,FEEDK=/^(fOrder|feed|grv|cg|npo|hold)$/;
+    if(opt.io===false){R.shifts=[];R.wts=[];R.vs=[];R.dx=[];R.ev=R.ev.filter(e=>MEDK.test(e.kind)||FEEDK.test(e.kind));}
+    if(opt.med===false)R.ev=R.ev.filter(e=>!MEDK.test(e.kind));
+    if(opt.feed===false)R.ev=R.ev.filter(e=>!FEEDK.test(e.kind));
+    const LR=opt.line===false?{add:0,chg:0}:nurseLinesApply(p,R.lines);
     R.shifts.forEach(s=>{o.shifts[s.day+'|'+(s.lab==='24h'?'24':s.sh)]=s;ns++;});
     R.wts.forEach(w=>{if(!o.wts.some(x=>x.t===w.t&&x.kg===w.kg))o.wts.push(w);});
     R.ev.forEach(e=>{if(!o.ev.some(x=>x.t===e.t&&x.kind===e.kind&&x.text===e.text))o.ev.push(e);});
     o.vs=o.vs||[];R.vs.forEach(v=>{const i=o.vs.findIndex(x=>x.t===v.t);if(i>=0)o.vs[i]=Object.assign(o.vs[i],v);else o.vs.push(v);});
     o.dx=o.dx||[];R.dx.forEach(d=>{if(!o.dx.includes(d))o.dx.push(d);});
     o.wts.sort((a,b)=>a.t.localeCompare(b.t));o.ev.sort((a,b)=>a.t.localeCompare(b.t));
-    return {ns,ni,nw:R.wts.length,ne:R.ev.length,nv:R.vs.length,kind:'nurse'};}
+    return {ns,ni,nw:R.wts.length,ne:R.ev.length,nv:R.vs.length,nl:LR.add+LR.chg,kind:'nurse'};}
   const d=ioRecDate(txt)||day,L=parseIOHourly(txt,d);if(L.length){o.items[d]=L;ni=L.length;}
   return {ns,ni,kind:'hourly',day:d};
 }
@@ -4806,7 +4813,7 @@ function nurseVitals(T){
   ['A','N'].forEach(x=>{const s=g(x,`${x}BPs\\s*[:：]\\s*(\\d+)`),d=g(x,`${x}BPd\\s*[:：]\\s*(\\d+)`),m=g(x,`${x}BPm\\s*[:：]\\s*(\\d+)`);if(s!=null||m!=null)v[x==='A'?'abp':'nbp']={s,d,m};});
   put('FS',g('F',/F\/S\s*[:：]\s*(\d+)/.source));
   const gc=T.match(/E\s*(\d)\s*V\s*(\d|E|T|A)\s*M\s*(\d)/);if(gc)v.GCS=`E${gc[1]}V${gc[2]}M${gc[3]}`;
-  put('RASS',g('R',/RASS\)?\s*[:：]\s*(-?\d)/.source));put('CPOT',g('P',/CPOT\)?】?\s*[:：]\s*(\d+)/.source));
+  put('RASS',g('R',/RASS\)?\s*[:：]\s*(-?\d)/.source));put('ICDSC',g('I',/ICDSC[）)]?\s*[:：]\s*(\d+)/.source));put('CPOT',g('P',/CPOT\)?】?\s*[:：]\s*(\d+)/.source));
   return Object.keys(v).length?v:null;
 }
 function vsList(p){return (ioStore(p).vs||[]).slice().sort((a,b)=>a.t.localeCompare(b.t));}
@@ -4849,7 +4856,7 @@ const PRN_KIND=[['bp',/hydralazine|labetalol|nicardipine|captopril|clonidine|nif
 function prnMetric(x,k){if(k==='SBP'){const b=vsBP(x);return b&&b.s!=null?b.s:null;}if(k==='BT')return x.BT??null;if(k==='F/S')return x.FS??null;if(k==='CPOT')return x.CPOT??null;if(k==='RASS')return x.RASS??null;return null;}
 function prnList(p){
   const o=ioStore(p),V=vsList(p);
-  return o.ev.filter(e=>e.kind==='prn').slice().sort((a,b)=>a.t.localeCompare(b.t)).map(e=>{
+  return o.ev.filter(e=>e.kind==='prn'&&!INS_RE.test(e.text)).slice().sort((a,b)=>a.t.localeCompare(b.t)).map(e=>{
     const name=MT.drugLabel(e.text.replace(/^\(?[^)A-Za-z]*\)\s*/,'')),dm=e.text.match(/([\d.]+\s*(?:PC|UN|U|IU|TAB|AMP|VIAL|ML|MG|MCG|PU|PK|GM|G))\s+(?:[A-Z]{2,4}\s+)?([A-Z]{2,4})?\s*PRN/i);
     const kd=PRN_KIND.find(([,re])=>re.test(e.text)),T=+ioT(e.t);let before=null,after=null;
     if(kd){for(let i=V.length-1;i>=0;i--){const t=+ioT(V[i].t),v=prnMetric(V[i],kd[2]);if(v==null)continue;if(t<=T&&T-t<=3*36e5){before={v,t:V[i].t};break;}}
@@ -4868,18 +4875,156 @@ function prnCard(p){
         <td class="small">${x.before?`${x.metric} <b>${esc(String(x.before.v))}</b> <span class="mute">${x.before.t.slice(11)}</span>`:'—'}</td><td class="small">${x.after?`${x.metric} <b>${esc(String(x.after.v))}</b> <span class="mute">${md(x.after.t)}</span>`:'—'}</td></tr>`).join('')}
       </tbody></table></div></details>`;}).join('');
   return `<div class="card"><h3>PRN 實際給藥 <span class="small mute">護理記錄・最新紀錄 ${md(ioLocal(new Date(endT)))}・只列紀錄</span></h3>${rows}
-    <div class="small mute" style="margin-top:6px">只列護理記錄中「依醫囑給予 … PRN」的實際給藥。給藥前後數值：降壓藥看 SBP、退燒藥看 BT、胰島素看 F/S、鴉片類看 CPOT、鎮靜藥看 RASS（前 3 小時內最近一筆、後 20 分鐘～4 小時內第一筆）。次數以最新一筆護理紀錄往回計算。</div></div>`;
+    <div class="small mute" style="margin-top:6px">只列護理記錄中「依醫囑給予 … PRN」的實際給藥（胰島素列在下方「胰島素與血糖」）。給藥前後數值：降壓藥看 SBP、退燒藥看 BT、胰島素看 F/S、鴉片類看 CPOT、鎮靜藥看 RASS（前 3 小時內最近一筆、後 20 分鐘～4 小時內第一筆）。次數以最新一筆護理紀錄往回計算。</div></div>`;
 }
+/* =====================================================================
+   護理記錄延伸擷取：胰島素／血糖、鎮靜疼痛譫妄評分、管灌與耐受度、管路事件、發燒
+   ===================================================================== */
+const INS_RE=/insulin|actrapid|humulin|novorapid|novomix|lantus|glargine|toujeo|levemir|detemir|tresiba|degludec|lispro|humalog|aspart|apidra|glulisine/i;
+const insName=s=>{s=String(s);const m=s.match(/insulin\s+glargine|glargine|detemir|degludec|lispro|aspart|glulisine/i);if(m)return m[0].replace(/^insulin\s+/i,'').replace(/^./,c=>c.toUpperCase());
+  if(/regular|actrapid|humulin\s*r/i.test(s))return 'Regular insulin';if(/NPH|humulin\s*n|isophane/i.test(s))return 'NPH';if(/novomix|70\/30|mix/i.test(s))return 'Premix insulin';return 'Insulin';};
+function nurseMore(e,R){
+  const T=e.text,t=ioLocal(e.t);
+  // --- 胰島素：依醫囑給予（含頻次）與「藥名、劑量：… NUN，部位」（含部位）
+  const given=[];let g;const gr=/依醫囑給予\s*(.+?)(?=，告知|，|；|\n|$)/g;
+  while((g=gr.exec(T))){const s=g[1];
+    if(INS_RE.test(s)){const u=(s.match(/([\d.]+)\s*UN\b/i)||s.match(/\s([\d.]+)\s*(?:U|IU)\s+(?:SC|IV|IVF|IVD|IM)\b/i)||[])[1];
+      const ins={t,kind:'ins',drug:insName(s),units:u!=null?+u:null,route:(s.match(/\b(SC|IVF|IVD|IV|IM)\b/)||[])[1]||'',freq:(s.match(/\b(STAT|ONCE|PRN|QD|BID|TID|QID|HS|Q\d+H)(?:\s*(AC|PC|HS))?\b/i)||[''])[0].toUpperCase()};given.push(ins);R.ev.push(ins);}
+    if(/glucose\s*50|D50\b|50%\s*glucose|50%\s*葡萄糖/i.test(s))R.ev.push({t,kind:'d50',text:s.slice(0,80)});}
+  let k;const kr=/藥名、劑量[:：]\s*(.+?)\s*([\d.]+)\s*UN\s*[，,]\s*部位[:：]\s*([^，；。\n]+)/g;
+  while((k=kr.exec(T))){if(!INS_RE.test(k[1]))continue;const dn=insName(k[1]),u=+k[2],site=k[3].trim();
+    const same=given.find(x=>x.drug===dn&&x.units===u);if(same){same.site=site;continue;}
+    R.ev.push({t,kind:'ins',drug:dn,units:u,route:'SC',freq:'',site});}
+  // --- 管灌：醫囑熱量、實際灌食量（配方／水）、反抽、coffee ground、禁食
+  const clauses=T.split(/[，。；\n]/);
+  clauses.forEach(c=>{
+    const o=c.match(/(\d{3,4})\s*大?卡\s*\/\s*天/);
+    if(o&&/管灌|灌食|飲食|配方|牛奶|鼻胃管/.test(c))R.ev.push({t,kind:'fOrder',kcal:+o[1],text:c.replace(/^\s*(\d{1,2}:\d{2})?\s*/,'').replace(/^(現|目前)?依醫囑(給予|予)?/,'').trim().slice(0,50)});
+    if(/反抽/.test(c)&&!/回血|推注|三頭|兩頭|咖啡頭|管路無/.test(c)){
+      const v=c.match(/反抽[^\d]{0,12}?([<>＞＜]?\s*\d+)\s*(?:毫升|ml|cc)/i);
+      const qual=(c.match(/消化(?:情形)?(?:良好|佳|尚可|可|差|不佳)|無未消化[^\d]{0,4}|無胃液|無量|無反抽物|未消化/)||[''])[0];
+      if(v||qual)R.ev.push({t,kind:'grv',ml:v?+v[1].replace(/[^\d]/g,''):(/無|佳|良好|可/.test(qual)&&!/未消化(?!.*無)/.test(qual)?0:null),gt:v?/[>＞]/.test(v[1]):false,text:qual||''});
+      if(/coffee\s*ground|咖啡色/i.test(c))R.ev.push({t,kind:'cg',text:c.trim().slice(0,40)});}
+    if(/(管灌|灌食|牛奶|配方奶|葡寧|普寧|益力|含水|開水|餐間水)/.test(c)&&/(予|給予|協助|管灌|灌食)/.test(c)&&!/反抽|\/\s*天|卡\s*\/|ivf|ml\/hr/i.test(c)){
+      let f=0,w=0,tot=null;const kc=(c.match(/(\d+)\s*大?卡\)?/)||[])[1];
+      const totm=c.match(/共\s*(\d+)\s*(?:毫升|ml|cc)/i);if(totm)tot=+totm[1];
+      else{const re2=/(\d+)\s*(?:毫升|ml|cc|豪升)/gi;let m2;while((m2=re2.exec(c))){const pre=c.slice(Math.max(0,m2.index-8),m2.index);if(/水|藥物/.test(pre))w+=+m2[1];else f+=+m2[1];}}
+      if(tot!=null||f||w)R.ev.push({t,kind:'feed',f,w,tot,kcal:kc?+kc:null,text:c.trim().slice(0,50)});}
+    if(/禁食|\bNPO\b/i.test(c)&&!/暫停/.test(c))R.ev.push({t,kind:'npo',text:'禁食'});
+  });
+  // --- 管路事件
+  let L;const lr=/\b(re ?on|remove|on) +([A-Za-z][A-Za-z0-9\-]*(?: [A-Za-z0-9\-]+)?) *[（(]([^)）]{1,12})[)）]\s*[，,](?:\s*病人因([^，]*)[，,])?\s*依醫囑予以(更換|移除|置放|放置)管路/gi;
+  while((L=lr.exec(T))){const act=/更換/.test(L[5])?'change':/移除/.test(L[5])?'remove':'insert';R.lines.push({t,act,name:`${L[2].trim()}(${L[3]})`,reason:(L[4]||'').trim()});}
+  let P;const pr=/於([^，。；]{1,12}?)置入\s*(\d+)\s*號\s*(靜脈留置針|中心靜脈導管|動脈導管|鼻胃管|導尿管)/g;
+  while((P=pr.exec(T)))R.lines.push({t,act:'insert',name:P[3]==='靜脈留置針'?'周邊靜脈留置針':P[3],size:P[2]+(P[3]==='靜脈留置針'?'G':'Fr'),site:P[1].trim()});
+  const cv=T.match(/中心靜脈(?:注射|導管置放|導管置入|置放|置入)[^。；]{0,30}?固定於([^，。；]{1,14})/);if(cv)R.lines.push({t,act:'insert',name:'中心靜脈導管(CVC)',site:cv[1].trim()});
+  const av=T.match(/動脈(?:導管)?(?:穿刺|置放|置入)[^。；]{0,30}?固定於([^，。；]{1,14})/);if(av)R.lines.push({t,act:'insert',name:'動脈導管(A-line)',site:av[1].trim()});
+  let S2;const sr=/(\d+(?:\.\d+)?)\s*(?:號|Fr\.?|fr)\s*([^，。；\d]{0,4}?)(鼻胃管|導尿管|氣管內管)(?:留置|固定)/g;
+  while((S2=sr.exec(T)))R.lines.push({t,act:'status',name:{鼻胃管:'鼻胃管(NG)',導尿管:'導尿管(Foley)',氣管內管:'氣管內管(ETT)'}[S2[3]],size:S2[1]+(S2[3]==='氣管內管'?'':'Fr'),site:S2[3]==='氣管內管'?((T.slice(S2.index).match(/固定(?:於)?\s*(\d+)\s*(?:公分|cm)/)||[])[1]?((T.slice(S2.index).match(/固定(?:於)?\s*(\d+)\s*(?:公分|cm)/))[1]+' cm'):''):''});
+  const en=T.match(/on\s*Endo\s*([\d.]+)\s*fr\s*(\d+)\s*cm/i);if(en)R.lines.push({t,act:'status',name:'氣管內管(ETT)',size:en[1],site:en[2]+' cm'});
+}
+// 管路事件寫入管路分頁（每個事件只套用一次；不重複建立已涵蓋的管路）
+function nurseLinesApply(p,evs){
+  const L=lineStore(p);L.nurseDone=L.nurseDone||[];let add=0,chg=0;
+  const cat=n=>lineCat(n).id==='other'&&/靜脈留置針/.test(n)?'pv':lineCat(n).id;
+  const T=x=>Date.parse(String(x).replace(' ','T'));
+  const activeAt=(c,t)=>L.items.filter(x=>cat(x.name)===c&&T(x.at)<=t&&(!x.rmAt||T(x.rmAt)>=t)).sort((a,b)=>T(b.at)-T(a.at));
+  const mk=(e,extra)=>{const it=Object.assign({at:e.t,name:e.name,site:e.site||'',size:e.size||'',days:'',type:'',flag:'',rmAt:'',place:'',reason:'',rmReason:'',unit:'',src:'護理記錄'},extra||{});
+    it.key=`${it.at}|${it.name}|${it.site}`;if(L.items.some(x=>x.key===it.key))return null;it.id='l'+uid().slice(1);L.items.push(it);add++;return it;};
+  evs.slice().sort((a,b)=>a.t.localeCompare(b.t)).forEach(e=>{
+    const key=`${e.t}|${e.act}|${e.name}|${e.site||''}`;if(L.nurseDone.includes(key))return;
+    const c=cat(e.name),t=T(e.t);if(c==='other'){L.nurseDone.push(key);return;}
+    if(e.act==='status'){if(c==='pv')return;if(!activeAt(c,t).length&&!L.items.some(x=>cat(x.name)===c&&x.rmAt&&Math.abs(T(x.rmAt)-t)<=6*36e5))mk(e,{reason:'護理記錄首次提及（實際置入時間可能更早）'});}
+    else if(e.act==='insert'){if(!L.items.some(x=>cat(x.name)===c&&Math.abs(T(x.at)-t)<=12*36e5))mk(e,{reason:'護理記錄：置入'});}
+    else{const A0=activeAt(c,t).sort((a,b)=>T(a.at)-T(b.at)),A=A0.filter(x=>t-T(x.at)>2*36e5).concat(A0.filter(x=>t-T(x.at)<=2*36e5));if(A[0]){A[0].rmAt=e.t;A[0].rmReason=(e.act==='change'?'更換':'移除')+(e.reason?'：'+e.reason:'');chg++;}
+      if(e.act==='change')mk(e,{reason:'護理記錄：更換'+(e.reason?'（'+e.reason+'）':'')});}
+    L.nurseDone.push(key);});
+  if(L.nurseDone.length>3000)L.nurseDone=L.nurseDone.slice(-3000);
+  if(add||chg)L.at=new Date().toISOString();return {add,chg};
+}
+// ---- 顯示：胰島素與血糖（用藥）
+function insGlyCard(p){
+  const o=ioStore(p),ins=o.ev.filter(e=>e.kind==='ins'),d50=o.ev.filter(e=>e.kind==='d50'),fs=vsList(p).filter(x=>x.FS!=null);
+  if(!ins.length&&!fs.length)return '';
+  const days={};const add=(d,k,x)=>{(days[d]=days[d]||{fs:[],ins:[],d50:[]})[k].push(x);};
+  fs.forEach(x=>add(x.t.slice(0,10),'fs',x));ins.forEach(x=>add(x.t.slice(0,10),'ins',x));d50.forEach(x=>add(x.t.slice(0,10),'d50',x));
+  const md=d=>d.slice(5).replace('-','/');
+  const rows=Object.keys(days).sort().reverse().map(d=>{const D=days[d],v=D.fs.map(x=>x.FS),tot=D.ins.reduce((a,x)=>a+(x.units||0),0);
+    return `<tr><td class="num"><b>${md(d)}</b></td><td class="small">${D.fs.sort((a,b)=>a.t.localeCompare(b.t)).map(x=>`<span style="white-space:nowrap">${x.t.slice(11)} <b class="${x.FS<70?'over':x.FS>180?'under':''}">${x.FS}</b></span>`).join('　')||'—'}</td>
+      <td class="num">${v.length?`${Math.min(...v)}–${Math.max(...v)}`:'—'}</td><td class="num">${v.filter(x=>x<70).length||''}</td><td class="num">${v.filter(x=>x>180).length||''}</td>
+      <td class="small">${D.ins.sort((a,b)=>a.t.localeCompare(b.t)).map(x=>`<span style="white-space:nowrap">${x.t.slice(11)} ${esc(x.drug)} <b>${x.units??'?'}</b> U ${esc(x.route)} ${esc(x.freq)}</span>`).join('<br>')||'—'}${D.d50.map(x=>`<div class="over">${x.t.slice(11)} ${esc(x.text)}</div>`).join('')}</td><td class="num">${tot||''}</td></tr>`;}).join('');
+  return `<div class="card"><h3>胰島素與血糖 <span class="small mute">護理記錄・依日曆日・只列數字</span></h3><div class="tblwrap"><table class="tbl"><thead><tr><th>日期</th><th>F/S（mg/dL）</th><th>範圍</th><th>&lt;70</th><th>&gt;180</th><th>胰島素實際給藥</th><th>當日 U</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="small mute" style="margin-top:4px">F/S 取自護理記錄；胰島素包含「依醫囑給予」與「藥名、劑量：… UN，部位」兩種寫法，同一筆重複記載只算一次。紅字 &lt;70、橘字 &gt;180。給予 50% glucose 會另外列出。</div></div>`;
+}
+// ---- 顯示：鎮靜、疼痛、譫妄評分（用藥）
+const SED_RX=/midazolam|dormicum|propofol|fresofol|dexmedetomidine|precedex|lorazepam|fentanyl|morphine|remifentanil|ketamine|cisatracurium|nimbex|rocuronium|haloperidol|quetiapine/i;
+function sedCard(p){
+  const V=vsList(p).filter(x=>x.RASS!=null||x.CPOT!=null||x.GCS||x.ICDSC!=null);if(!V.length)return '';
+  const days={};V.forEach(x=>(days[x.t.slice(0,10)]=days[x.t.slice(0,10)]||[]).push(x));
+  const rg=(A,k)=>{const a=A.map(x=>x[k]).filter(v=>v!=null);return a.length?(Math.min(...a)===Math.max(...a)?String(a[0]):`${Math.min(...a)} ～ ${Math.max(...a)}`):'—';};
+  const rows=Object.keys(days).sort().reverse().map(d=>{const A=days[d].sort((a,b)=>a.t.localeCompare(b.t)),g=A.filter(x=>x.GCS);
+    return `<tr><td class="num"><b>${d.slice(5).replace('-','/')}</b></td><td class="num">${rg(A,'RASS')}</td><td class="num">${rg(A,'CPOT')}</td><td class="num">${g.length?esc(g[g.length-1].GCS)+(g.length>1&&g[0].GCS!==g[g.length-1].GCS?`<div class="small mute">由 ${esc(g[0].GCS)}</div>`:''):'—'}</td><td class="num">${rg(A,'ICDSC')}</td>
+      <td class="small">${medsOnDay(p,d,SED_RX,true).join('、')||'—'}</td></tr>`;}).join('');
+  return `<div class="card"><h3>鎮靜、疼痛、譫妄評分 <span class="small mute">護理記錄・只列數字</span></h3><div class="tblwrap"><table class="tbl"><thead><tr><th>日期</th><th>RASS</th><th>CPOT</th><th>GCS（當日最後）</th><th>ICDSC</th><th>同期鎮靜／止痛／NMBA（醫囑）</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="small mute" style="margin-top:4px">RASS、CPOT、ICDSC 為當日範圍；同期用藥依醫囑紀錄（當天使用中或 3 天內停用）。</div></div>`;
+}
+// ---- 顯示：管灌內容與耐受度（TPN／營養）
+const hasFeed=p=>!!(p&&p.io&&(p.io.ev||[]).some(e=>/^(fOrder|feed|grv|cg|npo|hold)$/.test(e.kind)));
+function feedCard(p){
+  const o=ioStore(p),E=o.ev.filter(e=>/^(fOrder|feed|grv|cg|npo|hold)$/.test(e.kind));if(!E.length)return '';
+  const days={};E.forEach(e=>{const d=ioDayOf(ioT(e.t));(days[d]=days[d]||[]).push(e);});
+  const sh=o.shifts||{},dietOf=d=>{const b=Object.values(sh).filter(s=>s.day===d&&s.v&&s.v.diet!=null);const t24=b.find(s=>s.lab==='24h');return t24?t24.v.diet:b.length?b.reduce((a,s)=>a+s.v.diet,0):null;};
+  const md=d=>d.slice(5).replace('-','/');let lastOrd='';
+  const orders=E.filter(e=>e.kind==='fOrder').sort((a,b)=>a.t.localeCompare(b.t)).filter(e=>{const k=e.kcal+'|'+e.text.replace(/\s/g,'').slice(0,12);if(k===lastOrd)return false;lastOrd=k;return true;});
+  const rows=Object.keys(days).sort().reverse().map(d=>{const A=days[d].sort((a,b)=>a.t.localeCompare(b.t)),F=A.filter(e=>e.kind==='feed'),G=A.filter(e=>e.kind==='grv'),O=A.filter(e=>e.kind==='fOrder');
+    const f=F.reduce((a,e)=>a+(e.f||0),0),w=F.reduce((a,e)=>a+(e.w||0),0),tot=F.reduce((a,e)=>a+(e.tot||0),0),kc=F.reduce((a,e)=>a+(e.kcal||0),0),gm=G.filter(e=>e.ml!=null).map(e=>e.ml);
+    return `<tr><td class="num"><b>${md(d)}</b>${ioHD(p,d)?`<div class="small mute">${ioHD(p,d)}</div>`:''}</td><td class="small">${O.length?`${O[O.length-1].kcal} kcal/天`:'—'}${A.some(e=>e.kind==='npo')?'<div class="under">禁食</div>':''}</td>
+      <td class="num">${f||''}</td><td class="num">${w||''}</td><td class="num">${tot||''}</td><td class="num">${kc||''}</td><td class="num">${dietOf(d)??'—'}</td>
+      <td class="small">${G.map(e=>`<span style="white-space:nowrap">${e.t.slice(11)} ${e.ml!=null?`<b>${e.gt?'>':''}${e.ml}</b> mL`:''} ${esc(e.text)}</span>`).join('<br>')||'—'}${gm.length?`<div class="mute">最大 ${Math.max(...gm)} mL</div>`:''}</td>
+      <td class="small">${A.filter(e=>e.kind==='hold').map(e=>`<div class="under">${e.t.slice(11)} ${esc(e.text)}</div>`).join('')}${A.filter(e=>e.kind==='cg').map(e=>`<div class="over">${e.t.slice(11)} coffee ground</div>`).join('')}</td></tr>`;}).join('');
+  return `<div class="card"><h3>管灌內容與耐受度 <span class="small mute">護理記錄・一天＝07:00～隔天 07:00・只列數字</span></h3>
+    ${orders.length?`<div class="small" style="margin-bottom:6px"><b>管灌醫囑變化</b>：${orders.map(e=>`${e.t.slice(5,10).replace('-','/')} ${esc(e.text)}`).join(' → ')}</div>`:''}
+    <div class="tblwrap"><table class="tbl"><thead><tr><th>日期</th><th>醫囑熱量</th><th>配方 mL</th><th>水／藥物水 mL</th><th>合計記錄 mL</th><th>記錄 kcal</th><th>I/O 飲食量</th><th>反抽（GRV）</th><th>暫停／coffee ground</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="small mute" style="margin-top:4px">配方與水依護理記錄逐次灌食加總（有些只寫「共 N 毫升」列在合計記錄）；記錄不一定完整，請以 I/O 飲食量對照。反抽排除 IV／CVC 回抽紀錄（回血、咖啡頭）。</div></div>`;
+}
+// ---- 發燒事件（用藥時序）
+function feverEvents(p){return hasIO(p)?vsList(p).filter(x=>x.BT!=null&&x.BT>=38).map(x=>({t:ioT(x.t),v:x.BT})):[];}
+// ---- 皮疹／過敏字眼（排除否定與衛教句）
+const ADR_RE=/紅疹|皮疹|起疹|疹子|斑丘疹|蕁麻疹|風疹塊|藥疹|rash|urticaria|搔癢|癢感|皮膚癢|itch|過敏反應|藥物過敏|過敏現象|allergic|anaphyla|血管性水腫|angioedema|嘴唇腫|眼瞼腫|Stevens|\bSJS\b|\bTEN\b|\bDRESS\b/i;
+function nurseADR(e,R){
+  const t=ioLocal(e.t);e.text.split(/[，。；\n]/).forEach(c=>{const m=c.match(ADR_RE);if(!m)return;
+    const pre=c.slice(Math.max(0,m.index-8),m.index);
+    if(/無|未|沒有|否認|有無|是否|觀察|注意|預防|衛教|教導|告知|若|如有|避免/.test(pre))return;
+    if(/過敏史\s*[:：]?\s*(無|否|NKA|NKDA)/i.test(c)||/無不良反應|無過敏/.test(c))return;
+    R.ev.push({t,kind:'adr',text:c.trim().slice(0,60)});});
+}
+
+function vsChart(p){
+  const L=vsList(p);if(L.length<2)return '';const end=+ioT(L[L.length-1].t),from=end-7*864e5,A=L.filter(x=>+ioT(x.t)>=from);if(A.length<2)return '';
+  const W=760,LW=46,R=12,PH=78,GAP=22,X=t=>LW+(W-LW-R)*(t-from)/(end-from||1);
+  const P=[['MAP／SBP',x=>{const b=vsBP(x);return b?[b.m,b.s]:null;},'var(--accent)',[65]],['HR',x=>x.HR!=null?[x.HR]:null,'#c0504d',[]],['BT',x=>x.BT!=null?[x.BT]:null,'var(--warn)',[38]],['SpO₂',x=>x.SpO2!=null?[x.SpO2]:null,'#2f8f6a',[90]]];
+  let svg='';
+  P.forEach(([lab,f,col,refs],i)=>{const y0=6+i*(PH+GAP),pts=A.map(x=>[+ioT(x.t),f(x)]).filter(z=>z[1]&&z[1][0]!=null);if(!pts.length)return;
+    const vals=pts.flatMap(z=>z[1].filter(v=>v!=null)).concat(refs);let lo=Math.min(...vals),hi=Math.max(...vals);const pad=(hi-lo)*0.1||1;lo-=pad;hi+=pad;const Y=v=>y0+PH-(PH-12)*(v-lo)/(hi-lo);
+    svg+=`<text x="2" y="${y0+10}" font-size="11" font-weight="700" fill="${col}">${lab}</text>`;
+    refs.forEach(r=>svg+=`<line x1="${LW}" x2="${W-R}" y1="${Y(r)}" y2="${Y(r)}" stroke="${col}" stroke-dasharray="3 3" opacity=".5"/><text x="${LW-4}" y="${Y(r)+3}" font-size="9" text-anchor="end" fill="var(--mute)">${r}</text>`);
+    [0,1].forEach(j=>{const q=pts.filter(z=>z[1][j]!=null);if(q.length<2)return;svg+=`<polyline fill="none" stroke="${col}" stroke-width="${j?1:1.6}" opacity="${j?.45:1}" points="${q.map(z=>`${X(z[0]).toFixed(1)},${Y(z[1][j]).toFixed(1)}`).join(' ')}"/>`;});
+    const last=pts[pts.length-1];svg+=`<text x="${W-R}" y="${y0+10}" font-size="10" text-anchor="end" fill="${col}">最新 ${last[1].filter(v=>v!=null).join('／')}</text>`;
+    svg+=`<text x="${LW-4}" y="${Y(hi-pad)+3}" font-size="9" text-anchor="end" fill="var(--mute)">${Math.round(hi-pad)}</text><text x="${LW-4}" y="${Y(lo+pad)+3}" font-size="9" text-anchor="end" fill="var(--mute)">${Math.round(lo+pad)}</text>`;});
+  const yb=6+P.length*(PH+GAP)-GAP+12;for(let d=new Date(from);+d<=end;d.setDate(d.getDate()+1)){const x=new Date(d);x.setHours(0,0,0,0);if(+x<from)continue;svg+=`<line x1="${X(+x)}" x2="${X(+x)}" y1="4" y2="${yb-10}" stroke="var(--line)"/><text x="${X(+x)}" y="${yb}" font-size="10" text-anchor="middle" fill="var(--mute)">${x.getMonth()+1}/${x.getDate()}</text>`;}
+  return `<div class="card"><h3>生命徵象趨勢 <span class="small mute">最近 7 天・${A.length} 筆</span></h3><div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${yb+6}" width="100%" style="max-width:${W}px;display:block">${svg}</svg></div>
+    <div class="small mute">BP 粗線＝MAP、細線＝SBP（優先 A-line）；虛線為參考線（MAP 65、BT 38、SpO₂ 90），只供對照，不做判斷。</div></div>`;
+}
+function renderVSTab(p,ro){const c=vsCard(p,ro);if(!c)return '<div class="todo">尚無生命徵象。用「一鍵貼上」貼上護理記錄後顯示。</div>';return vsChart(p)+c;}
 function renderIO(p,ro){
   const D=ioDays(p),w=ioWt(p),o=ioStore(p),peds=p.template==='peds';
   let h=ro?'':`<div class="card"><h3>貼上護理記錄／I/O 明細</h3>
     <textarea id="ioText" rows="5" placeholder="可貼：①護理記錄單（抓生命徵象、班別 I/O 小計、體重、利尿劑實際給藥時間、暫停管灌、排便）②攝入排出細項統計的每小時明細（時間／項目／量）。原文不保存，只存數值。"></textarea>
     <div class="row" style="margin-top:8px;justify-content:space-between"><label class="small">每小時明細的記錄日期 <input type="date" id="ioDay" style="width:auto" value="${ymdOf(new Date(Date.now()-864e5))}"></label><button class="pri" id="btnIOAdd">解析並加入</button></div>
     <div class="small mute" style="margin-top:4px">記錄日期 11/19 涵蓋 11/19 07:00～11/20 07:00；明細裡 00:00–06:59 的紀錄會歸到隔天早上。</div></div>`;
-  if(!D.length)return h+vsCard(p,ro)+wtCard(p,ro)+bmCard(p)+'<div class="todo">尚無 I/O 資料。貼上護理記錄單或攝入排出每小時明細後顯示。</div>';
+  if(!D.length)return h+wtCard(p,ro)+bmCard(p)+'<div class="todo">尚無 I/O 資料。貼上護理記錄單或攝入排出每小時明細後顯示。</div>';
   const last=D[D.length-1],lastFull=[...D].reverse().find(x=>x.full)||last,kv=(k,v)=>`<div class="kv"><span class="k">${k}</span><span style="text-align:right">${v}</span></div>`;
   const fo=peds&&w.kg?last.cum/1000/w.kg*100:null;
-  h+=vsCard(p,ro);
   h+=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">I/O 摘要 <span class="small mute">只列數字，不做判斷</span></h3><button class="small" id="btnIOSoap">複製 SOAP I/O 段落</button></div>
     <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:4px 18px;margin-top:6px">
     ${kv('計算體重',w.kg?`<b>${w.kg}</b> kg <span class="small mute">${esc(w.src)}</span>`:'<span class="under">未填體重，無法算 mL/kg/h</span>')}
@@ -4993,28 +5138,30 @@ function previewIO(txt,opt){
     <select id="pasteTargetSel" style="width:auto;min-width:260px">${opts.map(([v,t])=>`<option value="${v}" ${v===def?'selected':''}>${esc(t)}</option>`).join('')}</select>
     ${byCn?'<span class="tag t-new">依病歷號自動對應</span>':cn?'<span class="small under">病歷號沒有對應的病人，請確認</span>':''}
     ${nurse?'':`<label class="small">記錄日期 <input type="date" id="pasteIODay" style="width:auto" value="${opt.day||rd||ymdOf(new Date(Date.now()-864e5))}"></label>`}</div>
-    <div class="small mute" style="margin-top:6px">${nurse?`判斷為護理記錄：${span}。原文不保存，只存下列數值與事件；重複的紀錄自動略過。`:'判斷為攝入排出每小時明細。'}</div>
+    <div class="small mute" style="margin-top:6px">${nurse?`判斷為護理記錄：${span}。原文不保存，只存下列數值與事件；重複的紀錄自動略過。發燒（BT≥38）與皮疹／過敏紀錄會標在用藥分頁的用藥時序。`:'判斷為攝入排出每小時明細。'}</div>
     <div id="ioChk" style="margin-top:8px"></div></div>
     <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="pri" id="btnDoImport">確認加入</button></div>`;
   const W=nurse?R.wts.filter(w=>!w.dry).sort((a,b)=>a.t.localeCompare(b.t)).slice(-1)[0]:null;
   const draw=()=>{const p=S.data.patients.find(x=>x.id===$('pasteTargetSel').value);if(!p)return;const o=ioStore(p);
     if(!nurse){$('ioChk').innerHTML='';return;}
-    const nv=R.vs.filter(v=>!(o.vs||[]).some(x=>x.t===v.t)).length,io=R.ev.filter(e=>e.kind!=='prn'&&!/^bm(No|Type)$/.test(e.kind)),prn=R.ev.filter(e=>e.kind==='prn'),nprn=prn.filter(e=>!o.ev.some(x=>x.kind==='prn'&&x.t===e.t&&x.text===e.text)).length;
+    const insN=R.ev.filter(e=>e.kind==='ins').length,d50N=R.ev.filter(e=>e.kind==='d50').length,adrN=R.ev.filter(e=>e.kind==='adr').length,prnN=R.ev.filter(e=>e.kind==='prn'&&!INS_RE.test(e.text)).length,medN=prnN+insN+d50N+adrN,feedN=R.ev.filter(e=>/^(fOrder|feed|grv|cg|npo|hold)$/.test(e.kind)).length,nv=R.vs.filter(v=>!(o.vs||[]).some(x=>x.t===v.t)).length,io=R.ev.filter(e=>e.kind!=='prn'&&!/^bm(No|Type)$/.test(e.kind)),prn=R.ev.filter(e=>e.kind==='prn'&&!INS_RE.test(e.text)),nprn=prn.filter(e=>!o.ev.some(x=>x.kind==='prn'&&x.t===e.t&&x.text===e.text)).length;
     const cb=(id,on,lab,sub,dis)=>`<label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0"><input type="checkbox" id="${id}" style="width:auto;margin-top:3px" ${on?'checked':''} ${dis?'disabled':''}><span><b>${lab}</b>${sub?`<div class="small mute">${sub}</div>`:''}</span></label>`;
     const cur=parseFloat(p.wt),wDiff=W&&(!(cur>0)||Math.abs(W.kg-cur)>=0.05);
     $('ioChk').innerHTML=
-      cb('ioChkIO',true,'I/O・VS 分頁',`生命徵象 ${R.vs.length} 筆（新 ${nv}）・I/O 小計 ${R.shifts.length} 組・體重 ${R.wts.length} 筆・排便／利尿劑／暫停管灌等事件 ${io.length} 筆`)
-      +(prn.length?cb('ioChkPRN',true,'用藥分頁：PRN 實際給藥',`${prn.length} 次（新 ${nprn}）：${[...new Set(prn.map(e=>MT.drugLabel(e.text.replace(/^\(?[^)A-Za-z]*\)\s*/,''))))].join('、')}`):'')
+      cb('ioChkIO',true,'生命徵象、I/O 分頁',`生命徵象 ${R.vs.length} 筆（新 ${nv}，含 RASS／CPOT／GCS／ICDSC）・I/O 小計 ${R.shifts.length} 組・體重 ${R.wts.length} 筆・排便／利尿劑事件 ${io.filter(e=>/^(bm|diu)/.test(e.kind)).length} 筆`)
+      +(medN?cb('ioChkMed',true,'用藥分頁',`PRN ${prn.length} 次・胰島素 ${insN} 次・50% glucose ${d50N} 次・皮疹／過敏紀錄 ${adrN} 筆（評分與發燒來自生命徵象）`):'')
+      +(feedN?cb('ioChkFeed',true,'TPN／營養分頁：管灌內容與耐受度',`管灌醫囑 ${R.ev.filter(e=>e.kind==='fOrder').length}・灌食 ${R.ev.filter(e=>e.kind==='feed').length} 次・反抽 ${R.ev.filter(e=>e.kind==='grv').length}・暫停 ${R.ev.filter(e=>e.kind==='hold').length}・coffee ground ${R.ev.filter(e=>e.kind==='cg').length}`):'')
+      +(R.lines.length?cb('ioChkLine',true,'管路分頁',`置入／更換／移除 ${R.lines.filter(x=>x.act!=='status').length} 個事件；入院時已留置的管路依首次提及時間建立（已有紀錄者不重複）`):'')
       +(wDiff?cb('ioChkWt',!(cur>0),'基本資料體重',`${cur>0?`目前 ${fmtN(cur)} kg（${esc(p.wtSrc||'來源未記錄')}）→ 改為`:'目前空白 → 帶入'} <b>${fmtN(W.kg)} kg</b>（護理記錄 ${md(W.t)}）；會影響所有劑量計算`):W?`<div class="small mute" style="margin:4px 0">基本資料體重 ${fmtN(cur)} kg 與護理記錄最新體重相同，不需更新</div>`:'')
       +(R.dx.length?(p.dx&&p.dx.trim()?`<div class="small mute" style="margin:4px 0">基本資料已有診斷，不覆蓋（護理記錄 Admission order 診斷 ${R.dx.length} 項）</div>`:cb('ioChkDx',true,'基本資料診斷（目前空白）',R.dx.map((d,i)=>`${i+1}. ${esc(d)}`).join('<br>'))):'');};
   draw();$('pasteTargetSel').onchange=draw;
   $('btnDoImport').onclick=()=>{const p=S.data.patients.find(x=>x.id===$('pasteTargetSel').value);if(!p)return;ensurePatient(p);snapshot(p,nurse?'加入護理記錄':'加入 I/O');
     const ck=id=>$(id)?$(id).checked:false,got=[];
-    const r=ioImport(p,txt,nurse?'':$('pasteIODay').value,nurse?{io:ck('ioChkIO'),prn:ck('ioChkPRN')}:{});
-    if(nurse){if(ck('ioChkIO'))got.push(`I/O 小計 ${r.ns} 組、生命徵象 ${r.nv} 筆`);if(ck('ioChkPRN'))got.push('PRN 給藥');
+    const r=ioImport(p,txt,nurse?'':$('pasteIODay').value,nurse?{io:ck('ioChkIO'),med:ck('ioChkMed'),feed:ck('ioChkFeed'),line:ck('ioChkLine')}:{});
+    if(nurse){if(ck('ioChkIO'))got.push(`I/O 小計 ${r.ns} 組、生命徵象 ${r.nv} 筆`);if(ck('ioChkMed'))got.push('用藥紀錄');if(ck('ioChkFeed'))got.push('管灌');if(ck('ioChkLine')&&r.nl)got.push(`管路 ${r.nl} 筆`);
       if(ck('ioChkWt')&&W){setWeight(p,W.kg,`護理記錄 ${md(W.t).slice(0,5)}`,W.t);got.push(`體重 ${fmtN(W.kg)} kg`);}
       if(ck('ioChkDx')&&!(p.dx&&p.dx.trim())){p.dx=R.dx.map((d,i)=>`${i+1}. ${d}`).join('\n');got.push(`診斷 ${R.dx.length} 項`);}}
-    p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab=nurse&&!ck('ioChkIO')&&ck('ioChkPRN')?'meds':'io';markDirty();renderList();renderMain();
+    p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab=nurse?(ck('ioChkIO')?'vs':ck('ioChkMed')?'meds':ck('ioChkFeed')?'tpn':'lines'):'io';markDirty();renderList();renderMain();
     toast(nurse?(got.length?'已加入：'+got.join('、'):'沒有勾選任何項目'):`已加入 ${ioMD(r.day)} 明細 ${r.ni} 筆`);};
 }
 /* =====================================================================
@@ -5090,7 +5237,7 @@ function isConsultText(t){return /(會診科別|照會科別|受會診科|被會
 /* =====================================================================
    待與醫師討論（各分頁的藥師筆記）
    ===================================================================== */
-const ISSUE_SEC={overview:'整體',basic:'基本資料',prog:'病程',lines:'管路',ai:'AI 判讀',rules:'劑量規則',tpn:'TPN',io:'I/O',meds:'用藥',drip:'輸注',lab:'檢驗',micro:'抗微生物',exam:'檢查',consult:'會診',rt:'呼吸治療',soap:'SOAP'};
+const ISSUE_SEC={overview:'整體',basic:'基本資料',prog:'病程',lines:'管路',ai:'AI 判讀',rules:'劑量規則',tpn:'TPN／營養',vs:'生命徵象',io:'I/O',meds:'用藥',drip:'輸注',lab:'檢驗',micro:'抗微生物',exam:'檢查',consult:'會診',rt:'呼吸治療',soap:'SOAP'};
 const locTs=iso=>{const d=new Date(iso);return isNaN(d)?'':`${pad(d.getMonth()+1)}/${pad(d.getDate())} ${hm(d)}`;};
 const ISSUE_ST=['待討論','已討論','已採納','未採納'];
 function issueStore(p){if(!Array.isArray(p.issues))p.issues=[];return p.issues;}
@@ -5608,7 +5755,7 @@ function tpnChart(rows,p){
     <div class="small mute" style="margin-top:4px">每日取當天最後生效處方；淡色＝當天無新處方、沿用前日；長條右上白點＝當天有多筆修改／更正（滑鼠移上去看明細）。</div>`;
 }
 function renderTPN(p,ro){
-  const R=tpnOf(p);if(!R||!R.rows.length)return '<div class="todo">醫囑單中沒有找到「IVF 醫囑」區塊。到「用藥」分頁貼上醫囑列印紀錄後，TPN 處方會自動整理到這裡。</div>';
+  const R=tpnOf(p);if(!R||!R.rows.length)return feedCard(p)||'<div class="todo">醫囑單中沒有找到「IVF 醫囑」區塊。到「用藥」分頁貼上醫囑列印紀錄後，TPN 處方會自動整理到這裡。</div>';
   const rows=R.rows,last=rows[rows.length-1],c=last.calc,kv=(k,v)=>`<div class="kv"><span class="k">${k}</span><span style="text-align:right">${v}</span></div>`;
   const prod=(S.data.settings.pnProd=S.data.settings.pnProd||{});
   let h=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">目前處方 <span class="small mute">${esc(tFmt(last.t))}・${esc(last.kind)}</span></h3><button class="small" id="btnTpnSoap">複製 SOAP 營養段落</button></div>
@@ -5656,6 +5803,7 @@ function renderTPN(p,ro){
     ${keys.map(k=>{const P=prod[k]||{};const imp=rows.filter(r=>r.pn&&r.pn.key===k&&r.calc.aaPct).map(r=>r.calc.aaPct.toFixed(2));
       return `<tr><td>${esc(k)}</td><td><input class="sm" style="width:80px" data-pnp="${esc(k)}|aa" value="${esc(P.aa??'')}" ${ro?'disabled':''}></td><td><input class="sm" style="width:80px" data-pnp="${esc(k)}|dex" value="${esc(P.dex??'')}" placeholder="${/\bD\s*\d+\s*W\b|Dex\s*[\d.]+%/i.test(k)?'依名稱':''}" ${ro?'disabled':''}></td><td class="small mute">${[...new Set(imp)].join('、')||'—'}</td></tr>`;}).join('')}
     </tbody></table></div><div class="small mute" style="margin-top:6px">名稱寫明濃度者（D10W、Dex 2.5%）自動判讀；「D/W」等請自行填入。拿到院內 PN 成分表後填入即可，電解質與滲透壓之後再加。</div></div>`;
+  h+=feedCard(p);
   return h;
 }
 function tpnText(p){const R=tpnOf(p);if(!R)return '';return R.rows.map(r=>`${tFmt(r.t)} [${r.kind}] ${tpnLine(r)}${r.calc.total?`; total ${fmtN(+r.calc.total.toFixed(1))}/${r.calc.tdf?fmtN(+r.calc.tdf.toFixed(1)):'-'} mL`:''}`).join('\n');}
