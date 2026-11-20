@@ -426,7 +426,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-20l';
+const APP_VER='2026-11-20m';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -968,7 +968,7 @@ function renderTab(p,ro){
     return h;
   }
   if(S.tab==='overview')return renderOverview(p);
-  if(S.tab==='meds')return renderMeds(p,ro)+renderCloud(p,ro);
+  if(S.tab==='meds')return renderMeds(p,ro)+prnCard(p)+renderCloud(p,ro);
   if(S.tab==='drip')return renderDrip(p,ro);
   if(S.tab==='lab')return renderLab(p,ro);
   if(S.tab==='soap')return renderSoap(p,ro);
@@ -4597,7 +4597,7 @@ const IO_DIU=/furosemide|lasix|bumetanide|burinex|torsemide|hydrochlorothiazide|
 const ioT=s=>new Date(String(s).replace(' ','T'));
 const ioLocal=d=>`${ymdOf(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 function ioStore(p){if(!p.io||typeof p.io!=='object')p.io={};const o=p.io;o.shifts=o.shifts||{};o.items=o.items||{};o.wts=o.wts||[];o.ev=o.ev||[];return o;}
-const hasIO=p=>!!(p&&p.io&&(Object.keys(p.io.shifts||{}).length||Object.keys(p.io.items||{}).length||(p.io.ev||[]).some(e=>/^bm/.test(e.kind))||(p.io.wts||[]).length||(p.io.vs||[]).length));
+const hasIO=p=>!!(p&&p.io&&(Object.keys(p.io.shifts||{}).length||Object.keys(p.io.items||{}).length||(p.io.ev||[]).some(e=>/^bm/.test(e.kind))||(p.io.wts||[]).length||(p.io.vs||[]).length||(p.io.ev||[]).some(e=>e.kind==='prn')));
 const ioDayOf=d=>{d=new Date(d);if(d.getHours()<7)d.setDate(d.getDate()-1);return ymdOf(d);};
 const ioShOf=d=>{const h=new Date(d).getHours();return h>=7&&h<15?0:h>=15&&h<23?1:2;};
 function isNurseRecord(t){t=String(t||'');return /護理記錄單|護理紀錄單/.test(t)||/攝入總計[^\n]{0,60}排出總計/.test(t);}
@@ -4633,7 +4633,7 @@ function parseNurseIO(t){
     nurseWeights(e.text).forEach(w=>R.wts.push(Object.assign({t:ioLocal(e.t)},w)));
     const vs=nurseVitals(e.text);if(vs)R.vs.push(Object.assign({t:ioLocal(e.t)},vs));
     let g;const gr=/依醫囑給予\s*(.+?)(?=，告知|，|；|\n|$)/g;
-    while((g=gr.exec(e.text))){const s=g[1].trim();if(IO_DIU.test(s))R.ev.push({t:ioLocal(e.t),kind:'diu',text:s.slice(0,90)});if(BM_LAX.test(s))R.ev.push({t:ioLocal(e.t),kind:'bmLax',text:s.slice(0,90)});else if(BM_ANTI.test(s))R.ev.push({t:ioLocal(e.t),kind:'bmAnti',text:s.slice(0,90)});}
+    while((g=gr.exec(e.text))){const s=g[1].trim();if(IO_DIU.test(s))R.ev.push({t:ioLocal(e.t),kind:'diu',text:s.slice(0,90)});if(/\bPRN\b/i.test(s)){const why=(e.text.match(/因([^，。；,\n]{2,30})/)||[])[1]||'',cond=(e.text.match(/\(PRN[^)]*\)/i)||[''])[0];R.ev.push({t:ioLocal(e.t),kind:'prn',text:s.slice(0,120),why:why.trim(),cond});}if(BM_LAX.test(s))R.ev.push({t:ioLocal(e.t),kind:'bmLax',text:s.slice(0,90)});else if(BM_ANTI.test(s))R.ev.push({t:ioLocal(e.t),kind:'bmAnti',text:s.slice(0,90)});}
     const h=e.text.match(/Hold one meal|暫停一餐|暫停管灌|暫停灌食|禁食|\bNPO\b/i);if(h)R.ev.push({t:ioLocal(e.t),kind:'hold',text:h[0]});
     nurseBM(e).forEach(x=>R.ev.push(x));
     [...e.text.matchAll(/Diagnosis\s*\(\d+\)\s*[:：]\s*-?\s*([^\n]+)/gi)].forEach(m=>{const t=m[1].trim();if(t&&!R.dx.includes(t))R.dx.push(t);});
@@ -4826,6 +4826,34 @@ function vsSoapTxt(p,rel){
   const rr=(l,a)=>a?`${l} ${fmtN(a[0])}–${fmtN(a[1])}`:'';
   const rg=[rr('SBP',V.rg.SBP),rr('MAP',V.rg.MAP),rr('HR',V.rg.HR),V.rg.BT?`BT max ${fmtN(V.rg.BT[1])}`:'',rr('F/S',V.rg.FS)].filter(Boolean).join(', ');
   return `${now} (${dl})${rg?`; 24h: ${rg}`:''}`;
+}
+
+/* ===== PRN 實際給藥（護理記錄）：次數、原因、前後數值 ===== */
+const PRN_KIND=[['bp',/hydralazine|labetalol|nicardipine|captopril|clonidine|nifedipine|urapidil|amlodipine|esmolol|nitroglycerin/i,'SBP'],['bt',/acetaminophen|paracetamol|propacetamol|ibuprofen|diclofenac|ketorolac|mefenamic/i,'BT'],
+  ['fs',/insulin|actrapid|humulin|novorapid|lispro|aspart/i,'F/S'],['pain',/morphine|fentanyl|tramadol|pethidine|meperidine|oxycodone|hydromorphone/i,'CPOT'],['sed',/midazolam|lorazepam|haloperidol|quetiapine|dexmedetomidine|propofol/i,'RASS']];
+function prnMetric(x,k){if(k==='SBP'){const b=vsBP(x);return b&&b.s!=null?b.s:null;}if(k==='BT')return x.BT??null;if(k==='F/S')return x.FS??null;if(k==='CPOT')return x.CPOT??null;if(k==='RASS')return x.RASS??null;return null;}
+function prnList(p){
+  const o=ioStore(p),V=vsList(p);
+  return o.ev.filter(e=>e.kind==='prn').slice().sort((a,b)=>a.t.localeCompare(b.t)).map(e=>{
+    const name=MT.drugLabel(e.text.replace(/^\(?[^)A-Za-z]*\)\s*/,'')),dm=e.text.match(/([\d.]+\s*(?:PC|UN|U|IU|TAB|AMP|VIAL|ML|MG|MCG|PU|PK|GM|G))\s+(?:[A-Z]{2,4}\s+)?([A-Z]{2,4})?\s*PRN/i);
+    const kd=PRN_KIND.find(([,re])=>re.test(e.text)),T=+ioT(e.t);let before=null,after=null;
+    if(kd){for(let i=V.length-1;i>=0;i--){const t=+ioT(V[i].t),v=prnMetric(V[i],kd[2]);if(v==null)continue;if(t<=T&&T-t<=3*36e5){before={v,t:V[i].t};break;}}
+      for(const x of V){const t=+ioT(x.t),v=prnMetric(x,kd[2]);if(v==null)continue;if(t>T+20*6e4&&t-T<=4*36e5){after={v,t:x.t};break;}}}
+    return Object.assign({},e,{name,dose:dm?dm[1]:'',route:(e.text.match(/\b(PO|IV|IVD|IM|SC|SL|INHA|RECT|NG|TOPI)\b/)||[])[1]||'',metric:kd?kd[2]:'',before,after});});
+}
+function prnCard(p){
+  const L=prnList(p);if(!L.length)return '';
+  const last=ioT(L[L.length-1].t),endT=Math.max(+last,...vsList(p).map(x=>+ioT(x.t))),by={};
+  L.forEach(x=>(by[x.name]=by[x.name]||[]).push(x));
+  const md=t=>t.slice(5,16).replace('-','/');
+  const rows=Object.entries(by).sort((a,b)=>b[1][b[1].length-1].t.localeCompare(a[1][a[1].length-1].t)).map(([n,A])=>{const n24=A.filter(x=>endT-ioT(x.t)<=864e5).length,n72=A.filter(x=>endT-ioT(x.t)<=3*864e5).length;
+    return `<details class="lgroup" style="margin-top:6px"><summary><span><b>${esc(n)}</b> <span class="small mute">近 24 小時 <b>${n24}</b> 次・72 小時 ${n72} 次・共 ${A.length} 次・最近 ${md(A[A.length-1].t)}</span>${A[A.length-1].cond?` <span class="small mute">${esc(A[A.length-1].cond)}</span>`:''}</span></summary>
+      <div class="tblwrap" style="padding:6px 10px"><table class="tbl"><thead><tr><th>給藥時間</th><th>劑量／途徑</th><th>原因（護理記錄）</th><th>給藥前</th><th>給藥後</th></tr></thead><tbody>
+      ${[...A].reverse().map(x=>`<tr><td class="num">${md(x.t)}</td><td class="small">${esc(x.dose)} ${esc(x.route)}</td><td class="small">${esc(x.why||'—')}</td>
+        <td class="small">${x.before?`${x.metric} <b>${esc(String(x.before.v))}</b> <span class="mute">${x.before.t.slice(11)}</span>`:'—'}</td><td class="small">${x.after?`${x.metric} <b>${esc(String(x.after.v))}</b> <span class="mute">${md(x.after.t)}</span>`:'—'}</td></tr>`).join('')}
+      </tbody></table></div></details>`;}).join('');
+  return `<div class="card"><h3>PRN 實際給藥 <span class="small mute">護理記錄・最新紀錄 ${md(ioLocal(new Date(endT)))}・只列紀錄</span></h3>${rows}
+    <div class="small mute" style="margin-top:6px">只列護理記錄中「依醫囑給予 … PRN」的實際給藥。給藥前後數值：降壓藥看 SBP、退燒藥看 BT、胰島素看 F/S、鴉片類看 CPOT、鎮靜藥看 RASS（前 3 小時內最近一筆、後 20 分鐘～4 小時內第一筆）。次數以最新一筆護理紀錄往回計算。</div></div>`;
 }
 function renderIO(p,ro){
   const D=ioDays(p),w=ioWt(p),o=ioStore(p),peds=p.template==='peds';
