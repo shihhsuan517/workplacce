@@ -293,6 +293,7 @@ tr.old td{opacity:.5;text-decoration:line-through}
         <label class="small mute" style="display:flex;gap:6px;align-items:center">
           <input type="checkbox" id="chkHide" style="width:auto"> 遮蔽姓名與病歷號
         </label>
+        <div id="docChips" style="display:flex;flex-wrap:wrap;gap:4px"></div>
       </div>
       <div class="list" id="ptList"></div>
       <div class="small mute" style="padding:8px 12px;border-top:1px solid var(--line)" id="ptCount"></div>
@@ -425,7 +426,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-20j';
+const APP_VER='2026-11-20k';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -781,14 +782,40 @@ function ptAbxHTML(p){
   return `<div class="ab" style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px" title="${esc(L.map(x=>x.name+(x.dot?' D'+x.dot:'')).join('、'))}">${L.slice(0,3).map(tag).join('')}${L.length>3?`<span class="tag t-abx" style="font-size:11.5px;padding:1px 6px">+${L.length-3}</span>`:''}</div>`;
 }
 const ptAbxSig=()=>S.data?S.data.patients.map(p=>p.id+':'+ptAbx(p).map(x=>x.name+x.dot).join(',')).join('|'):'';
+
+/* ===== 主治醫師代號（姓氏）：清單標籤、篩選、分組 ===== */
+const DOC_COMPOUND=['張簡','范姜','張廖','歐陽','司馬','司徒','諸葛','上官','東方','夏侯','長孫','慕容','公孫','皇甫','令狐','端木','尉遲','鍾離','宇文','軒轅'];
+function docCode(p){
+  const c=String(p.docCode||'').trim();if(c)return c;
+  const n=String(p.attending||'').replace(/^(主治醫師|主治|醫師|Dr\.?)\s*[:：]?\s*/i,'').trim();if(!n)return '';
+  const cp=DOC_COMPOUND.find(x=>n.startsWith(x));if(cp)return cp;
+  if(/^[A-Za-z]/.test(n)){const w=n.split(/[\s,]+/)[0];return w.charAt(0).toUpperCase()+w.slice(1,4).toLowerCase();}
+  return n.charAt(0);
+}
+function renderDocChips(){
+  const el=$('docChips');if(!el||!S.data)return;
+  const cnt={};S.data.patients.forEach(p=>{const c=docCode(p)||'未填';cnt[c]=(cnt[c]||0)+1;});
+  const keys=Object.keys(cnt).filter(k=>k!=='未填').sort((a,b)=>cnt[b]-cnt[a]||a.localeCompare(b,'zh-Hant'));if(cnt['未填'])keys.push('未填');
+  if(S.docF&&!cnt[S.docF])S.docF=null;
+  if(keys.length<1||!S.data.patients.length){el.innerHTML='';return;}
+  const g=!!S.data.settings.groupDoc;
+  el.innerHTML=`<span class="small mute" style="align-self:center">主治</span>`+[['','全部',S.data.patients.length],...keys.map(k=>[k,k,cnt[k]])].map(([v,l,n])=>`<button class="small ${(S.docF||'')===v?'pri':''}" data-docf="${esc(v)}" style="padding:2px 8px">${esc(l)} <span class="mute">${n}</span></button>`).join('')
+    +`<button class="small ${g?'pri':''}" id="btnDocGroup" style="padding:2px 8px" title="依主治醫師分組顯示">分組</button>`;
+}
+$('docChips').onclick=e=>{const b=e.target.closest('[data-docf]');if(b){S.docF=b.dataset.docf||null;renderList();return;}
+  if(e.target.closest('#btnDocGroup')){S.data.settings.groupDoc=!S.data.settings.groupDoc;markDirty();renderList();}};
 function renderList(){
   const q=$('ptSearch').value.trim().toLowerCase();
-  const list=sortedPatients().filter(p=>!q||[p.bed,p.code,p.name,p.chartNo,p.dx].join(' ').toLowerCase().includes(q));
-  $('ptList').innerHTML=list.map(p=>`
+  renderDocChips();
+  let list=sortedPatients().filter(p=>!q||[p.bed,p.code,p.name,p.chartNo,p.dx,p.attending,docCode(p)].join(' ').toLowerCase().includes(q));
+  if(S.docF)list=list.filter(p=>(docCode(p)||'未填')===S.docF);
+  const grp=S.data.settings.groupDoc&&!S.docF;if(grp){const k=p=>docCode(p)||'\uffff';list.sort((a,b)=>k(a).localeCompare(k(b),'zh-Hant'));}
+  let lastDoc=null;
+  $('ptList').innerHTML=list.map(p=>{const dc=docCode(p),hd=grp&&dc!==lastDoc?`<div class="small mute" style="padding:6px 4px 2px;font-weight:700">${esc(dc||'未填主治')}</div>`:'';lastDoc=dc;return hd+`
     <div class="pitem ${p.id===S.selId&&!S.archive?'on':''}" data-id="${p.id}">
-      <div class="b">${esc(p.bed||'（未填床號）')}${p.code?'　'+esc(p.code):''}${(p.issues||[]).some(x=>x.status==='待討論')?` <span class="tag t-warn" title="待與醫師討論">📌 ${p.issues.filter(x=>x.status==='待討論').length}</span>`:''}</div>
+      <div class="b">${dc?`<span class="tag t-reg" style="float:right;font-size:11.5px;padding:0 6px" title="主治 ${esc(p.attending||dc)}">${esc(dc)}</span>`:''}${esc(p.bed||'（未填床號）')}${p.code?'　'+esc(p.code):''}${(p.issues||[]).some(x=>x.status==='待討論')?` <span class="tag t-warn" title="待與醫師討論">📌 ${p.issues.filter(x=>x.status==='待討論').length}</span>`:''}</div>
       <div class="c ${hide()?'blur':''}">${esc(p.name||'')}${p.chartNo?' · '+esc(p.chartNo):''}</div>${ptAbxHTML(p)}
-    </div>`).join('')||`<div class="small mute" style="padding:12px">${q?'找不到符合的病患':'尚無在院病患'}</div>`;
+    </div>`;}).join('')||`<div class="small mute" style="padding:12px">${q||S.docF?'找不到符合的病患':'尚無在院病患'}</div>`;
   $('ptCount').textContent=`在院 ${S.data.patients.length} 位`;
   S._abxSig=ptAbxSig();
 }
@@ -912,6 +939,7 @@ function renderTab(p,ro){
       ${fld(p,'chartNo','病歷號',{ro,sens:true})}
       ${fld(p,'admitDate','入院日',{ro,type:'date'})}
       ${fld(p,'attending','主治醫師',{ro,ph:'貼上入院紀錄或醫囑單會自動帶入'})}
+      ${fld(p,'docCode','醫師代號（病患清單用）',{ro,ph:'留空＝自動取主治姓氏'+(docCode(p)?`（目前：${docCode(p)}）`:'')})}
       ${fld(p,'template','SOAP 範本',{ro,type:'select',opts:Object.entries(TPL)})}
     </div>${p.attendingAuto?`<div class="small mute" style="margin-top:6px">主治醫師自動帶入來源：${esc(p.attendingAuto.src)}${p.attendingAuto.name!==p.attending?`（偵測到 ${esc(p.attendingAuto.name)}，因手動修改未覆蓋）`:''}${p.attendingAuto.note?`<span class="tag t-warn">${esc(p.attendingAuto.note)}</span>`:''}</div>`:''}</div>
     <div class="card"><h3>基本資料</h3><div class="grid">
@@ -971,7 +999,7 @@ function bindForm(p,ro){
     el.addEventListener(ev,()=>{
       const k=el.dataset.f;p[k]=el.value;p.updatedAt=new Date().toISOString();markDirty();
       if(k==='wt'){p.wtAt=new Date().toISOString().slice(0,16).replace('T',' ');p.wtSrc='手動輸入';}
-      if(['bed','code','name','chartNo'].includes(k))renderList();
+      if(['bed','code','name','chartNo','attending','docCode'].includes(k))renderList();
       if(['template','sex'].includes(k)){renderMain();return;}
       if(['ht','wt','sex','age','dob','ga','birthWt','birthTime'].includes(k)){
         const c=calcBody(p),o=$('calcOut');
