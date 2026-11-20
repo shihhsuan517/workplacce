@@ -426,7 +426,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-20m';
+const APP_VER='2026-11-20n';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -932,7 +932,7 @@ function calcBody(p){
 function renderTab(p,ro){
   if(S.tab==='basic'){
     const peds=p.template==='peds';
-    let h=`<div class="card"><h3>身分與住院</h3><div class="grid">
+    let h=wtPendingHTML(p,ro)+`<div class="card"><h3>身分與住院</h3><div class="grid">
       ${fld(p,'bed','床號',{ro,ph:'例：MICU-05'})}
       ${fld(p,'code','自訂代號',{ro,ph:'例：肺炎A'})}
       ${fld(p,'name','姓名',{ro,sens:true})}
@@ -994,11 +994,12 @@ function renderTab(p,ro){
 function bindForm(p,ro){
   if($('btnAdmPaste'))$('btnAdmPaste').onclick=()=>openPaste(p.id);
   if(ro)return;
+  document.querySelectorAll('[data-wtp]').forEach(b=>b.onclick=()=>{snapshot(p,'體重');if(b.dataset.wtp==='apply'){const w=p.wtPending;setWeight(p,w.kg,w.src,w.at);toast(`體重已改為 ${fmtN(w.kg)} kg`);}else delete p.wtPending;markDirty();renderMain();});
   document.querySelectorAll('#tabBody [data-f]').forEach(el=>{
     const ev=el.tagName==='SELECT'?'change':'input';
     el.addEventListener(ev,()=>{
       const k=el.dataset.f;p[k]=el.value;p.updatedAt=new Date().toISOString();markDirty();
-      if(k==='wt'){p.wtAt=new Date().toISOString().slice(0,16).replace('T',' ');p.wtSrc='手動輸入';}
+      if(k==='wt'){p.wtAt=nowLocal();p.wtSrc='手動輸入';delete p.wtPending;}
       if(['bed','code','name','chartNo','attending','docCode'].includes(k))renderList();
       if(['template','sex'].includes(k)){renderMain();return;}
       if(['ht','wt','sex','age','dob','ga','birthWt','birthTime'].includes(k)){
@@ -2433,13 +2434,25 @@ function syncDrips(p,meds){
   return n;
 }
 
+
+/* ===== 基本資料體重：統一寫入（記錄來源與時間）；差距 >5% 時先提醒不覆蓋 ===== */
+const nowLocal=()=>{const d=new Date();return `${ymdOf(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
+function setWeight(p,kg,src,at){p.wt=String(+(+kg).toFixed(3));p.wtSrc=src;p.wtAt=at||nowLocal();delete p.wtPending;}
+function weightFromSource(p,kg,src,at){kg=parseFloat(kg);if(!(kg>0))return '';const cur=parseFloat(p.wt);
+  if(!(cur>0)){setWeight(p,kg,src,at);return 'set';}
+  if(Math.abs(kg-cur)<1e-9){p.wtSrc=src;p.wtAt=at||nowLocal();delete p.wtPending;return 'same';}
+  if(Math.abs(kg-cur)/cur<=0.05){setWeight(p,kg,src,at);return 'set';}
+  p.wtPending={kg,src,at:at||nowLocal()};return 'pending';}
+function wtPendingHTML(p,ro){const w=p.wtPending;if(!w)return '';const cur=parseFloat(p.wt);
+  return `<div class="notice warn" style="margin-bottom:12px">${esc(w.src)}的體重 <b>${fmtN(w.kg)} kg</b> 與目前 ${fmtN(cur)} kg 相差 ${(Math.abs(w.kg-cur)/cur*100).toFixed(1)}%，未自動更新（劑量計算仍用 ${fmtN(cur)} kg）。
+    ${ro?'':`<button class="small" data-wtp="apply">改用 ${fmtN(w.kg)} kg</button> <button class="small" data-wtp="ignore">維持 ${fmtN(cur)} kg</button>`}</div>`;}
 function importParsed(res,targetId){
   const today=ymd();
   let p=targetId&&targetId!=='new'?S.data.patients.find(x=>x.id===targetId):null;
   const isNew=!p;
   if(!p){p=newPatient();S.data.patients.push(p);}
   ensurePatient(p);
-  Object.entries(res.header).forEach(([k,v])=>{if(v)p[k]=v;});
+  Object.entries(res.header).forEach(([k,v])=>{if(!v)return;if(k==='wt'){res.wtRes=weightFromSource(p,v,`醫囑表頭 ${today.slice(5).replace('-','/')}`);return;}p[k]=v;});
   if(res.header.ageText&&!res.header.age)p.age='';
   if(p.ageText)p.ageText=normAgeText(p.ageText);
   { const ay=ageYears(p);
@@ -4663,9 +4676,11 @@ function ioCat(name){
   if(/IVF|點滴|N\/?S\b|D5|D10|食鹽水|葡萄糖|lactat|ringer|TPN|靜脈營養|脂肪|lipid|輸液/i.test(n)||/^[A-Z][A-Z0-9 \-\/().%,]{2,}$/.test(n))return 'iv';
   return '';
 }
-function ioImport(p,txt,day){
-  const o=ioStore(p);let ns=0,ni=0;
+function ioImport(p,txt,day,opt){
+  const o=ioStore(p);let ns=0,ni=0;opt=opt||{};
   if(isNurseRecord(txt)){const R=parseNurseIO(txt);
+    if(opt.io===false){R.shifts=[];R.wts=[];R.vs=[];R.dx=[];R.ev=R.ev.filter(e=>e.kind==='prn');}
+    if(opt.prn===false)R.ev=R.ev.filter(e=>e.kind!=='prn');
     R.shifts.forEach(s=>{o.shifts[s.day+'|'+(s.lab==='24h'?'24':s.sh)]=s;ns++;});
     R.wts.forEach(w=>{if(!o.wts.some(x=>x.t===w.t&&x.kg===w.kg))o.wts.push(w);});
     R.ev.forEach(e=>{if(!o.ev.some(x=>x.t===e.t&&x.kind===e.kind&&x.text===e.text))o.ev.push(e);});
@@ -4857,7 +4872,7 @@ function prnCard(p){
 }
 function renderIO(p,ro){
   const D=ioDays(p),w=ioWt(p),o=ioStore(p),peds=p.template==='peds';
-  let h=ro?'':`<div class="card"><h3>貼上 I/O</h3>
+  let h=ro?'':`<div class="card"><h3>貼上護理記錄／I/O 明細</h3>
     <textarea id="ioText" rows="5" placeholder="可貼：①護理記錄單（抓生命徵象、班別 I/O 小計、體重、利尿劑實際給藥時間、暫停管灌、排便）②攝入排出細項統計的每小時明細（時間／項目／量）。原文不保存，只存數值。"></textarea>
     <div class="row" style="margin-top:8px;justify-content:space-between"><label class="small">每小時明細的記錄日期 <input type="date" id="ioDay" style="width:auto" value="${ymdOf(new Date(Date.now()-864e5))}"></label><button class="pri" id="btnIOAdd">解析並加入</button></div>
     <div class="small mute" style="margin-top:4px">記錄日期 11/19 涵蓋 11/19 07:00～11/20 07:00；明細裡 00:00–06:59 的紀錄會歸到隔天早上。</div></div>`;
@@ -4895,9 +4910,10 @@ function bindIO(p,ro){
   if($('btnVSCopy'))$('btnVSCopy').onclick=()=>copyMsg(vsSoapTxt(p),'已複製 Vital sign');
   if($('btnIOSoap'))$('btnIOSoap').onclick=()=>copyMsg(ioSoapTxt(p)||'',`已複製 I/O`);
   if(ro)return;
-  if($('btnWtApply'))$('btnWtApply').onclick=()=>{snapshot(p,'更新體重');p.wt=String($('btnWtApply').dataset.kg);markDirty();renderMain();toast('已更新基本資料體重（劑量計算會改用新體重）');};
+  if($('btnWtApply'))$('btnWtApply').onclick=()=>{snapshot(p,'更新體重');const L=wtSeries(p).slice(-1)[0];setWeight(p,$('btnWtApply').dataset.kg,`護理記錄 ${L?L.t.slice(5,10).replace('-','/'):''}`,L?L.t:null);markDirty();renderMain();toast('已更新基本資料體重（劑量計算會改用新體重）');};
   document.querySelectorAll('[data-wtdel]').forEach(b=>b.onclick=e=>{e.preventDefault();const [t,kg]=b.dataset.wtdel.split('|');snapshot(p,'刪除體重');const o=ioStore(p);o.wts=o.wts.filter(w=>!(w.t===t&&String(w.kg)===kg));markDirty();renderMain();});
   if($('btnIOAdd'))$('btnIOAdd').onclick=()=>{const t=$('ioText').value;if(!t.trim()){toast('沒有內容');return;}
+    if(isNurseRecord(t)||isIOHourly(t)){const dd=$('ioDay').value;openPaste(p.id);$('pasteText').value=t;previewIO(t,{day:dd});return;}
     if(!isNurseRecord(t)&&!isIOHourly(t)){const v=nurseVitals(t);if(v&&Object.keys(v).length>=2){snapshot(p,'加入生命徵象');const o=ioStore(p);o.vs=o.vs||[];o.vs.push(Object.assign({t:ioLocal(new Date()),manual:true},v));markDirty();renderMain();toast('已加入一筆生命徵象（沒有日期，時間記為現在）');return;}toast('看不出是護理記錄、I/O 明細或生命徵象');return;}
     snapshot(p,'加入 I/O');const r=ioImport(p,t,$('ioDay').value);markDirty();renderMain();
     toast(r.kind==='nurse'?`已加入 ${r.ns} 班 I/O 小計${r.nv?`、${r.nv} 筆生命徵象`:''}${r.nw?`、${r.nw} 筆體重`:''}${r.ne?`、${r.ne} 筆事件（利尿劑／管灌／排便）`:''}`:`已加入 ${ioMD(r.day)} 明細 ${r.ni} 筆`);};
@@ -4964,21 +4980,42 @@ function bmCard(p){
 }
 function bmSoapTxt(p,rel){const B=bmDays(p);if(!B)return '';const d=t=>rel?rel(t.slice(0,10)):t.slice(5,10).replace('-','/');
   const en=B.since.replace(' 小時',' h').replace(' 天',' d');return B.lastBM?`last BM ${d(B.lastBM.t)} (${en} before last record)`:`no BM recorded ${d(B.first)}–${d(B.lastRec)} (${en})`;}
-function previewIO(txt){
-  const nurse=isNurseRecord(txt),R=nurse?parseNurseIO(txt):null,rd=nurse?'':ioRecDate(txt);
-  let def=pasteTarget||(S.selId&&!S.archive?S.selId:'');
-  const opts=sortedPatients().map(x=>[x.id,`加入：${x.bed||'（未填床號）'} ${x.code||''}`]);
-  if(!opts.length){$('pastePreview').innerHTML='<div class="notice bad">請先新增病患，再貼上 I/O。</div>';return;}
+function previewIO(txt,opt){
+  opt=opt||{};const nurse=isNurseRecord(txt),R=nurse?parseNurseIO(txt):null,rd=nurse?'':ioRecDate(txt);
+  const norm=x=>String(x||'').trim().replace(/^0+/,''),cn=nurse?((txt.match(/病歷號\s*[:：]\s*(\S+)/)||[])[1]||''):'';
+  const byCn=norm(cn)?S.data.patients.find(x=>x.chartNo&&norm(x.chartNo)===norm(cn)):null;
+  const def=byCn?byCn.id:(pasteTarget||(S.selId&&!S.archive?S.selId:''));
+  const opts=sortedPatients().map(x=>[x.id,`加入：${x.bed||'（未填床號）'} ${x.code||''}${byCn&&x.id===byCn.id?'（病歷號相符）':''}`]);
+  if(!opts.length){$('pastePreview').innerHTML='<div class="notice bad">請先新增病患，再貼上護理記錄或 I/O。</div>';return;}
+  const E=nurse?nurseEntries(txt):[],md=t=>t.slice(5,16).replace('-','/');
+  const span=E.length?`${md(ioLocal(E[0].t))} ～ ${md(ioLocal(E[E.length-1].t))}，${E.length} 筆紀錄`:'';
   $('pastePreview').innerHTML=`<div class="card" style="margin-top:12px"><div class="row"><b>加入到</b>
     <select id="pasteTargetSel" style="width:auto;min-width:260px">${opts.map(([v,t])=>`<option value="${v}" ${v===def?'selected':''}>${esc(t)}</option>`).join('')}</select>
-    ${nurse?'':`<label class="small">記錄日期 <input type="date" id="pasteIODay" style="width:auto" value="${rd||ymdOf(new Date(Date.now()-864e5))}"></label>`}</div>
-    <div class="small mute" style="margin-top:6px">判斷為${nurse?'護理記錄單：只取生命徵象、I/O 小計、體重、利尿劑給藥時間、暫停管灌與排便，原文不保存':'攝入排出每小時明細'}。</div>
-    ${nurse?`<div class="small" style="margin-top:6px">${R.shifts.length?R.shifts.map(s=>`${ioMD(s.day)} ${IO_SH[s.sh]}：${s.pairs.map(([k,v])=>`${esc(k)} ${fmtN(v)}`).join('、')}`).join('<br>'):'<span class="under">沒有找到 I/O 小計</span>'}
-      ${R.wts.length?`<br>體重：${R.wts.map(w=>w.kg+' kg').join('、')}`:''}${R.ev.filter(e=>!/^bm(No|Type)$/.test(e.kind)).length?`<br>事件：${R.ev.filter(e=>!/^bm(No|Type)$/.test(e.kind)).map(e=>`${e.t.slice(5,16).replace('-','/')} ${esc(e.text)}${e.amt?' '+esc(e.amt):''}`).join('；')}`:''}${R.ev.some(e=>e.kind==='bmNo')?`<br>未解便紀錄 ${R.ev.filter(e=>e.kind==='bmNo').length} 筆`:''}</div>`:''}</div>
+    ${byCn?'<span class="tag t-new">依病歷號自動對應</span>':cn?'<span class="small under">病歷號沒有對應的病人，請確認</span>':''}
+    ${nurse?'':`<label class="small">記錄日期 <input type="date" id="pasteIODay" style="width:auto" value="${opt.day||rd||ymdOf(new Date(Date.now()-864e5))}"></label>`}</div>
+    <div class="small mute" style="margin-top:6px">${nurse?`判斷為護理記錄：${span}。原文不保存，只存下列數值與事件；重複的紀錄自動略過。`:'判斷為攝入排出每小時明細。'}</div>
+    <div id="ioChk" style="margin-top:8px"></div></div>
     <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="pri" id="btnDoImport">確認加入</button></div>`;
-  $('btnDoImport').onclick=()=>{const p=S.data.patients.find(x=>x.id===$('pasteTargetSel').value);if(!p)return;ensurePatient(p);snapshot(p,'加入 I/O');
-    const r=ioImport(p,txt,nurse?'':$('pasteIODay').value);p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab='io';markDirty();renderList();renderMain();
-    toast(r.kind==='nurse'?`已加入 ${r.ns} 班 I/O 小計`:`已加入 ${ioMD(r.day)} 明細 ${r.ni} 筆`);};
+  const W=nurse?R.wts.filter(w=>!w.dry).sort((a,b)=>a.t.localeCompare(b.t)).slice(-1)[0]:null;
+  const draw=()=>{const p=S.data.patients.find(x=>x.id===$('pasteTargetSel').value);if(!p)return;const o=ioStore(p);
+    if(!nurse){$('ioChk').innerHTML='';return;}
+    const nv=R.vs.filter(v=>!(o.vs||[]).some(x=>x.t===v.t)).length,io=R.ev.filter(e=>e.kind!=='prn'&&!/^bm(No|Type)$/.test(e.kind)),prn=R.ev.filter(e=>e.kind==='prn'),nprn=prn.filter(e=>!o.ev.some(x=>x.kind==='prn'&&x.t===e.t&&x.text===e.text)).length;
+    const cb=(id,on,lab,sub,dis)=>`<label style="display:flex;gap:8px;align-items:flex-start;margin:4px 0"><input type="checkbox" id="${id}" style="width:auto;margin-top:3px" ${on?'checked':''} ${dis?'disabled':''}><span><b>${lab}</b>${sub?`<div class="small mute">${sub}</div>`:''}</span></label>`;
+    const cur=parseFloat(p.wt),wDiff=W&&(!(cur>0)||Math.abs(W.kg-cur)>=0.05);
+    $('ioChk').innerHTML=
+      cb('ioChkIO',true,'I/O・VS 分頁',`生命徵象 ${R.vs.length} 筆（新 ${nv}）・I/O 小計 ${R.shifts.length} 組・體重 ${R.wts.length} 筆・排便／利尿劑／暫停管灌等事件 ${io.length} 筆`)
+      +(prn.length?cb('ioChkPRN',true,'用藥分頁：PRN 實際給藥',`${prn.length} 次（新 ${nprn}）：${[...new Set(prn.map(e=>MT.drugLabel(e.text.replace(/^\(?[^)A-Za-z]*\)\s*/,''))))].join('、')}`):'')
+      +(wDiff?cb('ioChkWt',!(cur>0),'基本資料體重',`${cur>0?`目前 ${fmtN(cur)} kg（${esc(p.wtSrc||'來源未記錄')}）→ 改為`:'目前空白 → 帶入'} <b>${fmtN(W.kg)} kg</b>（護理記錄 ${md(W.t)}）；會影響所有劑量計算`):W?`<div class="small mute" style="margin:4px 0">基本資料體重 ${fmtN(cur)} kg 與護理記錄最新體重相同，不需更新</div>`:'')
+      +(R.dx.length?(p.dx&&p.dx.trim()?`<div class="small mute" style="margin:4px 0">基本資料已有診斷，不覆蓋（護理記錄 Admission order 診斷 ${R.dx.length} 項）</div>`:cb('ioChkDx',true,'基本資料診斷（目前空白）',R.dx.map((d,i)=>`${i+1}. ${esc(d)}`).join('<br>'))):'');};
+  draw();$('pasteTargetSel').onchange=draw;
+  $('btnDoImport').onclick=()=>{const p=S.data.patients.find(x=>x.id===$('pasteTargetSel').value);if(!p)return;ensurePatient(p);snapshot(p,nurse?'加入護理記錄':'加入 I/O');
+    const ck=id=>$(id)?$(id).checked:false,got=[];
+    const r=ioImport(p,txt,nurse?'':$('pasteIODay').value,nurse?{io:ck('ioChkIO'),prn:ck('ioChkPRN')}:{});
+    if(nurse){if(ck('ioChkIO'))got.push(`I/O 小計 ${r.ns} 組、生命徵象 ${r.nv} 筆`);if(ck('ioChkPRN'))got.push('PRN 給藥');
+      if(ck('ioChkWt')&&W){setWeight(p,W.kg,`護理記錄 ${md(W.t).slice(0,5)}`,W.t);got.push(`體重 ${fmtN(W.kg)} kg`);}
+      if(ck('ioChkDx')&&!(p.dx&&p.dx.trim())){p.dx=R.dx.map((d,i)=>`${i+1}. ${d}`).join('\n');got.push(`診斷 ${R.dx.length} 項`);}}
+    p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab=nurse&&!ck('ioChkIO')&&ck('ioChkPRN')?'meds':'io';markDirty();renderList();renderMain();
+    toast(nurse?(got.length?'已加入：'+got.join('、'):'沒有勾選任何項目'):`已加入 ${ioMD(r.day)} 明細 ${r.ni} 筆`);};
 }
 /* =====================================================================
    會診
@@ -5209,7 +5246,7 @@ function applyNeo(p,o){
   if(o.dob&&!p.dob){p.dob=o.dob;got.push('出生日 '+o.dob);}
   if(o.birthTime&&!p.birthTime){p.birthTime=o.birthTime;got.push('出生時間 '+o.birthTime);}
   if(o.ht&&!p.ht){p.ht=o.ht;got.push('身長 '+o.ht+' cm');}
-  if(o.birthWt&&!p.wt){p.wt=String(+o.birthWt/1000);p.wtAt=p.wtAt||'';got.push('體重暫以出生體重');}
+  if(o.birthWt&&!p.wt){p.wt=String(+o.birthWt/1000);p.wtAt=p.wtAt||'';p.wtSrc='出生體重（暫用）';got.push('體重暫以出生體重');}
   if((o.ga||o.dob)&&p.template==='adult'){p.template='peds';got.push('切換兒科範本');}
   return got;
 }
@@ -6420,6 +6457,7 @@ function renderOverview(p){
   const hd=p.admitDate?Math.floor((Date.parse(ymd())-Date.parse(p.admitDate))/864e5)+1:null;
   const rem=[];
   if(!p.wt)rem.push('尚未輸入體重：µg/kg 劑量、CrCl 無法計算');
+  if(p.wtPending)rem.push(`${p.wtPending.src}的體重 ${fmtN(p.wtPending.kg)} kg 與目前 ${p.wt} kg 差距超過 5%，未自動更新：請到基本資料確認`);
   if(!p.sex||!p.ht)rem.push('尚未輸入性別或身高：PBW 無法計算');
   if(p.template==='peds'&&!p.dob&&!/[天月]/.test(p.ageText||'')&&(ageYears(p)??9)<=1&&(/之[子女]/.test(p.name||'')||(p.medList||[]).some(m=>/neonat|新生兒/i.test(m.raw||m.name||''))))
     rem.push(`年齡「${p.ageText||p.age}」可能是新生兒的天數或月數：請到基本資料填「出生日期」（或改成「X 天」），並填 GA 與出生體重；貼上入院紀錄會自動帶入（Brion k 值、SOAP 年齡依此判斷）`);
