@@ -425,7 +425,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-20d';
+const APP_VER='2026-11-20e';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -3546,7 +3546,7 @@ This is an ${age}-year-old ${sex}, a case of ${dx}
 # ${labHead}
 ${labs}
 # Echo: LVEF
-# Cath:${exL?`\n# Image／Exam：${exL}`:''}${coL?`\n# Consult：${coL}`:''}
+# Cath:${cathSoapTxt(p)?' '+cathSoapTxt(p):''}${exL?`\n# Image／Exam：${exL}`:''}${coL?`\n# Consult：${coL}`:''}
 # PCI with/without stent, CABG
 # TIMI score (STEMI:(low:0-3/intermediate:4-5/high:>=6))(NSTEMI:(low:0-2/intermediate:3-4/high:>=5))
 # Medications：
@@ -4161,7 +4161,7 @@ function parseExams(text){
     if(ii>=0){const out=[L[ii].replace(EXAM_IMP,'')];for(let j=ii+1;j<L.length;j++){if(EXAM_END.test(L[j]))break;out.push(L[j]);}
       imp=out.join('\n').replace(/^\n+|\s+$/g,'').trim();}
     const ec=isAdultEcho(b)?parseAdultEcho(b):isPedsEcho(b)?parseEcho(b):null;if(ec&&ec.concl.length)imp=ec.concl.join('\n');
-    return {date:dt.slice(0,10),time:dt.slice(11,16),type:examType(title+' '+b.slice(0,300)),title:title.replace(/[:：]\s*$/,'').slice(0,120),imp,text:examScrub(b),echo:ec};
+    return {date:dt.slice(0,10),time:dt.slice(11,16),type:examType(title+' '+b.slice(0,300)),title:title.replace(/[:：]\s*$/,'').slice(0,120),imp,text:examScrub(b),echo:ec,cath:isCathText(b)?parseCath(b):null};
   });
 }
 function examStore(p){if(!Array.isArray(p.exams))p.exams=[];return p.exams;}
@@ -4169,7 +4169,7 @@ function mergeExams(p,list){
   const E=examStore(p);let add=0,upd=0;
   const sig=x=>x.text.replace(/\s+/g,'').slice(0,200);
   list.forEach(x=>{const ex=E.find(y=>sig(y)===sig(x)||(y.date===x.date&&y.title&&y.title===x.title&&y.time===x.time));
-    if(ex){Object.assign(ex,{text:x.text,imp:x.imp||ex.imp,type:ex.typeManual?ex.type:x.type,echo:x.echo||ex.echo});upd++;}
+    if(ex){Object.assign(ex,{text:x.text,imp:x.imp||ex.imp,type:ex.typeManual?ex.type:x.type,echo:x.echo||ex.echo,cath:x.cath||ex.cath});upd++;}
     else{E.push(Object.assign({id:'e'+uid().slice(1),addedAt:new Date().toISOString()},x));add++;}});
   return {add,upd};
 }
@@ -4185,7 +4185,7 @@ function renderExam(p,ro){
   let h=ro?'':`<div class="card"><h3>貼上檢查報告</h3>
     <textarea id="examText" rows="6" placeholder="從 HIS 複製影像、超音波、心電圖、內視鏡、病理等報告貼在這裡。一次可以貼多份，系統會依日期與檢查名稱分開，並抓出 Impression／結論。"></textarea>
     <div class="row" style="margin-top:8px;justify-content:flex-end"><button class="pri" id="btnExamAdd">解析並加入</button></div></div>`;
-  h+=echoTrackCard(p,E)+adultEchoTrackCard(p,E);
+  h+=pciCard(p,E,ro)+echoTrackCard(p,E)+adultEchoTrackCard(p,E);
   h+=`<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">檢查報告 <span class="small mute">${E.length} 份</span></h3>
     <div class="row">${types.length>2?types.map(t=>`<button class="small ${t===f?'pri':''}" data-examf="${t}">${t}</button>`).join(''):''}${E.length?'<button class="small" id="btnExamSoap">複製檢查摘要（SOAP）</button>':''}</div></div>`;
   if(!shown.length)h+='<div class="small mute" style="margin-top:8px">尚未貼上檢查報告。</div>';
@@ -4196,7 +4196,7 @@ function renderExam(p,ro){
       <div class="fld"><label>類別</label><select data-ef="${x.id}|type">${EXAM_TYPE_NAMES.map(t=>`<option ${t===x.type?'selected':''}>${t}</option>`).join('')}</select></div>
       <div class="fld wide"><label>檢查名稱</label><input data-ef="${x.id}|title" value="${esc(x.title||'')}"></div>
       <div class="fld wide"><label>Impression／結論（帶入 SOAP）</label><textarea rows="3" data-ef="${x.id}|imp">${esc(x.imp||'')}</textarea></div></div>`}
-    ${x.echo?(x.echo.kind==='adult'?adultEchoBlock(x.echo,p,x.date):echoBlock(x.echo)):''}
+    ${x.echo?(x.echo.kind==='adult'?adultEchoBlock(x.echo,p,x.date):echoBlock(x.echo)):''}${x.cath?cathBlock(x.cath):''}
     ${ro?`<div style="white-space:pre-wrap"><b>Impression：</b>${esc(x.imp||'—')}</div>`:''}
     <details style="margin-top:6px"><summary class="small mute" style="cursor:pointer">完整報告</summary><div style="white-space:pre-wrap;font-size:13px;margin-top:6px">${esc(x.text)}</div></details>
     </div></details>`).join('');
@@ -4215,7 +4215,7 @@ function echoBlock(E){
 /* ===== 檢查報告去識別：移除姓名、病歷號、床號、醫師、單號、影像號（只存檢查日期與項目） ===== */
 const EXAM_PII=/(姓\s*名|病歷號碼?|病\s*床\s*號|床\s*號|開單醫師|判讀主治醫師|判讀醫師|主治醫師|報告醫師|確認醫師|審核醫師|檢查醫師|手術醫師|第一助手醫師|助手醫師|電\s*話|\bCI|醫囑單號|檔\s*區|影\s*像\s*號|身分證(?:字號)?|年\s*齡)\s*[:：][ \t　]*[^\s　]*/g;
 function examScrub(t){
-  return String(t||'').replace(/^\s*\(本內容僅供參考\)\s*$/gm,'').replace(/^\n+/,'').split('\n').map(l=>{if(!EXAM_PII.test(l))return l;EXAM_PII.lastIndex=0;const r=l.replace(EXAM_PII,'');return r.trim()?r.replace(/\s+$/,''):null;}).filter(l=>l!==null).join('\n');
+  return String(t||'').replace(/^[ \t]*Worksheet\s*:[\s\S]*?(?=^[ \t]*Conclusions?\s*:)/m,'Worksheet:（申報段落未保存）\n').replace(/^\s*\(本內容僅供參考\)\s*$/gm,'').replace(/^\n+/,'').split('\n').map(l=>{if(!EXAM_PII.test(l))return l;EXAM_PII.lastIndex=0;const r=l.replace(EXAM_PII,'');return r.trim()?r.replace(/\s+$/,''):null;}).filter(l=>l!==null).join('\n');
 }
 /* ===== 成人心臟超音波（Philips 格式【區段】）：只列數字，不做判斷 ===== */
 function isAdultEcho(t){return /echocardiograph/i.test(t)&&(/【\s*(Left Ventricle|Atrium|Valve lesion)/i.test(t)||/\bEDD\s*\(mm\)/i.test(t));}
@@ -4325,6 +4325,202 @@ function adultEchoTrackCard(p,E){
       <td class="small">${sh(x.date,AECHO_RX.cardiac)}<div class="mute">利尿：${sh(x.date,AECHO_RX.diuretic)}</div></td></tr>`;}).join('')}
     </tbody></table></div><div class="small mute" style="margin-top:4px">同期用藥依醫囑紀錄。完整的容量相關數值與同期檢驗請展開下方各份報告。</div></div>`;
 }
+/* =====================================================================
+   心導管／PCI：解析（事實）＋藥師對照卡（並列、不下結論）＋指引參考（可展開）
+   ===================================================================== */
+function isCathText(t){return /Coronary angiogram|--\s*Lesion\s*\d|【Intervention Material】|CARDIAC CATH|\bPTCA\b/i.test(t||'');}
+const CATH_V=/\b(LM|LAD|LCx|LCX|RCA|RI|Ramus|OM\d?|D\d|PDA|PLV|SVG|LIMA)\b/gi;
+const cathMajor=v=>{v=v.toUpperCase();return v==='LCX'?'LCx':v==='LM'||v==='LAD'||v==='RCA'?v:/^OM/.test(v)?'LCx':/^D\d/.test(v)?'LAD':v;};
+function parseCath(t){
+  const raw=String(t||'').replace(/\r/g,'');
+  const body=raw.replace(/^\s*Worksheet\s*:[\s\S]*?(?=^\s*Conclusions?\s*:|$(?![\s\S]))/m,'');
+  const m1=(re,i=1)=>{const m=body.match(re);return m?m[i]:null;};
+  const C={kind:'cath',vessels:[],lesions:[],tech:{},comment:[],concl:[]};
+  C.access=m1(/via\s+((?:left|right)\s+)?(radial|femoral|brachial|ulnar)/i,0);
+  if(C.access)C.access=C.access.replace(/^via\s+/i,'');
+  const cv=m1(/Contrast\s*[:：]\s*([\d.]+)\s*ml/i);C.contrast=cv!=null?+cv:null;
+  const hp=m1(/Heparin\s*([\d,]+)\s*(?:unit|U\b|IU)/i);C.heparin=hp?+hp.replace(/,/g,''):null;
+  C.act=m1(/ACT\s*:?\s*(?:post\s*:\s*)?([<>]?\s*\d+)/i);
+  const ao=body.match(/\bAO\s*:\s*(\d+\/\d+)(?:\s*;?\s*mean\s*(\d+))?/i);if(ao)C.ao=ao[1]+(ao[2]?`（mean ${ao[2]}）`:'');
+  const cr=body.match(/Cre\s*:\s*([\d.]+)\s*\((\d{8})\)/i);if(cr)C.cre={v:+cr[1],d:`${cr[2].slice(0,4)}-${cr[2].slice(4,6)}-${cr[2].slice(6,8)}`};
+  const gf=m1(/GFR\s*:\s*([\d.]+)/i);C.gfr=gf!=null?+gf:null;
+  C.dominant=m1(/Dominant\s*site\s*:\s*(\w+)/i);
+  C.complication=m1(/Complication\s*:\s*([^;\n]+)/i);
+  C.pacer=m1(/Temporary\s*pacemaker\s*:\s*(\w+)/i);
+  C.mcs=(body.match(/\bIABP\b|\bECMO\b|Impella/gi)||[]).filter((x,i,a)=>a.indexOf(x)===i);
+  const ind=body.match(/Indication\s*:\s*\n\s*([^\n]+)/i);if(ind)C.indication=ind[1].replace(/\s{2,}.*$/,'').trim();
+  // 冠狀動脈各血管
+  const ca=body.search(/Coronary\s+angiogram/i);
+  if(ca>=0){let cur=null;for(const l of body.slice(ca).split('\n').slice(1)){
+      if(/^\s*(SA node|Temporary pacemaker|Intervention\s*:|Dominant)/i.test(l))break;
+      const m=l.match(/^\s*(LM|LAD|LCx|LCX|RCA|RI|Ramus|OM\d?|D\d|PDA|PLV|SVG|LIMA)\s*:\s*(.*)$/i);
+      if(m){cur={v:m[1].toUpperCase()==='LCX'?'LCx':m[1].toUpperCase(),text:m[2].trim()};C.vessels.push(cur);}
+      else if(cur&&l.trim())cur.text+=' '+l.trim();}
+    C.vessels.forEach(x=>{const p=[...x.text.matchAll(/(\d+)\s*%/g)].map(m=>+m[1]);x.max=p.length?Math.max(...p):(/total\s*occlu/i.test(x.text)?100:null);
+      x.cto=/chronic\s+total|\bCTO\b/i.test(x.text);x.occl=/total\s*occlu|occus|occlusio/i.test(x.text);x.timi=(x.text.match(/TIMI[-\s]*(\d)/i)||[])[1]||'';});}
+  // 病灶與支架
+  const parts=body.split(/--\s*Lesion\s*(\d+)\s*--/i);
+  for(let i=1;i<parts.length;i+=2){const b=parts[i+1]||'',L={no:+parts[i]};
+    const lm=b.match(/Lesion\s*:\s*([^;\n]*);\s*([^\n]*)/i);if(lm){L.type=lm[1].trim();L.loc=lm[2].trim();}
+    L.proc=(b.match(/Procedure\s*:\s*([^;\n]+)/i)||[])[1]||'';
+    L.stents=[...b.matchAll(/Stent\d*\s*:\s*([^;\n]+?);\s*Size\s*:\s*([\d.]+)\s*mm\s*x\s*Length\s*:\s*([\d.]+)\s*mm/gi)].map(m=>({brand:m[1].trim(),d:+m[2],len:+m[3]}));
+    L.pre=(b.match(/Pre-?\s*Stenosis\s*:?\s*(\d+)\s*%/i)||[])[1]||'';L.final=(b.match(/Final\s*:+\s*(\d+)\s*%/i)||[])[1]||'';
+    C.lesions.push(L);}
+  // 結論與 Comment
+  const ci=raw.search(/^[ \t]*Conclusions?[ \t]*:/im);
+  if(ci>=0){let inC=false;for(const l of raw.slice(ci).split('\n').slice(1)){if(/判讀|檢查醫師|報告醫師|^\s*#{8,}/.test(l))break;const s=l.trim();if(!s)continue;
+    if(/【\s*Comment\s*】/i.test(s)){inC=true;continue;}(inC?C.comment:C.concl).push(s.replace(/^-\s*/,inC?'':'- '));}}
+  // 治療的血管：病灶位置 + 結論「at …」
+  const atTxt=C.concl.filter(s=>/s\/p\s+stent|stenting|POBA|balloon/i.test(s)).map(s=>(s.match(/\bat\s+(.+)$/i)||[])[1]||'').join(' ');
+  const tv=new Set();(C.lesions.map(l=>l.loc||'').join(' ')+' '+atTxt).replace(CATH_V,m=>{tv.add(cathMajor(m));return m;});
+  C.treated=[...tv].filter(v=>['LM','LAD','LCx','RCA'].includes(v));
+  const T=body+'\n'+C.concl.join('\n');
+  C.tech={ivus:/IVUS\s*[:：]\s*Yes/i.test(T),oct:/\bOCT\s*[:：]\s*Yes/i.test(T),kbi:/\bKBI\b|kissing\s+balloon/i.test(T),pot:/\bPOT\b/.test(T),
+    twoStent:/two[- ]stent\s+(?:technique|strategy)|culotte|\bcrush\b|DK[- ]?crush|\bT-?stent|\bTAP\b/i.test(T),athero:/rotablat|atherectomy|orbital|\bIVL\b|shockwave|lithotripsy/i.test(T),
+    ffr:(T.match(/\b(FFR|iFR|RFR)\s*[:=]?\s*([\d.]+)/i)||[]).slice(1).join(' ')};
+  C.nStent=C.lesions.reduce((a,l)=>a+l.stents.length,0);C.totalLen=C.lesions.reduce((a,l)=>a+l.stents.reduce((x,s)=>x+s.len,0),0);
+  C.residual=C.vessels.filter(x=>['LM','LAD','LCx','RCA'].includes(x.v)&&x.max!=null&&x.max>=(x.v==='LM'?50:70)&&!C.treated.includes(x.v));
+  C.staged=(T.match(/staged\s+PCI[^\n]*/i)||[''])[0].trim();
+  return C;
+}
+// 複雜 PCI 各項（各試驗定義不一，逐項列出）
+function cathComplex(C){
+  const v3=C.treated.filter(v=>v!=='LM').length;
+  const bif=C.tech.twoStent?'有（報告寫明雙支架術式）':C.tech.kbi&&C.treated.includes('LM')&&C.treated.includes('LAD')&&C.treated.includes('LCx')?'可能（LM 分叉兩側皆放支架且有 KBI，請確認術式）':'否';
+  const cto=C.vessels.some(x=>x.cto&&C.treated.includes(x.v));
+  return [['3 條血管治療',v3>=3,`${v3} 條（${C.treated.join('、')||'—'}）`],['≥3 支支架',C.nStent>=3,`${C.nStent} 支`],['≥3 個病灶',C.lesions.length>=3,`${C.lesions.length} 個`],
+    ['分叉雙支架',bif==='否'?false:bif.startsWith('有')?true:null,bif],['總支架長度 >60 mm',C.totalLen>60,`${C.totalLen} mm`],['CTO 為治療標的',cto,cto?'是':'否（未治療的 CTO 不計）'],
+    ['左主幹（LM）為治療標的',C.treated.includes('LM'),C.treated.includes('LM')?'是':'否'],['使用 atherectomy／IVL',C.tech.athero,C.tech.athero?'是':'否']];
+}
+// ---- 病人資料來源 ----
+function cathHay(p){return [p.dx,...progStore(p).map(r=>r.A),...((p.adm&&p.adm.sections)||[]).map(x=>x.text),...((p.io&&p.io.dx)||[]),...examStore(p).map(x=>x.imp||'')].filter(Boolean).join('\n');}
+function hayHit(hay,re){const L=hay.split('\n').find(l=>re.test(l));return L?oneLine(L,90):'';}
+const PCI_RX={asa:/aspirin|bokey|acetylsalicylic|\bASA\b/i,p2y12:/clopidogrel|plavix|ticagrelor|brilinta|prasugrel|efient/i,oac:/apixaban|eliquis|rivaroxaban|xarelto|edoxaban|lixiana|dabigatran|pradaxa|warfarin|coumadin/i,
+  par:/enoxaparin|clexane|fondaparinux|arixtra|argatroban|bivalirudin|heparin(?![^\n]*(?:lock|flush))/i,bb:/\b(?:meto|bisopro|carvedi|propran|aten|nebiv|labetal)ol/i,
+  raas:/(?:pril|sartan)\b|sacubitril|entresto|olmesartan|valsartan|losartan|telmisartan|irbesartan|candesartan/i,statin:/atorvastatin|lipitor|rosuvastatin|crestor|simvastatin|pravastatin|pitavastatin|livalo|fluvastatin/i,
+  eze:/ezetimibe|ezetrol|vytorin|atozet/i,mra:/spironolactone|aldactone|eplerenone|finerenone|kerendia/i,sglt2:/dapagliflozin|forxiga|empagliflozin|jardiance|canagliflozin|ertugliflozin/i,
+  ppi:/prazole|nexium|pantoloc|takepron/i,nephro:/vancomycin|gentamicin|amikacin|tobramycin|amphotericin|colistin|polymyxin|ibuprofen|naproxen|diclofenac|ketorolac|celecoxib|etoricoxib|mefenamic/i,
+  nsaidSt:/ibuprofen|naproxen|diclofenac|ketorolac|celecoxib|etoricoxib|mefenamic|prednisolone|methylprednisolone|dexamethasone|hydrocortisone|prednisone/i};
+const OAC_IND=[['AF／AFL',/atrial fibrillation|atrial flutter|\bAf\b|\bAF\b|\bPAF\b|心房顫動|心房撲動/],['VTE',/\bDVT\b|deep vein thromb|pulmonary embol|\bPE\b(?!G)|肺栓塞|深部靜脈/i],['機械瓣',/mechanical\s+(?:valve|MVR|AVR)|s\/p\s+(?:mechanical\s+)?(?:MVR|AVR)\b/i],['LV 血栓',/LV\s+thromb|left ventricular thromb|左心室血栓/i]];
+function cgCrCl(p,scr){const age=ageYears(p),wt=parseFloat(p.wt)||ioWt(p).kg;if(!(scr>0)||age==null||!wt||!p.sex)return null;return (140-age)*wt/(72*scr)*(p.sex==='F'?0.85:1);}
+function latestAdultEF(p){const L=examSorted(p).filter(x=>x.echo&&x.echo.kind==='adult'&&x.echo.meas.EF!=null);return L.length?{ef:L[0].echo.meas.EF,date:L[0].date}:null;}
+// CHA₂DS₂-VA（2024 ESC）：自動偵測＋手動覆寫
+const CHA_ITEMS=[['c','C 心衰竭',1],['h','H 高血壓',1],['a2','A₂ 年齡 ≥75',2],['d','D 糖尿病',1],['s2','S₂ 中風／TIA／血栓栓塞',2],['v','V 血管疾病（MI、PAD、主動脈斑塊）',1],['a','A 年齡 65–74',1]];
+function chaAuto(p){const hay=cathHay(p),age=ageYears(p),ef=latestAdultEF(p),r={};
+  const hc=hayHit(hay,/heart failure|\bHF(?:rEF|pEF|mrEF)?\b|\bCHF\b|Killip\s*(?:II|III|IV|[234])|心衰竭|cardiomyopathy/i);r.c=hc?{v:true,src:hc}:ef&&ef.ef<=40?{v:true,src:`LVEF ${ef.ef}%（${ef.date}）`}:{v:false,src:''};
+  const hh=hayHit(hay,/hypertension|\bHTN\b|高血壓/i);r.h={v:!!hh,src:hh};
+  r.a2={v:age!=null&&age>=75,src:age!=null?`${age} 歲`:'年齡未填'};r.a={v:age!=null&&age>=65&&age<75,src:age!=null?`${age} 歲`:'年齡未填'};
+  const hd=hayHit(hay,/diabetes|\bDM\b|T2DM|糖尿病/i);r.d={v:!!hd,src:hd};
+  const hs=hayHit(hay,/stroke|\bCVA\b|\bTIA\b|cerebral infarct|systemic embol|中風|腦梗塞/i);r.s2={v:!!hs,src:hs};
+  const hv=hayHit(hay,/myocardial infarction|NSTEMI|STEMI|\bMI\b|\bCAD\b|coronary artery disease|PAOD|\bPAD\b|peripheral arter|aortic plaque|冠狀動脈/i);r.v={v:!!hv,src:hv};
+  return r;}
+function chaScore(p){const A=chaAuto(p),o=(p.risk&&p.risk.cha)||{};let s=0;const rows=CHA_ITEMS.map(([k,l,pt])=>{const ov=o[k];const v=ov==='y'?true:ov==='n'?false:A[k].v;if(v)s+=pt;return {k,l,pt,v,auto:A[k],ov};});return {s,rows};}
+// PRECISE-DAPT（Costa 2017 nomogram；係數依公開計算公式重建，請以官方計算器核對）
+function preciseDapt(age,crcl,hb,wbc,bleed){
+  if([age,crcl,hb,wbc].some(x=>x==null||isNaN(x)))return null;
+  const cl=(x,lo,hi)=>Math.min(hi,Math.max(lo,x)),a=cl(age,50,90),c=Math.min(crcl,100),h=cl(hb,10,12),w=cl(wbc,5,20);
+  const parts={age:0.02595618*(a-50),crcl:-0.0140439*(c-100),hb:-0.40551264*(h-12),wbc:0.05697497*(w-5),bleed:bleed?1.41955653:0};
+  const k=100/5.52784356,pts={};let t=0;Object.entries(parts).forEach(([x,v])=>{pts[x]=v*k;t+=v*k;});
+  return {score:Math.min(100,Math.round(t)),pts};
+}
+function pciRisk(p,C,date){
+  const o=(p.risk&&p.risk.bleed)||{},age=ageYears(p);
+  const cr=latestLab(p,'72-333'),scr=cr?labNum(cr):C&&C.cre?C.cre.v:null,crcl=scr?cgCrCl(p,scr):null;
+  const eg=latestLab(p,'72-335'),egfr=crcl!=null?crcl:eg?labNum(eg):C&&C.gfr;
+  const hbL=latestLab(p,'72C001'),hb=hbL?labNum(hbL):null,wL=latestLab(p,'72A001'),wbc=wL?labNum(wL):null,pL=latestLab(p,'72I001'),plt=pL?labNum(pL):null;
+  const pd=preciseDapt(age,crcl,hb,wbc,o.prior==='y');
+  const hay=cathHay(p),oacNow=medsOnDay(p,ymd(),PCI_RX.oac,true),oacInd=OAC_IND.filter(([,re])=>re.test(hay)).map(x=>x[0]);
+  const ov=(k,auto)=>o[k]==='y'?true:o[k]==='n'?false:auto;
+  const nsNow=medsOnDay(p,ymd(),PCI_RX.nsaidSt,true),hbMin=p.sex==='F'?[11,11.9]:[11,12.9];
+  const maj=[['oac','預期長期口服抗凝',oacNow.length?true:null,oacNow.length?`使用中：${oacNow.join('、')}`:oacInd.length?`診斷有 ${oacInd.join('、')}，是否長期抗凝待確認`:'手動'],
+    ['ckd','嚴重 CKD（eGFR／CrCl <30）',egfr!=null?egfr<30:null,egfr!=null?fmtN(+egfr.toFixed(0)):'無資料'],['hb','Hb <11 g/dL',hb!=null?hb<11:null,hb!=null?String(hb):'無資料'],
+    ['plt','PLT <100 ×10⁹/L',plt!=null?plt<100:null,plt!=null?String(plt):'無資料'],['bleed6','6 個月內需住院／輸血的自發性出血（或反覆）',null,'手動'],
+    ['diath','慢性出血體質',null,'手動'],['cirr','肝硬化合併門脈高壓',null,hayHit(hay,/cirrhosis|肝硬化/i)||'手動'],
+    ['ca','12 個月內活動性惡性腫瘤',null,hayHit(hay,/cancer|carcinoma|malignan|lymphoma|leukemia|腫瘤|癌/i)||'手動'],
+    ['ich','曾顱內出血／腦 AVM／6 個月內中重度缺血性中風',null,hayHit(hay,/intracranial h|\bICH\b|\bSAH\b|\bSDH\b|AVM|顱內出血/i)||'手動'],['surg','30 天內重大手術或創傷',null,'手動'],['surg2','DAPT 期間無法延後的重大手術',null,'手動']]
+    .map(([k,l,a,s])=>[k,l,ov(k,a),s,o[k]]);
+  const min=[['age','年齡 ≥75',age!=null?age>=75:null,age!=null?`${age} 歲`:'無資料'],['ckdm','中度 CKD（30–59）',egfr!=null?egfr>=30&&egfr<60:null,egfr!=null?fmtN(+egfr.toFixed(0)):'無資料'],
+    ['hbm',`Hb ${hbMin[0]}–${hbMin[1]} g/dL`,hb!=null?hb>=hbMin[0]&&hb<=hbMin[1]:null,hb!=null?String(hb):'無資料'],['bleed12','12 個月內需住院／輸血的自發性出血（未達主要）',null,'手動'],
+    ['nsaid','長期口服 NSAID 或類固醇',nsNow.length?true:null,nsNow.join('、')||'手動'],['isch','缺血性中風（未達主要）',null,hayHit(hay,/ischemic stroke|cerebral infarct|腦梗塞/i)||'手動']]
+    .map(([k,l,a,s])=>[k,l,ov(k,a),s,o[k]]);
+  const nMaj=maj.filter(x=>x[2]===true).length,nMin=min.filter(x=>x[2]===true).length;
+  return {age,crcl,egfr,hb,wbc,plt,pd,maj,min,nMaj,nMin,hbr:nMaj>=1||nMin>=2,oacInd,oacNow};
+}
+// ---- 顯示 ----
+function cathBlock(C){
+  const vt=C.vessels.length?`<table class="tbl" style="margin-top:6px"><thead><tr><th>血管</th><th>最大狹窄</th><th>TIMI</th><th>描述</th></tr></thead><tbody>${C.vessels.map(x=>`<tr><td><b>${esc(x.v)}</b>${C.treated.includes(x.v)?' <span class="tag t-new">已治療</span>':''}${x.cto?' <span class="tag t-warn">CTO</span>':''}</td><td class="num">${x.max!=null?x.max+'%':'—'}</td><td>${x.timi||'—'}</td><td class="small">${esc(x.text)}</td></tr>`).join('')}</tbody></table>`:'';
+  const lt=C.lesions.length?`<table class="tbl" style="margin-top:6px"><thead><tr><th>病灶</th><th>位置</th><th>支架（直徑×長度）</th><th>術前→最終</th></tr></thead><tbody>${C.lesions.map(l=>`<tr><td>${l.no}<div class="small mute">${esc(l.type||'')}</div></td><td class="small">${esc(l.loc||'—')}<div class="mute">${esc(l.proc)}</div></td><td class="small">${l.stents.map(s=>`${esc(s.brand)} ${s.d}×${s.len}`).join('<br>')||'—'}</td><td class="num">${l.pre?l.pre+'%':'—'} → ${l.final?l.final+'%':'—'}</td></tr>`).join('')}</tbody></table>`:'';
+  const tech=Object.entries({IVUS:C.tech.ivus,OCT:C.tech.oct,KBI:C.tech.kbi,POT:C.tech.pot,'雙支架術式':C.tech.twoStent,'Atherectomy／IVL':C.tech.athero}).filter(x=>x[1]).map(x=>x[0]).concat(C.tech.ffr?[C.tech.ffr]:[]);
+  return `<div style="margin:6px 0 8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px"><div class="small mute" style="margin-bottom:4px">心導管擷取（Worksheet 申報段落不保存）</div>
+    <div class="small">${[C.indication?`適應症 <b>${esc(C.indication)}</b>`:'',C.access?`途徑 <b>${esc(C.access)}</b>`:'',C.contrast!=null?`顯影劑 <b>${C.contrast}</b> mL`:'',C.heparin?`Heparin <b>${fmtN(C.heparin)}</b> U`:'',C.act?`ACT ${esc(C.act)}`:'',C.ao?`AO ${esc(C.ao)}`:'',C.cre?`術前 Cr ${C.cre.v}（${C.cre.d.slice(5).replace('-','/')}）`:'',C.gfr!=null?`GFR ${C.gfr}`:'',C.dominant?`優勢 ${esc(C.dominant)}`:'',C.complication?`併發症 ${esc(C.complication)}`:'',C.pacer&&!/^no$/i.test(C.pacer)?`臨時起搏器 ${esc(C.pacer)}`:'',C.mcs.length?`機械輔助 ${C.mcs.join('、')}`:''].filter(Boolean).join('　')}</div>
+    ${vt}${lt}<div class="small" style="margin-top:6px">支架 <b>${C.nStent}</b> 支・總長 <b>${C.totalLen}</b> mm${tech.length?`・術式 ${esc(tech.join('、'))}`:''}</div>
+    ${C.residual.length?`<div class="small under" style="margin-top:4px">未治療的顯著病灶：${C.residual.map(x=>`${x.v} ${x.max}%${x.cto?'（CTO）':''}`).join('、')}</div>`:''}${C.staged?`<div class="small" style="margin-top:2px">後續：${esc(C.staged)}</div>`:''}
+    ${C.comment.length?`<div class="small" style="margin-top:4px"><b>Comment</b>：${C.comment.map(esc).join('；')}</div>`:''}</div>`;
+}
+function pciCard(p,E,ro){
+  const X=E.filter(x=>x.cath&&x.cath.nStent).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];if(!X)return '';
+  const C=X.cath,d=X.date,day=d?Math.floor((Date.parse(ymd())-Date.parse(d))/864e5):null,R=pciRisk(p,C,d),cha=chaScore(p),cx=cathComplex(C);
+  const med=re=>medsOnDay(p,ymd(),re,false).join('<br>')||'<span class="mute">—</span>';
+  const row=(l,v)=>`<tr><th style="width:11em;text-align:left">${l}</th><td>${v}</td></tr>`;
+  const yn=v=>v===true?'<b>是</b>':v===false?'否':'<span class="mute">未知</span>';
+  const sel=(grp,k,cur)=>ro?'':` <select data-risk="${grp}|${k}" style="width:auto;padding:1px 4px;font-size:12px"><option value="">自動</option><option value="y" ${cur==='y'?'selected':''}>有</option><option value="n" ${cur==='n'?'selected':''}>無</option></select>`;
+  const bo=(p.risk&&p.risk.bleed)||{};
+  // 術後 Cr
+  const crAfter=[];if(d&&hasLabs(p)){Object.values(p.labs.items).filter(it=>it.code==='72-333'&&it.sampleType==='B').forEach(it=>Object.entries(it.vals).forEach(([sk,v])=>{const t=skDate(sk);const dd=(Date.parse(t)-Date.parse(d))/864e5;if(dd>=-2&&dd<=4)crAfter.push([sk,v.value]);}));crAfter.sort((a,b)=>a[0].localeCompare(b[0]));}
+  const crcl=C.cre?cgCrCl(p,C.cre.v):null;
+  const ef=latestAdultEF(p);
+  let h=`<div class="card"><h3>PCI 藥師對照 <span class="small mute">${esc(d?d.slice(5).replace('-','/'):'日期?')} PCI${day!=null?`・術後第 ${day} 天`:''}・只並列事實，不下結論</span></h3>
+  <div style="font-weight:600;margin-top:4px">① 抗血栓（目前醫囑）</div><table class="tbl"><tbody>
+    ${row('Aspirin',med(PCI_RX.asa))}${row('P2Y12 抑制劑',med(PCI_RX.p2y12))}${row('口服抗凝',med(PCI_RX.oac))}${row('注射抗凝',med(PCI_RX.par))}
+    ${row('OAC 適應症診斷',R.oacInd.length?`<b>${R.oacInd.join('、')}</b><div class="small mute">${OAC_IND.filter(([n])=>R.oacInd.includes(n)).map(([,re])=>esc(hayHit(cathHay(p),re))).join('<br>')}</div>`:'<span class="mute">診斷中未見</span>')}
+    ${row('Comment',esc(C.comment.join('；'))||'—')}</tbody></table>
+  <div style="font-weight:600;margin-top:10px">② CHA₂DS₂-VA <span class="tag ${cha.s>=2?'t-warn':'t-reg'}">${cha.s} 分</span> <span class="small mute">（非瓣膜性 AF 適用；肥厚性心肌病、類澱粉沉積不適用）</span></div>
+    <table class="tbl"><tbody>${cha.rows.map(r=>`<tr><td style="width:15em">${r.l}（${r.pt}）</td><td>${yn(r.v)}${sel('cha',r.k,r.ov)}${r.ov?' <span class="small under">手動</span>':''}</td><td class="small mute">${esc(r.auto.src||'')}</td></tr>`).join('')}</tbody></table>
+  <div style="font-weight:600;margin-top:10px">③ 出血風險</div>
+    <div class="small">PRECISE-DAPT：${R.pd?`<span class="tag ${R.pd.score>=25?'t-warn':'t-reg'}">${R.pd.score} 分</span> <span class="mute">年齡 ${R.age}（${R.pd.pts.age.toFixed(0)}）・CrCl ${fmtN(+R.crcl.toFixed(0))}（${R.pd.pts.crcl.toFixed(0)}）・Hb ${R.hb}（${R.pd.pts.hb.toFixed(0)}）・WBC ${R.wbc}（${R.pd.pts.wbc.toFixed(0)}）・先前出血 ${bo.prior==='y'?'有':'無'}（${R.pd.pts.bleed.toFixed(0)}）</span>`:`<span class="under">缺資料：${[R.age==null?'年齡':'',R.crcl==null?'CrCl（需體重、性別、Cr）':'',R.hb==null?'Hb':'',R.wbc==null?'WBC':''].filter(Boolean).join('、')}</span>`}
+      ${ro?'':`<label class="small" style="margin-left:8px">先前自發性出血 <select data-risk="bleed|prior" style="width:auto;padding:1px 4px;font-size:12px"><option value="">無／未知</option><option value="y" ${bo.prior==='y'?'selected':''}>有</option></select></label>`}</div>
+    <div class="small" style="margin-top:4px">ARC-HBR：主要 <b>${R.nMaj}</b> 項・次要 <b>${R.nMin}</b> 項 ${R.hbr?'<span class="tag t-warn">符合 HBR 定義（≥1 主要或 ≥2 次要）</span>':'<span class="tag t-reg">未達 HBR 定義</span>'} <span class="mute">（未知項目不計）</span></div>
+    <details style="margin-top:4px"><summary class="small mute" style="cursor:pointer">ARC-HBR 逐項（可手動補「未知」項）</summary><table class="tbl"><tbody>
+      ${R.maj.map(([k,l,v,src,cur])=>`<tr><td style="width:2.5em"><span class="tag t-warn">主</span></td><td>${l}</td><td>${yn(v)}${sel('bleed',k,cur)}${cur?' <span class="small under">手動</span>':''}</td><td class="small mute">${esc(src)}</td></tr>`).join('')}
+      ${R.min.map(([k,l,v,src,cur])=>`<tr><td><span class="tag t-reg">次</span></td><td>${l}</td><td>${yn(v)}${sel('bleed',k,cur)}${cur?' <span class="small under">手動</span>':''}</td><td class="small mute">${esc(src)}</td></tr>`).join('')}
+    </tbody></table></details>
+  <div style="font-weight:600;margin-top:10px">④ 複雜 PCI 特徵 <span class="small mute">（無統一定義，逐項列出）</span></div>
+    <table class="tbl"><tbody>${cx.map(([l,v,s])=>`<tr><td style="width:15em">${l}</td><td>${v===true?'<b>符合</b>':v===null?'<span class="under">可能</span>':'否'}</td><td class="small mute">${esc(s)}</td></tr>`).join('')}</tbody></table>
+  <div style="font-weight:600;margin-top:10px">⑤ 顯影劑</div><table class="tbl"><tbody>
+    ${row('顯影劑量',C.contrast!=null?`<b>${C.contrast}</b> mL`:'—')}
+    ${row('CV／報告 GFR',C.contrast!=null&&C.gfr?`<b>${(C.contrast/C.gfr).toFixed(2)}</b> <span class="small mute">（${C.contrast} ÷ ${C.gfr}）</span>`:'—')}
+    ${row('CV／CrCl（CG）',C.contrast!=null&&crcl?`<b>${(C.contrast/crcl).toFixed(2)}</b> <span class="small mute">（CrCl ${crcl.toFixed(0)}：術前 Cr ${C.cre.v}、體重 ${parseFloat(p.wt)||ioWt(p).kg} kg）</span>`:'<span class="mute">需體重、性別、年齡</span>')}
+    ${row('術前後 Cr',crAfter.length?crAfter.map(([sk,v])=>`${skMD(sk)} <b>${esc(String(v))}</b>`).join('　'):'<span class="mute">檢驗中無術前 2 天～術後 4 天的 Cr</span>')}
+    ${row('同期腎毒性藥物',med(PCI_RX.nephro))}</tbody></table>
+  <div style="font-weight:600;margin-top:10px">⑥ 次級預防（目前醫囑）</div><table class="tbl"><tbody>
+    ${row('β-blocker',med(PCI_RX.bb))}${row('ACEi／ARB／ARNI',med(PCI_RX.raas))}${row('Statin',med(PCI_RX.statin))}${row('Ezetimibe',med(PCI_RX.eze))}
+    ${row('MRA',med(PCI_RX.mra))}${row('SGLT2i',med(PCI_RX.sglt2))}${row('PPI（搭配抗血栓）',med(PCI_RX.ppi))}
+    ${row('LVEF',ef?`<b>${ef.ef}%</b> <span class="small mute">${esc(ef.date)}</span>`:'<span class="mute">尚無成人心臟超音波</span>')}
+    ${row('LDL',(()=>{const v=labByName(p,/\bLDL/i);return v?`<b>${esc(String(v.value))}</b> <span class="small mute">${skMD(v.sk)}</span>`:'<span class="mute">無資料</span>';})())}</tbody></table>
+  ${C.residual.length||C.staged?`<div style="font-weight:600;margin-top:10px">⑦ 後續</div><div class="small">${C.residual.map(x=>`${x.v} ${x.max}%${x.cto?'（CTO）':''} 未治療`).join('、')}${C.staged?`<br>${esc(C.staged)}`:''}</div>`:''}
+  ${pciGuideRef()}</div>`;
+  return h;
+}
+function pciGuideRef(){
+  const li=(t,ref)=>`<li style="margin-bottom:6px">${t}<div class="mute">${ref}</div></li>`;
+  return `<details style="margin-top:10px"><summary style="cursor:pointer;font-weight:600">指引參考（通用內容，非針對此病人的建議）</summary><ul class="small" style="margin:6px 0 0 18px;padding:0">
+    ${li('AF 合併 PCI：口服抗凝搭配抗血小板時，預設為 aspirin + clopidogrel 的短期三合一（最多約 1 週），之後 DOAC + clopidogrel 6–12 個月；三合一期間避免 ticagrelor、prasugrel（出血風險較高）。','2023 ACC/AHA/ACCP/HRS AF guideline（aspirin 於 1–4 週內停用、續用 OAC + P2Y12）；2024 ESC AF guideline；J Clin Med 2025;14:6331（review）')}
+    ${li('CHA₂DS₂-VA（2024 ESC 移除性別項）：≥2 分建議口服抗凝，1 分可考慮。','2024 ESC Guidelines for the management of AF（Van Gelder et al., Eur Heart J 2024）')}
+    ${li('PRECISE-DAPT（年齡、CrCl、Hb、WBC、先前自發性出血）：≥25 分為高出血風險，可考慮較短 DAPT（3–6 個月）；用於預測院外出血。平台計算依公開 nomogram 公式重建，請以官方計算器核對。','Costa F, et al. Lancet 2017;389:1025–1034')}
+    ${li('ARC-HBR：符合 ≥1 項主要或 ≥2 項次要條件即屬高出血風險。','Urban P, et al. Circulation 2019;140:240–261；Ueki Y, et al. EuroIntervention 2020;16:371–379（驗證）')}
+    ${li('複雜 PCI 沒有統一定義，常見條件：3 條血管治療、≥3 支支架、≥3 個病灶、分叉雙支架、總支架長度 >60 mm、CTO 為治療標的、LM 為治療標的；與較高缺血風險相關，會影響 DAPT 長短的討論。','J Clin Med 2020 PMC7196972；各試驗定義比較 PMC10400615')}
+    ${li('顯影劑量／計算 CrCl（Cockcroft-Gault）比值 >3 與顯影劑腎病變、需透析風險增加相關。','Gurm HS, et al. JACC 2011；Kooiman J, et al. PLoS One 2014;9:e90233')}
+  </ul></details>`;
+}
+function cathSoapTxt(p,rel){
+  const X=examSorted(p).find(x=>x.cath&&(x.cath.nStent||x.cath.vessels.length));if(!X)return '';const C=X.cath;
+  const segs=[];const at=C.concl.filter(s=>/s\/p\s+stent/i.test(s)).map(s=>s.replace(/^-\s*s\/p\s+/i,'').trim());
+  const dl=rel?rel(X.date):X.date?X.date.slice(5).replace('-','/'):'';
+  segs.push(`${dl} ${C.nStent?`PCI: ${at.join('; ')||`DES×${C.nStent}`}`:'CAG'}`);
+  if(C.residual.length)segs.push(`residual ${C.residual.map(x=>`${x.v} ${x.cto?'CTO':x.max+'%'}`).join(', ')}${C.staged?' (staged PCI planned)':''}`);
+  if(C.contrast!=null)segs.push(`contrast ${C.contrast} mL`);
+  return segs.join('; ');
+}
 // PDA／心臟超音波追蹤表：依日期排列，對照同期 PDA 用藥
 function echoTrackCard(p,E){
   const L=E.filter(x=>x.echo&&x.echo.kind!=='adult').sort((a,b)=>((a.date||'9')+(a.time||'')).localeCompare((b.date||'9')+(b.time||'')));if(!L.length)return '';
@@ -4347,6 +4543,7 @@ function bindExam(p,ro){
   document.querySelectorAll('[data-examf]').forEach(b=>b.onclick=()=>{S.examUI=b.dataset.examf;renderMain();});
   if($('btnExamSoap'))$('btnExamSoap').onclick=()=>copyMsg(examSoapTxt(p),'已複製檢查摘要');
   if(ro)return;
+  document.querySelectorAll('[data-risk]').forEach(el=>el.onchange=()=>{const [g,k]=el.dataset.risk.split('|');p.risk=p.risk||{};p.risk[g]=p.risk[g]||{};if(el.value)p.risk[g][k]=el.value;else delete p.risk[g][k];markDirty();renderMain();});
   if($('btnExamAdd'))$('btnExamAdd').onclick=()=>{
     const L=parseExams($('examText').value);if(!L.length){toast('沒有內容');return;}
     snapshot(p,'加入檢查報告');const r=mergeExams(p,L);p.updatedAt=new Date().toISOString();markDirty();renderMain();
@@ -4390,7 +4587,7 @@ function ioSummaryShift(t){
 }
 const IO_KEY={注射量:'inj',飲食量:'diet',尿量:'urine',糞便量:'stool',大便量:'stool',其他排出量:'otherOut',攝入總計:'inTot',排出總計:'outTot',差異量:'diff'};
 function parseNurseIO(t){
-  const E=nurseEntries(t),R={shifts:[],wts:[],ev:[]};
+  const E=nurseEntries(t),R={shifts:[],wts:[],ev:[],dx:[]};
   E.forEach(e=>{
     if(/攝入總計|排出總計/.test(e.text)){const pairs=[];let m;const re=/([一-龥()（）A-Za-z]{1,10}?(?:量|總計))\s*(-?[\d.]+)/g;
       while((m=re.exec(e.text)))pairs.push([m[1],+m[2]]);
@@ -4400,6 +4597,7 @@ function parseNurseIO(t){
     while((g=gr.exec(e.text))){const s=g[1].trim();if(IO_DIU.test(s))R.ev.push({t:ioLocal(e.t),kind:'diu',text:s.slice(0,90)});if(BM_LAX.test(s))R.ev.push({t:ioLocal(e.t),kind:'bmLax',text:s.slice(0,90)});else if(BM_ANTI.test(s))R.ev.push({t:ioLocal(e.t),kind:'bmAnti',text:s.slice(0,90)});}
     const h=e.text.match(/Hold one meal|暫停一餐|暫停管灌|暫停灌食|禁食|\bNPO\b/i);if(h)R.ev.push({t:ioLocal(e.t),kind:'hold',text:h[0]});
     nurseBM(e).forEach(x=>R.ev.push(x));
+    [...e.text.matchAll(/Diagnosis\s*\(\d+\)\s*[:：]\s*-?\s*([^\n]+)/gi)].forEach(m=>{const t=m[1].trim();if(t&&!R.dx.includes(t))R.dx.push(t);});
   });
   return R;
 }
@@ -4432,6 +4630,7 @@ function ioImport(p,txt,day){
     R.shifts.forEach(s=>{o.shifts[s.day+'|'+s.sh]=s;ns++;});
     R.wts.forEach(w=>{if(!o.wts.some(x=>x.t===w.t))o.wts.push(w);});
     R.ev.forEach(e=>{if(!o.ev.some(x=>x.t===e.t&&x.kind===e.kind&&x.text===e.text))o.ev.push(e);});
+    o.dx=o.dx||[];R.dx.forEach(d=>{if(!o.dx.includes(d))o.dx.push(d);});
     o.wts.sort((a,b)=>a.t.localeCompare(b.t));o.ev.sort((a,b)=>a.t.localeCompare(b.t));
     return {ns,ni,nw:R.wts.length,ne:R.ev.length,kind:'nurse'};}
   const d=ioRecDate(txt)||day,L=parseIOHourly(txt,d);if(L.length){o.items[d]=L;ni=L.length;}
@@ -5978,6 +6177,7 @@ function aiPack(p,mark){
     if(p.rt&&p.rt.rass)L.push(`- RASS ${p.rt.rass}`);}}
   if(m.lines&&lineStore(p).items.length){const V=linesView(p);if(V.act.length){H('管路（留置中）');V.act.forEach(x=>L.push(`- ${lineShort(x)}：${relIso(p,x.at)} 起，第 ${lineDayN(x)} 天`));}}
   if(m.io&&hasIO(p)){const t=ioSoapTxt(p,d=>relIso(p,d));if(t){H('I/O');L.push('- '+t);}}
+  if(m.exam&&examStore(p).some(x=>x.cath)){const t=cathSoapTxt(p,d=>relIso(p,d));if(t){H('心導管／PCI');L.push('- '+t);const X=examSorted(p).find(x=>x.cath&&x.cath.nStent);if(X){const R=pciRisk(p,X.cath,X.date),c=chaScore(p);L.push(`- CHA2DS2-VA ${c.s}；PRECISE-DAPT ${R.pd?R.pd.score:'N/A'}；ARC-HBR 主要 ${R.nMaj}／次要 ${R.nMin}${R.oacInd.length?`；OAC 適應症診斷：${R.oacInd.join('、')}`:''}`);}}}
   if(m.exam&&examStore(p).length){H('檢查報告');examSorted(p).slice(0,full?8:4).forEach(x=>L.push(`- ${x.date?relIso(p,x.date):'?'} ${x.type} ${x.title}：${sc(oneLine(x.imp||'（無 Impression）',full?600:250))}`));}
   if(m.consult&&consStore(p).length){H('會診');consSorted(p).slice(0,full?8:4).forEach(c=>L.push(`- ${c.reqDate?relIso(p,c.reqDate):'?'} ${c.dept||'會診'}（${c.status}）：${sc(oneLine(c.reply||c.reason||'',full?600:250))}`));}
   if(m.rules){const t=rulePatrolText(p);if(t){H('平台劑量規則巡查（依 Lexicomp 等規則庫）');L.push(relTxt(p,t));}}
