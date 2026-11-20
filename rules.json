@@ -1,6 +1,6 @@
 {
- "version": "2026-11-17a",
- "updated": "2026-11-17",
+ "version": "2026-11-20a",
+ "updated": "2026-11-20",
  "rules": [
   {
    "id": "dexmedetomidine",
@@ -5586,6 +5586,263 @@
     "notes": [
      "美國已無市售商品。"
     ]
+   }
+  },
+  {
+   "id": "heparin",
+   "label": "Heparin（UFH）",
+   "names": [
+    "heparin"
+   ],
+   "excludeRe": "lock|flush|heparini[sz]ed\\s*saline|\\b2\\s*u(?:nits?)?\\s*/\\s*ml",
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) — Heparin (Lexi-Drugs Multinational)",
+     "sections": "Dosing: Adult; Older Adult; Altered Kidney Function; Altered Liver Function; Obesity; Adjustment for Toxicity; Usual Infusion Concentrations; Administration; Warnings; Interactions; Monitoring; Reference Range（Last Updated 11/19/26）",
+     "addedAt": "2026-11-20",
+     "by": "JC"
+    }
+   ],
+   "weight": {
+    "basis": "TBW",
+    "obese": {
+     "def": "BMI>=40",
+     "basis": "AdjBW",
+     "text": "治療性 IV：BMI 30–39 用實際體重；BMI ≥40 用 AdjBW 計算，或用實際體重（可不給 bolus）並降低起始維持量（例如 VTE 12 units/kg/hr）。VTE 預防 SUBQ 為固定劑量，不依體重。"
+    }
+   },
+   "usual": {
+    "text": "依適應症（以下皆 IV 起始，之後依院內 nomogram 以 aPTT／anti-Xa 調整）：VTE 治療 80 units/kg bolus（max 10,000）→ 18 units/kg/hr（初始 max 2,000 units/hr），或 5,000 units → 1,333 units/hr；AF 60–80 units/kg（max 5,000）→ 12–18 units/kg/hr（max 1,000 units/hr）；NSTE-ACS 非侵入性 60 units/kg（max 5,000）→ 12 units/kg/hr（max 1,000 units/hr）≥48 h；STEMI 溶栓輔助 60 units/kg（max 4,000）→ 12 units/kg/hr（max 1,000 units/hr）；STEMI 未再灌流 50–70 units/kg（max 5,000）→ 12 units/kg/hr；PCI（未用 GP IIb/IIIa）70–100 units/kg（max 10,000）目標 ACT 250–300，用 GP IIb/IIIa 50–70 units/kg（max 7,000）目標 ACT 200–250；ECMO 50–100 units/kg 或 2,500–5,000 units → 8–12 units/kg/hr（max 1,600 units/hr），anti-Xa 0.3–0.5 或 aPTT 50–80 秒；周邊動脈急性阻塞 60–80 units/kg → 12–18 units/kg/hr；機械瓣 bridging 18 units/kg/hr（不給 bolus），術後 12–18 units/kg/hr（不給 bolus）。VTE 預防 SUBQ 5,000 units q8–12h。間歇性血液透析迴路：1,000–2,000 units bolus → 500 units/hr（結束前 60 分鐘停）；CRRT（需抗凝且不能用 citrate）：500–1,000 units → 500 units/hr，aPTT 約 1.5 倍對照或約 45 秒。"
+   },
+   "doses": [
+    {
+     "ind": "VTE 預防",
+     "routes": [
+      "SC",
+      "SUBQ",
+      "IH"
+     ],
+     "lo": 5000,
+     "hi": 5000,
+     "unit": "units",
+     "text": "5,000 units q8–12h；體重 <50 kg 可能較敏感，考慮 q12h"
+    },
+    {
+     "ind": "VTE 預防（肥胖 BMI ≥30／>50）",
+     "routes": [
+      "SC",
+      "SUBQ",
+      "IH"
+     ],
+     "lo": 5000,
+     "hi": 7500,
+     "unit": "units",
+     "text": "5,000–7,500 units q8h；BMI >50 考慮 7,500 q8h"
+    },
+    {
+     "ind": "VTE 門診治療（替代）",
+     "routes": [
+      "SC",
+      "SUBQ",
+      "IH"
+     ],
+     "lo": 250,
+     "hi": 333,
+     "unit": "units/kg",
+     "text": "起始 333 units/kg，之後 250 units/kg q12h"
+    },
+    {
+     "ind": "VTE 治療 bolus",
+     "routes": [
+      "IV"
+     ],
+     "when": "stat",
+     "lo": 80,
+     "hi": 80,
+     "unit": "units/kg",
+     "max": {
+      "v": 10000,
+      "unit": "units"
+     }
+    },
+    {
+     "ind": "AF bolus",
+     "routes": [
+      "IV"
+     ],
+     "when": "stat",
+     "lo": 60,
+     "hi": 80,
+     "unit": "units/kg",
+     "max": {
+      "v": 5000,
+      "unit": "units"
+     }
+    },
+    {
+     "ind": "NSTE-ACS／STEMI bolus",
+     "routes": [
+      "IV"
+     ],
+     "when": "stat",
+     "lo": 50,
+     "hi": 70,
+     "unit": "units/kg",
+     "max": {
+      "v": 5000,
+      "unit": "units"
+     },
+     "text": "STEMI 溶栓輔助 60 units/kg（max 4,000）"
+    },
+    {
+     "ind": "PCI bolus（未用 GP IIb/IIIa）",
+     "routes": [
+      "IV"
+     ],
+     "when": "stat",
+     "lo": 70,
+     "hi": 100,
+     "unit": "units/kg",
+     "max": {
+      "v": 10000,
+      "unit": "units"
+     }
+    }
+   ],
+   "infusion": {
+    "unit": "units/kg/hr",
+    "ranges": [
+     {
+      "ind": "起始輸注（依適應症）",
+      "min": 8,
+      "max": 18,
+      "text": "VTE 18；AF 12–18；ACS 12；ECMO 8–12；機械瓣 bridging 18、術後 12–18。此為起始範圍；之後依 aPTT／anti-Xa 依院內 nomogram 調整，調整後可能超出。"
+     }
+    ],
+    "primary": 0,
+    "alerts": [],
+    "loading": "Bolus：VTE 80 units/kg（max 10,000）；AF 60–80 units/kg（max 5,000）；NSTE-ACS 60 units/kg（max 5,000）；STEMI 溶栓 60 units/kg（max 4,000）；ECMO 50–100 units/kg 或 2,500–5,000 units。機械瓣 bridging／術後不給 bolus。"
+   },
+   "renal": {
+    "none": true,
+    "text": "輕度至重度腎功能不全：起始不需調整，依院內流程調整以維持抗凝目標。",
+    "HD": "不易被透析；不需補充劑量或起始調整。",
+    "PD": "不易被透析；不需補充劑量或起始調整。",
+    "CRRT": "不易被透析；不需補充劑量或起始調整。",
+    "PIRRT": "不易被透析；不需補充劑量或起始調整。"
+   },
+   "hepatic": {
+    "none": true,
+    "text": "CTP A–C：起始不需調整。末期肝病 antithrombin III 下降，可能使 aPTT 假性延長、anti-Xa 假性偏低並造成 heparin resistance，需個別化目標與監測。",
+    "trigger": "cirrhosis|肝硬化|liver failure|hepatic failure",
+    "triggerText": "肝病：antithrombin III 下降，aPTT 可能假性延長、anti-Xa 假性偏低，監測目標需個別化。"
+   },
+   "elderly": {
+    "age": 60,
+    "text": ">60 歲血中濃度與 aPTT 反應可能較高，可能需要較低劑量。常見頭 24–48 小時反應正常，之後 aPTT 偏高需降速，密切監測；老年女性出血風險較高。"
+   },
+   "concomitant": [
+    {
+     "re": "apixaban|rivaroxaban|edoxaban|dabigatran|eliquis|xarelto|lixiana|pradaxa",
+     "text": "DOAC：併用 Risk X（避免），轉換期除外。口服 Xa 抑制劑會使 anti-Xa 監測假性偏高，有疑慮時至少 72 小時改用 aPTT。由 DOAC 轉 IV heparin：於下一劑 DOAC 到期時開始，不給 bolus。"
+    },
+    {
+     "re": "enoxaparin|clexane|fondaparinux|arixtra",
+     "text": "LMWH／fondaparinux：Risk D，開始前停用其他抗凝劑。由 LMWH／fondaparinux 轉 IV heparin：下一劑到期前 1–2 小時開始，不給 bolus。"
+    },
+    {
+     "re": "warfarin|coumadin",
+     "text": "Warfarin：轉換時與 IV heparin 併用至 INR ≥2 連續兩次（間隔約 24 小時，約 5 天）。"
+    },
+    {
+     "re": "aspirin|clopidogrel|plavix|ticagrelor|brilinta|prasugrel|cilostazol|ibuprofen|naproxen|diclofenac|ketorolac|celecoxib|etoricoxib",
+     "text": "抗血小板、NSAID：抗凝效果與出血風險增加（Risk C，監測）。"
+    },
+    {
+     "re": "dipyridamole|persantin",
+     "text": "Dipyridamole：Risk D，出血風險增加，減量其中之一。"
+    },
+    {
+     "re": "(?:pril|sartan)\\b|entresto|spironolactone|eplerenone|amiloride|potassium chloride|\\bKCl\\b",
+     "text": "ACEi／ARB／保鉀利尿劑／鉀鹽：heparin 抑制 aldosterone 合成，高血鉀風險，監測 K。"
+    },
+    {
+     "re": "nitroglycerin|\\bNTG\\b|millisrol",
+     "text": "Nitroglycerin：可能降低 heparin 抗凝效果與濃度，監測 aPTT。"
+    },
+    {
+     "re": "alteplase|actilyse|tenecteplase|streptokinase",
+     "text": "血栓溶解劑：Risk X；溶栓輸注期間停 heparin，結束後再恢復。"
+    }
+   ],
+   "notes": [
+    "HIT：4T 評分中、高機率時立即停用所有 heparin（含 flush、heparin-coated catheter），改用非 heparin 抗凝劑；100 天內有 HIT 史再暴露風險較高。常規監測 PLT。",
+    "濃度從 1 到 20,000 units/mL 都有，給藥前確認濃度；heparin lock flush 只用於維持管路通暢，不可作抗凝治療。",
+    "監測：Hb、Hct、PLT、PT、aPTT、出血徵象、K（必要時糞便潛血）。",
+    "目標：VTE／AF 治療 anti-Xa 0.3–0.7 units/mL（aPTT 治療範圍需由各院實驗室校正）；NSTE-ACS、STEMI（溶栓或未再灌流）aPTT 1.5–2 倍對照（約 50–70 秒）；機械瓣術後 aPTT 1.5–2 倍對照。",
+    "Heparin resistance：>35,000 units/24 h 仍未達 aPTT 目標時考慮（AT 缺乏、發燒、感染、MI、癌症、術後），可改用 anti-Xa 監測。",
+    "不可 IM（疼痛、刺激、血腫）。",
+    "抗磷脂症候群病人 aPTT 基準值可能延長，建議先測基準值或改用 anti-Xa。"
+   ],
+   "info": {
+    "up": "2026-11-19",
+    "times": [
+     "IV 立即；SUBQ 20–30 min",
+     "—",
+     "t½ 約 1.5 h（1–2 h）"
+    ],
+    "tnote": "t½ 隨劑量增加（25 units/kg 約 30 分、100 units/kg 約 60 分）",
+    "bp": "",
+    "prep": "常用 25,000 units／250 mL（100 units/mL）於 D5W、1/2NS 或 NS；需輸注幫浦，配製後充分混勻。預混袋開封後 4 天、拆外包裝後 30 天。",
+    "alert": "高警訊藥品，濃度易混淆；HIT（監測 PLT）；DOAC 會干擾 anti-Xa 監測。",
+    "bolus": {
+     "stockPerMl": 5000,
+     "stockUnit": "units",
+     "items": [
+      {
+       "label": "VTE 治療",
+       "lo": 80,
+       "hi": 80,
+       "unit": "units/kg",
+       "max": 10000
+      },
+      {
+       "label": "AF",
+       "lo": 60,
+       "hi": 80,
+       "unit": "units/kg",
+       "max": 5000
+      },
+      {
+       "label": "NSTE-ACS（非侵入性）",
+       "lo": 60,
+       "hi": 60,
+       "unit": "units/kg",
+       "max": 5000
+      },
+      {
+       "label": "STEMI 溶栓輔助",
+       "lo": 60,
+       "hi": 60,
+       "unit": "units/kg",
+       "max": 4000
+      },
+      {
+       "label": "PCI（未用 GP IIb/IIIa，ACT 250–300）",
+       "lo": 70,
+       "hi": 100,
+       "unit": "units/kg",
+       "max": 10000
+      },
+      {
+       "label": "ECMO 插管",
+       "lo": 50,
+       "hi": 100,
+       "unit": "units/kg"
+      }
+     ]
+    }
    }
   }
  ],
