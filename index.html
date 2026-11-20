@@ -425,7 +425,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-20b';
+const APP_VER='2026-11-20c';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -4388,16 +4388,16 @@ function ioSummaryShift(t){
   const c=[];for(let k=-1;k<=1;k++)[7,15,23].forEach(h=>{const d=new Date(t);d.setDate(d.getDate()+k);d.setHours(h,0,0,0);c.push(d);});
   c.sort((a,b)=>Math.abs(a-t)-Math.abs(b-t));const end=new Date(+c[0]-60000);return {day:ioDayOf(end),sh:ioShOf(end)};
 }
-const IO_KEY={注射量:'inj',飲食量:'diet',尿量:'urine',其他排出量:'otherOut',攝入總計:'inTot',排出總計:'outTot',差異量:'diff'};
+const IO_KEY={注射量:'inj',飲食量:'diet',尿量:'urine',糞便量:'stool',大便量:'stool',其他排出量:'otherOut',攝入總計:'inTot',排出總計:'outTot',差異量:'diff'};
 function parseNurseIO(t){
   const E=nurseEntries(t),R={shifts:[],wts:[],ev:[]};
   E.forEach(e=>{
     if(/攝入總計|排出總計/.test(e.text)){const pairs=[];let m;const re=/([一-龥()（）A-Za-z]{1,10}?(?:量|總計))\s*(-?[\d.]+)/g;
       while((m=re.exec(e.text)))pairs.push([m[1],+m[2]]);
-      if(pairs.length){const v={};pairs.forEach(([k,x])=>{if(IO_KEY[k])v[IO_KEY[k]]=x;});const s=ioSummaryShift(e.t);R.shifts.push(Object.assign(s,{at:ioLocal(e.t),v,pairs}));}}
+      if(pairs.length){const v={};pairs.forEach(([k,x])=>{if(IO_KEY[k])v[IO_KEY[k]]=x;});const s=ioSummaryShift(e.t);R.shifts.push(Object.assign(s,{at:ioLocal(e.t),v,pairs}));if(v.stool>0)R.ev.push({t:ioLocal(e.t),day:s.day,kind:'bmVol',text:`${IO_SH[s.sh]}小計 糞便量`,amt:`${fmtN(v.stool)} mL`});}}
     const w=e.text.match(/體重\s*[:：]?\s*([\d.]+)\s*(?:KG|公斤)/i);if(w)R.wts.push({t:ioLocal(e.t),kg:+w[1]});
     let g;const gr=/依醫囑給予\s*(.+?)(?=，告知|，|；|\n|$)/g;
-    while((g=gr.exec(e.text))){const s=g[1].trim();if(IO_DIU.test(s))R.ev.push({t:ioLocal(e.t),kind:'diu',text:s.slice(0,90)});}
+    while((g=gr.exec(e.text))){const s=g[1].trim();if(IO_DIU.test(s))R.ev.push({t:ioLocal(e.t),kind:'diu',text:s.slice(0,90)});if(BM_LAX.test(s))R.ev.push({t:ioLocal(e.t),kind:'bmLax',text:s.slice(0,90)});else if(BM_ANTI.test(s))R.ev.push({t:ioLocal(e.t),kind:'bmAnti',text:s.slice(0,90)});}
     const h=e.text.match(/Hold one meal|暫停一餐|暫停管灌|暫停灌食|禁食|\bNPO\b/i);if(h)R.ev.push({t:ioLocal(e.t),kind:'hold',text:h[0]});
     nurseBM(e).forEach(x=>R.ev.push(x));
   });
@@ -4569,14 +4569,15 @@ function bmDays(p){
   const o=ioStore(p),ev=o.ev.filter(e=>/^bm/.test(e.kind)).map(e=>Object.assign({},e));
   Object.values(o.items).forEach(L=>L.forEach(it=>{if(ioCat(it.name)!=='stool')return;ev.push(it.ml>0?{t:it.t,kind:'bm',text:it.name,amt:`${fmtN(it.ml)} mL`}:{t:it.t,kind:'bmZero',text:`${it.name} 0`});}));
   if(!ev.length)return null;ev.sort((a,b)=>a.t.localeCompare(b.t));
-  const days={};ev.forEach(e=>{const d=ioDayOf(ioT(e.t));(days[d]=days[d]||[]).push(e);});
+  const days={};ev.forEach(e=>{const d=e.day||ioDayOf(ioT(e.t));(days[d]=days[d]||[]).push(e);});
   ioDays(p).forEach(x=>{days[x.day]=days[x.day]||[];});
   const rows=Object.keys(days).sort().map(day=>{const E=days[day],pos=E.filter(e=>e.kind==='bm');
-    return {day,pos,no:E.filter(e=>e.kind==='bmNo'||e.kind==='bmZero'),types:[...new Set(E.filter(e=>e.kind==='bmType').map(e=>e.text))],aid:E.filter(e=>e.kind==='bmAid'),
-      st:pos.length?'有':E.some(e=>e.kind==='bmNo'||e.kind==='bmZero')?'無':'未記錄',
+    const vol=E.filter(e=>e.kind==='bmVol');
+    return {day,pos,vol,laxG:E.filter(e=>e.kind==='bmLax'),antiG:E.filter(e=>e.kind==='bmAnti'),no:E.filter(e=>e.kind==='bmNo'||e.kind==='bmZero'),types:[...new Set(E.filter(e=>e.kind==='bmType').map(e=>e.text))],aid:E.filter(e=>e.kind==='bmAid'),
+      st:pos.length||vol.length?'有':E.some(e=>e.kind==='bmNo'||e.kind==='bmZero')?'無':'未記錄',
       lax:medsOnDay(p,day,BM_LAX,true),anti:medsOnDay(p,day,BM_ANTI,true),opi:medsOnDay(p,day,BM_OPI,true)};});
   const allT=ev.map(e=>e.t).concat(...Object.values(o.items).map(L=>L.map(x=>x.t))).sort(),lastRec=allT[allT.length-1];
-  const lastBM=[...ev].reverse().find(e=>e.kind==='bm');
+  const lastBM=[...ev].reverse().find(e=>e.kind==='bm'||e.kind==='bmVol');
   const gap=a=>{const h=(ioT(lastRec)-ioT(a))/36e5;return h<48?`${Math.round(h)} 小時`:`${Math.floor(h/24)} 天`;};
   return {rows,lastBM,lastRec,first:allT[0],since:lastBM?gap(lastBM.t):gap(allT[0])};
 }
@@ -4589,10 +4590,10 @@ function bmCard(p){
     <div class="tblwrap" style="margin-top:6px"><table class="tbl"><thead><tr><th>日期</th><th>解便</th><th>次數</th><th>性狀／量（時間）</th><th>大便型態欄位</th><th>灌腸／塞劑</th><th>同期緩瀉劑</th><th>同期止瀉劑</th><th>同期鴉片類</th></tr></thead><tbody>
     ${[...B.rows].reverse().map(x=>`<tr><td class="num"><b>${ioMD(x.day)}</b>${ioHD(p,x.day)?`<div class="small mute">${ioHD(p,x.day)}</div>`:''}</td>
       <td>${x.st==='有'?'<b>有</b>':x.st==='無'?'無':'<span class="mute">未記錄</span>'}</td><td class="num">${x.pos.length||'—'}</td>
-      <td class="small">${x.pos.map(e=>`${e.t.slice(11)} ${esc(e.text)}${e.amt?' '+esc(e.amt):''}`).join('<br>')||(x.no.length?`<span class="mute">${esc([...new Set(x.no.map(e=>e.text))].join('、'))}</span>`:'—')}</td>
+      <td class="small">${x.pos.concat(x.vol).sort((a,b)=>a.t.localeCompare(b.t)).map(e=>`${e.t.slice(11)} ${esc(e.text)}${e.amt?' '+esc(e.amt):''}`).join('<br>')||(x.no.length?`<span class="mute">${esc([...new Set(x.no.map(e=>e.text))].join('、'))}</span>`:'—')}${(x.pos.length||x.vol.length)&&x.no.length?`<div class="mute">同日另有：${esc([...new Set(x.no.map(e=>e.text))].join('、'))}</div>`:''}</td>
       <td class="small">${esc(x.types.join('、'))||'—'}</td><td class="small">${x.aid.map(e=>`${e.t.slice(11)} ${esc(e.text)}`).join('<br>')||'—'}</td>
-      <td class="small">${x.lax.join('、')||'—'}</td><td class="small">${x.anti.join('、')||'—'}</td><td class="small">${x.opi.join('、')||'—'}</td></tr>`).join('')}
-    </tbody></table></div><div class="small mute" style="margin-top:4px">次數只算有寫出解便內容的紀錄（例如「解黃色軟便中量」）與明細中量 &gt; 0 的大便項目；「大便型態」評估欄位每班重複填寫，不計次數。同期用藥依醫囑（當天使用中或 3 天內停用）。</div></div>`;
+      <td class="small">${x.laxG.map(e=>`${e.t.slice(11)} ${esc(e.text)}`).join('<br>')||(x.lax.length?`<span class="mute">醫囑：${x.lax.join('、')}</span>`:'—')}</td><td class="small">${x.antiG.map(e=>`${e.t.slice(11)} ${esc(e.text)}`).join('<br>')||(x.anti.length?`<span class="mute">醫囑：${x.anti.join('、')}</span>`:'—')}</td><td class="small">${x.opi.join('、')||'—'}</td></tr>`).join('')}
+    </tbody></table></div><div class="small mute" style="margin-top:4px">次數只算有寫出解便內容的紀錄（例如「解黃色軟便中量」）與明細中量 &gt; 0 的大便項目；班別小計的糞便量列為「有」解便的依據，但不算次數（時間為小計時間）；緩瀉劑／止瀉劑有時間者為護理記錄的實際給藥，標「醫囑」者為依醫囑推估；「大便型態」評估欄位每班重複填寫，不計次數。同期用藥依醫囑（當天使用中或 3 天內停用）。</div></div>`;
 }
 function bmSoapTxt(p,rel){const B=bmDays(p);if(!B)return '';const d=t=>rel?rel(t.slice(0,10)):t.slice(5,10).replace('-','/');
   const en=B.since.replace(' 小時',' h').replace(' 天',' d');return B.lastBM?`last BM ${d(B.lastBM.t)} (${en} before last record)`:`no BM recorded ${d(B.first)}–${d(B.lastRec)} (${en})`;}
