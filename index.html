@@ -306,8 +306,9 @@ tr.old td{opacity:.5;text-decoration:line-through}
 <div id="expOv" class="ov hidden"><div class="pbox" id="expBox"></div></div>
 <div id="pasteOv" class="ov hidden"><div class="pbox">
   <h4>一鍵貼上病人資料／醫囑</h4>
-  <div class="small mute" style="margin-bottom:8px">把 HIS 的病人資訊列與醫囑整段貼上（可以只貼其中一種）。解析後先預覽，確認才匯入。</div>
+  <div class="small mute" style="margin-bottom:8px">HIS 複製的內容都可以直接貼：病人資訊列、醫囑（目前用藥／醫囑列印）、檢驗、培養與抗微生物圖譜、護理記錄、I/O 明細、管路、呼吸治療、病程、入院紀錄、會診、檢查報告（心導管、心臟超音波等）。系統會自動判斷種類，解析後先預覽，確認才加入。</div>
   <textarea id="pasteText" placeholder="病歷號:… 姓名:… 年齡:… 床號 入院日期:…&#10;Esomeprazole mups 40mg/tab   1PC QD&#10;Midazolam 15mg/3mL/amp (管4)(in NS 250 run as order)   10PC IRRE&#10;…"></textarea>
+  <div id="pasteKind" class="small" style="margin-top:6px;min-height:1.2em"></div>
   <div class="row" style="margin-top:8px">
     <button class="pri" id="btnParsePaste">解析</button>
     <button id="btnClosePaste">取消</button>
@@ -426,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-20p';
+const APP_VER='2026-11-21a';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -2484,10 +2485,14 @@ let pasteTarget=null,lastParse=null;
 function openPaste(targetId){
   if(!S.data)return;
   pasteTarget=targetId||null;lastParse=null;
-  $('pasteText').value='';$('pastePreview').innerHTML='';
+  $('pasteText').value='';$('pastePreview').innerHTML='';$('pasteKind').innerHTML='';
   $('pasteOv').classList.remove('hidden');setTimeout(()=>$('pasteText').focus(),40);
 }
-function closePaste(){$('pasteOv').classList.add('hidden');$('pasteText').value='';$('pastePreview').innerHTML='';lastParse=null;}
+function pasteKind(t){if(!t||!t.trim())return '';
+  const K=[[isCloudMed,'雲端藥歷'],[isOrderSheet,'醫囑列印紀錄'],[isLabReport,'檢驗報告'],[isMicro,'培養／抗微生物圖譜'],[isLineRecord,'管路紀錄'],[isNurseRecord,'護理記錄'],[isIOHourly,'I/O 明細'],[isRTRecord,'呼吸治療紀錄'],[isProgress,'病程紀錄'],[isAdmission,'入院紀錄'],[isConsultText,'會診'],[isExamText,'檢查報告']];
+  for(const [f,l] of K){try{if(f(t))return l;}catch(e){}}return '病人資訊列／目前用藥';}
+let _pkT=null;
+function closePaste(){$('pasteOv').classList.add('hidden');$('pasteText').value='';$('pasteKind').innerHTML='';$('pastePreview').innerHTML='';lastParse=null;}
 
 /* ===== 多病人去識別摘要匯出（沿用 AI 判讀包的去識別與內容設定，不含 AI 提問） ===== */
 S.expUI={sel:null,fmt:'md'};
@@ -2531,6 +2536,7 @@ function renderExport(){
 $('btnExportSum').onclick=()=>{if(!S.data||!S.data.patients.length){toast('目前沒有病人');return;}S.expUI.sel=null;renderExport();$('expOv').classList.remove('hidden');};
 $('btnPaste').onclick=()=>openPaste(null);
 $('btnClosePaste').onclick=closePaste;
+$('pasteText').addEventListener('input',()=>{clearTimeout(_pkT);_pkT=setTimeout(()=>{const k=pasteKind($('pasteText').value);$('pasteKind').innerHTML=k?`判斷為：<b>${k}</b>　<span class="mute">不對的話請確認是否複製完整</span>`:'';},250);});
 const CLS_TAG={pn:['t-new','靜脈營養'],fluid:['t-reg','稀釋液'],drip:['t-drip','輸注'],abx:['t-abx','抗生素'],reg:['t-reg','常規'],prn:['t-prn','PRN'],once:['t-reg','單次'],exp:['t-exp','已到期']};
 $('btnParsePaste').onclick=()=>{
   if(isCloudMed($('pasteText').value)){previewCloud($('pasteText').value);return;}
@@ -2570,7 +2576,7 @@ $('btnParsePaste').onclick=()=>{
     h+='</tbody></table></div>';
   }
   if(res.unknown.length)h+=`<div class="notice warn">以下 ${res.unknown.length} 行無法辨識，未匯入：<br>${res.unknown.map(esc).join('<br>')}</div>`;
-  h+=`<div class="row" style="margin-top:12px;justify-content:flex-end"><button class="pri" id="btnDoImport">確認匯入</button></div>`;
+  h+=`<div class="row" style="margin-top:12px;justify-content:flex-end"><button class="pri" id="btnDoImport">確認加入</button></div>`;
   $('pastePreview').innerHTML=h;
   $('btnDoImport').onclick=()=>{
     const r=importParsed(lastParse,$('pasteTargetSel').value);
@@ -2967,7 +2973,7 @@ function renderMeds(p,ro){
     abx.sort((a,b)=>(inList.has(b[0])-inList.has(a[0]))).forEach(([k,L])=>{
       const on=inList.has(k);
       h+=`<tr><td>${esc(L.name)}</td><td><input type="date" class="sm" data-abx="${esc(k)}" value="${esc(L.start||L.first)}" ${ro?'disabled':''}></td>
-        <td class="num"><b>D${abxDay(L,on)}</b></td><td>${on?'<span class="tag t-abx">使用中</span>':`<span class="tag t-exp">已停（最後見於 ${esc(L.last)}）</span>`}</td></tr>`;
+        <td class="num"><b>${L.start?'':'≥ '}D${abxDay(L,on)}</b>${L.start?'':` <span class="small under">未確認</span>${ro?'':` <button class="small" data-abxok="${esc(k)}" title="確認起始日就是左邊的日期">日期正確</button>`}`}</td><td>${on?'<span class="tag t-abx">使用中</span>':`<span class="tag t-exp">已停（最後見於 ${esc(L.last)}）</span>`}</td></tr>`;
     });
     h+='</tbody></table></div></div>';
   }
@@ -3036,7 +3042,8 @@ function bindMeds(p,ro){
   if((p.orderSources||[]).length)bindOrders(p,ro);
   if(ro)return;
   document.querySelectorAll('[data-abx]').forEach(el=>el.onchange=()=>{
-    const L=p.medLog[el.dataset.abx];if(!L)return;L.start=el.value===L.first?'':el.value;markDirty();renderMain();});
+    const L=p.medLog[el.dataset.abx];if(!L)return;L.start=el.value||'';markDirty();renderMain();});
+  document.querySelectorAll('[data-abxok]').forEach(el=>el.onclick=()=>{const L=p.medLog[el.dataset.abxok];if(!L)return;snapshot(p,'確認抗生素起始日');L.start=L.first;markDirty();renderMain();});
 }
 
 /* =====================================================================
@@ -3146,7 +3153,7 @@ function dripInfoHTML(p,c){
 function dresHTML(c,r,rh,peds){
   if(r.stage==='incomplete-basic')return '<div class="mute">請輸入支數、每支劑量、稀釋總體積</div>';
   let h=`<div class="line"><span class="mute">濃度</span><span class="v">${fmtN(r.concOrig)} ${c.ampUnit}/mL${c.conv!==1?` = ${fmtN(r.concOut)} ${c.outUnit}/mL`:''}</span></div>`;
-  if(peds){}else if(r.concWarn)h+=`<div class="over">⚠ 超過院內常規最大濃度 ${c.maxTxt||c.maxConc+' '+c.ampUnit+'/mL'}</div>`;
+  if(peds){}else if(r.concWarn)h+=`<div class="under">△ 超過院內常規最大濃度 ${c.maxTxt||c.maxConc+' '+c.ampUnit+'/mL'}</div>`;
   else if(c.maxConc&&r.concOrig)h+=`<div class="small mute">✓ 未超過院內常規最大濃度 ${c.maxTxt||c.maxConc+' '+c.ampUnit+'/mL'}</div>`;
   if(rh){
     if(r.stage==='done'&&!peds){let RE=r.rangesEval.filter(x=>x.flag!=='empty');const same=RE.length>1&&RE.every(x=>x.unit===RE[0].unit);if(same&&RE.some(x=>x.flag==='ok'))RE=RE.filter(x=>x.flag==='ok');
@@ -3533,16 +3540,16 @@ function soapLabLines(p,kind){
 // SOAP 用：每個使用中抗生素一行「Betamycin 11/16 16:34- (D1)」
 function abxDurationBlk(p){
   const R=ordersOf(p);let L=[];
-  if(R)L=R.groups.filter(g=>g.abx&&g.open&&!g.local).map(g=>`${MT.drugLabel(g.name)} ${g.course.start?MT.fmt(g.course.start):'?'}- (D${g.course.dot})`);
-  else L=(p.medList||[]).filter(m=>m.abx&&!m.expired).map(m=>{const Lg=p.medLog[m.key],st=Lg&&(Lg.start||Lg.first);return `${m.display.replace(/\s*[（(].*[）)]\s*$/,'')} ${st?st.slice(5).replace('-','/'):'?'}- (D${m.dot||(Lg?abxDay(Lg,true):'?')})`;});
+  if(R)L=R.groups.filter(g=>g.abx&&g.open&&!g.local).map(g=>{const ap=abxGApprox(R,g);return `${MT.drugLabel(g.name)} ${ap?'≤':''}${g.course.start?MT.fmt(g.course.start):'?'}- (${ap?'≥':''}D${g.course.dot})`;});
+  else L=(p.medList||[]).filter(m=>m.abx&&!m.expired).map(m=>{const Lg=p.medLog[m.key],st=Lg&&(Lg.start||Lg.first);const ap=!m.dot&&Lg&&!Lg.start;return `${m.display.replace(/\s*[（(].*[）)]\s*$/,'')} ${ap?'≤':''}${st?st.slice(5).replace('-','/'):'?'}- (${ap?'≥':''}D${m.dot||(Lg?abxDay(Lg,true):'?')})`;});
   return L.length?'\n'+L.join('\n'):'(no)';
 }
 function abxDurationTxt(p){
   const R=ordersOf(p);
-  if(R){const a=R.groups.filter(g=>g.abx&&g.open);return a.length?a.map(g=>`D${g.course.dot} ${g.label}`).join(', '):'no';}
+  if(R){const a=R.groups.filter(g=>g.abx&&g.open);return a.length?a.map(g=>`${abxGApprox(R,g)?'≥':''}D${g.course.dot} ${g.label}`).join(', '):'no';}
   const a=(p.medList||[]).filter(m=>m.abx&&!m.expired);
   if(!a.length)return 'no';
-  return a.map(m=>{const L=p.medLog[m.key];return `D${m.dot||(L?abxDay(L,true):'?')} ${m.display}`;}).join(', ');
+  return a.map(m=>{const L=p.medLog[m.key];return `${!m.dot&&L&&!L.start?'≥':''}D${m.dot||(L?abxDay(L,true):'?')} ${m.display}`;}).join(', ');
 }
 function buildSoap(p){
   const t=p.template,sex=p.sex==='M'?'male':p.sex==='F'?'female':'male/female';
@@ -6613,6 +6620,22 @@ function bindAI(p,ro){
 /* =====================================================================
    總覽
    ===================================================================== */
+/* 資料時效：卡片標題旁顯示最後更新時間；>24h 橘、>72h 或早於本次入院 紅 */
+function tsOf(x){if(x==null||x==='')return null;if(x instanceof Date)return +x;if(typeof x==='number')return x;x=String(x).trim();
+  let m=x.match(/^(\d{4})(\d{2})(\d{2})(\d{2})?(\d{2})?/);if(m&&!/[\/-]/.test(x.slice(0,8)))return +new Date(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0));
+  m=x.match(/(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})(?:[ T](\d{1,2}):(\d{2}))?/);if(m)return +new Date(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0));return null;}
+function freshTag(p,x,o){o=o||{};const t=tsOf(x);if(t==null)return '';const d=new Date(t),pd=n=>String(n).padStart(2,'0');
+  const lab=`${pd(d.getMonth()+1)}/${pd(d.getDate())}${o.noTime||(!d.getHours()&&!d.getMinutes())?'':' '+pd(d.getHours())+':'+pd(d.getMinutes())}`;
+  if(S.archive)return `<span class="small mute">${lab}</span>`;
+  const h=(Date.now()-t)/36e5,warn=o.warnH||24,bad=o.badH||72,adm=p.admitDate?tsOf(p.admitDate):null;
+  if(adm!=null&&t<adm-864e5)return `<span class="small over" title="這筆資料的時間早於本次入院日 ${esc(p.admitDate)}">${lab}・早於本次入院</span>`;
+  const ago=h<48?Math.round(h)+' 小時前':Math.floor(h/24)+' 天前';
+  if(h>bad)return `<span class="small over" title="最後更新已超過 ${Math.round(bad/24)} 天，請確認是否有新資料">${lab}・${ago}，可能過時</span>`;
+  if(h>warn)return `<span class="small under">${lab}・${ago}</span>`;
+  return `<span class="small mute">${lab}</span>`;}
+/* 抗生素起始日是否只是推估（實際可能更早） */
+function abxGApprox(R,g){if(!R||!R.range||!g.course.start)return false;const f=R.parsed.orders.filter(o=>MT.drugKey(o.name)===g.key&&!o.dc).sort((a,b)=>a.t-b.t)[0];
+  return !!(+g.course.start<=+R.range[0]&&f&&!['NEW','ST'].includes(f.cat));}
 function renderOverview(p){
   const kv=(k,v)=>`<div class="kv"><span class="k">${k}</span><span style="text-align:right">${v}</span></div>`;
   const hd=p.admitDate?Math.floor((Date.parse(ymd())-Date.parse(p.admitDate))/864e5)+1:null;
@@ -6636,7 +6659,7 @@ function renderOverview(p){
     if(pr&&pr.eligible&&!pr.given)rem.push(`符合 Palivizumab 健保給付（8.2.8，最多 ${pr.max} 劑），尚未記錄施打`);
     else if(pr&&pr.eligible&&pr.next&&pr.given<pr.max&&pr.next<=ymd())rem.push(`Palivizumab 第 ${pr.given+1} 劑已到預計日（${pr.next}）`);}
   if(hasTPN(p)){const R=tpnOf(p),r=R.rows[R.rows.length-1],c=r.calc;
-    h+=`<div class="card" style="margin:0"><h3>TPN <span class="small mute">${esc(tFmt(r.t))}</span></h3>
+    h+=`<div class="card" style="margin:0"><h3>TPN ${freshTag(p,r.t)||`<span class="small mute">${esc(tFmt(r.t))}</span>`}</h3>
       ${kv('TDF',r.tdf?r.tdf.mlkg+' mL/kg/day':'—')}${kv('AA',r.pn?`${r.pn.aa??'—'} g/kg/day`:'—')}${kv('脂肪',r.lipid?`${r.lipid.g??'—'} g/kg/day`:'—')}
       ${c.kcal?kv('熱量',`${c.kcal.toFixed(0)} kcal/kg/day${c.dexKnown?'':' <span class="small mute">（未含葡萄糖）</span>'}`):''}${c.gir!=null?kv('GIR',c.gir.toFixed(1)+' mg/kg/min'):''}
       ${c.flags.filter(f=>f[0]!=='info').map(([k,t])=>`<div class="small ${k==='bad'?'over':'under'}">⚠ ${esc(t)}</div>`).join('')}
@@ -6648,25 +6671,25 @@ function renderOverview(p){
     let v='<span class="mute">未填流速</span>';
     if(r.stage==='done'){const bad=r.rangesEval.some(x=>x.flag==='over'),low=r.rangesEval.some(x=>x.flag==='under');
       v=`<span class="${bad?'over':low?'under':'ok'}">${bad?'⚠ ':''}${esc(doseSummary(c,r))}</span>`;}
-    if(r.concWarn)v+=' <span class="over">濃度過高</span>';
+    if(r.concWarn)v+=' <span class="under" title="高於院內常規最大濃度：確認是否為中心靜脈、限水需求或刻意濃縮">高於常規濃度</span>';
     return kv(`${c.label}${d.flow?` <span class="small mute">${esc(d.flow)} mL/hr</span>`:''}`,v);
   }).join(''):'<div class="small mute">無</div>'}</div>`;
   // 抗生素
   const R=ordersOf(p);
   if(R){
     const act=R.groups.filter(g=>g.abx&&g.open),stopped=R.groups.filter(g=>g.abx&&!g.open);
-    h+=`<div class="card" style="margin:0"><h3>抗微生物製劑 <span class="small mute">LOT ${R.lot} 天</span></h3>${act.length?act.map(g=>kv(esc(g.label),`<b>DOT ${g.course.dot}</b> <span class="small mute">自 ${g.course.start?MT.fmtDay(g.course.start):'?'}</span>`)).join(''):'<div class="small mute">目前無</div>'}
+    h+=`<div class="card" style="margin:0"><h3>抗微生物製劑 <span class="small mute">LOT ${R.lot} 天</span></h3>${act.length?act.map(g=>{const ap=abxGApprox(R,g);return kv(esc(g.label),`<b>DOT ${ap?'≥ ':''}${g.course.dot}</b> <span class="small ${ap?'under':'mute'}">${ap?`起始不明（醫囑單最早 ${g.course.start?MT.fmtDay(g.course.start):'?'}，請往前補貼醫囑）`:`自 ${g.course.start?MT.fmtDay(g.course.start):'?'}`}</span>`);}).join(''):'<div class="small mute">目前無</div>'}
       ${stopped.length?`<div class="small mute" style="margin-top:6px">已停：${stopped.map(g=>`${esc(g.label)} ${g.course.start?MT.fmtDay(g.course.start):'?'}–${g.course.end?MT.fmtDay(g.course.end):'?'}`).join('、')}</div>`:''}</div>`;
   }else{
     const inList=new Set((p.medList||[]).filter(m=>!m.expired).map(m=>m.key));
     const abx=Object.entries(p.medLog||{}).filter(([k,L])=>L.abx&&inList.has(k));
-    h+=`<div class="card" style="margin:0"><h3>抗生素</h3>${abx.length?abx.map(([k,L])=>kv(esc(L.name),`<b>D${abxDay(L,true)}</b> <span class="small mute">自 ${esc(L.start||L.first)}</span>`)).join(''):'<div class="small mute">無</div>'}</div>`;
+    h+=`<div class="card" style="margin:0"><h3>抗生素</h3>${abx.length?abx.map(([k,L])=>kv(esc(L.name),L.start?`<b>D${abxDay(L,true)}</b> <span class="small mute">自 ${esc(L.start)}</span>`:`<b>≥ D${abxDay(L,true)}</b> <span class="small under">起始不明（首次貼上 ${esc(L.first.slice(5).replace('-','/'))}）</span> <button class="small" onclick="S.tab='meds';renderMain()">補起始日</button>`)).join(''):'<div class="small mute">無</div>'}</div>`;
   }
   // 呼吸器
   const V=RT.summary(p,rtCtx(p));
   if(V){
     const vs=[V.mode,V.ps!=null?'PS '+V.ps:null,V.pinsp!=null?'PC '+V.pinsp:null,V.peep!=null?'PEEP '+V.peep:null,V.fio2!=null?'FiO₂ '+V.fio2+'%':null].filter(Boolean).join('・');
-    h+=`<div class="card" style="margin:0"><h3>呼吸器 <span class="small mute">${esc(V.time||'')}</span></h3>
+    h+=`<div class="card" style="margin:0"><h3>呼吸器 ${freshTag(p,V.time)||`<span class="small mute">${esc(V.time||'')}</span>`}</h3>
       ${kv('設定',esc(vs||'—'))}
       ${V.vt!=null?kv('Vte / RR',`${esc(V.vt)} mL${V.vtkg!=null?` <span class="${V.vtkg>8?'over':'small mute'}">(${V.vtkg.toFixed(1)} mL/kg PBW)</span>`:''} / ${V.rr??'—'}`):''}
       ${V.dp!=null?kv('Driving P'+(V.dpEst?'（估）':''),`<span class="${V.dp>15?'over':''}">${V.dp.toFixed(0)}</span>`):''}
@@ -6709,13 +6732,13 @@ function renderOverview(p){
       return kv(`${lab} <span class="small mute">${skMD(v.sk)}</span>`,`<span class="${c}">${esc(val)}${v.flag?' '+v.flag:''}</span>${prev}`);}).join('');
     const r=renalCalc(p);
     const ren=r?(r.peds?kv('eGFR (Brion)',`${r.peds.egfr.toFixed(1)}`):r.crcl!=null?kv('CrCl (C-G)',`<b>${r.crcl.toFixed(1)}</b> mL/min${r.adj!=null?` <span class="small mute">AdjBW ${r.adj.toFixed(1)}</span>`:''}`):''):'';
-    h+=`<div class="card" style="margin:0"><h3>檢驗 <span class="small mute">最新 ← 前次</span></h3>${rows}${ren}
+    h+=`<div class="card" style="margin:0"><h3>檢驗 <span class="small mute">最新 ← 前次</span> ${(()=>{let mx='';Object.values(p.labs.items).forEach(it=>Object.keys(it.vals).forEach(k=>{if(k>mx)mx=k;}));return mx?freshTag(p,mx):'';})()}</h3>${rows}${ren}
       <div style="margin-top:8px"><button class="small" onclick="S.tab='lab';renderMain()">查看全部檢驗</button></div></div>`;
   }
   // 用藥摘要
   const list=(p.medList||[]).filter(m=>!m.expired);
   const cnt=k=>list.filter(m=>m.cls===k).length;
-  h+=`<div class="card" style="margin:0"><h3>用藥</h3>${list.length?kv('輸注',cnt('drip'))+kv('抗生素',cnt('abx'))+kv('常規',cnt('reg'))+kv('PRN',cnt('prn'))+kv('單次',cnt('once')):'<div class="small mute">尚未貼上醫囑</div>'}
+  h+=`<div class="card" style="margin:0"><h3>用藥 ${p.medPasteAt?freshTag(p,new Date(p.medPasteAt)):''}</h3>${list.length?kv('輸注',cnt('drip'))+kv('抗生素',cnt('abx'))+kv('常規',cnt('reg'))+kv('PRN',cnt('prn'))+kv('單次',cnt('once')):'<div class="small mute">尚未貼上醫囑</div>'}
     <div style="margin-top:8px"><button class="small" onclick="S.tab='meds';renderMain()">查看用藥</button></div></div>`;
   h+='</div>';
   if(rem.length)h+=`<div class="notice warn" style="margin-top:12px">${rem.map(esc).join('<br>')}</div>`;
