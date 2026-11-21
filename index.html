@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-21a';
+const APP_VER='2026-11-21b';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -4092,7 +4092,7 @@ function previewExamCons(kind,txt){
     <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="pri" id="btnDoImport">確認加入</button></div>`;
   $('btnDoImport').onclick=()=>{
     const tid=$('pasteTargetSel').value;let p=tid!=='new'?S.data.patients.find(x=>x.id===tid):null;const isNew=!p;
-    if(!p){p=newPatient();S.data.patients.push(p);}ensurePatient(p);
+    if(!p){p=newPatient();S.data.patients.push(p);}ensurePatient(p);if(!isNew)snapshot(p,ex?'加入檢查報告':'加入會診');
     if(ex)mergeExams(p,L);else consStore(p).push(Object.assign({id:'c'+uid().slice(1),addedAt:new Date().toISOString(),follow:''},L[0]));
     p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab=kind;markDirty();renderList();renderMain();
     toast(`${isNew?'已新增病患並':'已'}加入${ex?`檢查報告 ${L.length} 份`:'會診'}`);};
@@ -5511,7 +5511,7 @@ function previewProg(txt){
     <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="pri" id="btnDoImport">確認加入</button></div>`;
   $('btnDoImport').onclick=()=>{
     const tid=$('pasteTargetSel').value;let p=tid!=='new'?S.data.patients.find(x=>x.id===tid):null;const isNew=!p;
-    if(!p){p=newPatient();S.data.patients.push(p);}ensurePatient(p);
+    if(!p){p=newPatient();S.data.patients.push(p);}ensurePatient(p);if(!isNew)snapshot(p,'加入病程');
     const x=mergeProgress(p,r);p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab='prog';markDirty();renderList();renderMain();
     toast(`${isNew?'已新增病患並':'已'}加入病程${x.got.length?'；'+x.got.join('、'):''}`);};
 }
