@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-21b';
+const APP_VER='2026-11-21c';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -4095,7 +4095,7 @@ function previewExamCons(kind,txt){
     if(!p){p=newPatient();S.data.patients.push(p);}ensurePatient(p);if(!isNew)snapshot(p,ex?'加入檢查報告':'加入會診');
     if(ex)mergeExams(p,L);else consStore(p).push(Object.assign({id:'c'+uid().slice(1),addedAt:new Date().toISOString(),follow:''},L[0]));
     p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab=kind;markDirty();renderList();renderMain();
-    toast(`${isNew?'已新增病患並':'已'}加入${ex?`檢查報告 ${L.length} 份`:'會診'}`);};
+    toast(`${isNew?'已新增病患並':'已'}加入${ex?`檢查報告 ${L.length} 份${L.some(x=>!x.imp)?'；部分報告沒抓到 Impression，請在欄位補上':''}`:`${L[0].dept?' '+L[0].dept:''}會診${L[0].dept?'':'；沒抓到科別，請補上'}`}`);};
 }
 function isAdmission(t){return (t||'').split(/\r?\n/).some(l=>ADM_HEAD.test(l));}
 function parseAdmission(t){
@@ -4604,10 +4604,9 @@ function bindExam(p,ro){
   if($('btnExamSoap'))$('btnExamSoap').onclick=()=>copyMsg(examSoapTxt(p),'已複製檢查摘要');
   if(ro)return;
   document.querySelectorAll('[data-risk]').forEach(el=>el.onchange=()=>{const [g,k]=el.dataset.risk.split('|');p.risk=p.risk||{};p.risk[g]=p.risk[g]||{};if(el.value)p.risk[g][k]=el.value;else delete p.risk[g][k];markDirty();renderMain();});
-  if($('btnExamAdd'))$('btnExamAdd').onclick=()=>{
-    const L=parseExams($('examText').value);if(!L.length){toast('沒有內容');return;}
-    snapshot(p,'加入檢查報告');const r=mergeExams(p,L);p.updatedAt=new Date().toISOString();markDirty();renderMain();
-    toast(`已加入 ${r.add} 份${r.upd?`，更新 ${r.upd} 份`:''}${L.some(x=>!x.imp)?'；部分報告沒抓到 Impression，請在欄位補上':''}`);};
+  if($('btnExamAdd'))$('btnExamAdd').onclick=()=>{const t=$('examText').value;
+    if(!parseExams(t).length){toast('沒有內容');return;}
+    openPaste(p.id);$('pasteText').value=t;previewExamCons('exam',t);};
   document.querySelectorAll('[data-ef]').forEach(el=>{
     const [id,k]=el.dataset.ef.split('|');
     el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>{const x=examStore(p).find(y=>y.id===id);if(!x)return;x[k]=el.value;if(k==='type')x.typeManual=true;p.updatedAt=new Date().toISOString();markDirty();});
@@ -5244,7 +5243,7 @@ function bindConsult(p,ro){
   const add=c=>{snapshot(p,'新增會診');consStore(p).push(Object.assign({id:'c'+uid().slice(1),addedAt:new Date().toISOString(),follow:''},c));p.updatedAt=new Date().toISOString();markDirty();renderMain();};
   if($('btnConsBlank'))$('btnConsBlank').onclick=()=>add({dept:'',doctor:'',reqDate:ymd(),replyDate:'',reason:'',reply:'',status:'待回覆',text:''});
   if($('btnConsAdd'))$('btnConsAdd').onclick=()=>{const t=$('consText').value;if(!t.trim()){toast('請先貼上會診內容，或按「新增空白會診」');return;}
-    const c=parseConsult(t);add(c);toast(`已加入${c.dept?' '+c.dept:''}會診${c.reply?'（含回覆）':''}${c.dept?'':'；沒抓到科別，請補上'}`);};
+    openPaste(p.id);$('pasteText').value=t;previewExamCons('consult',t);};
   document.querySelectorAll('[data-cf]').forEach(el=>{
     const [id,k]=el.dataset.cf.split('|');
     el.addEventListener(el.tagName==='SELECT'?'change':'input',()=>{const c=consStore(p).find(y=>y.id===id);if(!c)return;c[k]=el.value;
@@ -5489,8 +5488,7 @@ function renderProg(p,ro){
 function bindProg(p,ro){
   if(ro)return;
   if($('btnProgAdd'))$('btnProgAdd').onclick=()=>{const t=$('progText').value;if(!isProgress(t)){toast('沒有找到 S／O／A／P 段落');return;}
-    snapshot(p,'加入病程');const r=parseProgress(t);const x=mergeProgress(p,r);p.updatedAt=new Date().toISOString();markDirty();renderList();renderMain();
-    toast(`${x.upd?'已更新':'已加入'} ${r.at.slice(5)} 病程${x.got.length?'；'+x.got.join('、'):''}`);};
+    openPaste(p.id);$('pasteText').value=t;previewProg(t);};
   document.querySelectorAll('[data-progdx]').forEach(b=>b.onclick=async()=>{const r=progStore(p).find(x=>x.id===b.dataset.progdx);if(!r||!r.A)return;
     if(p.dx&&!await confirmBox('更新診斷','用這份病程的 Assessment 取代目前「診斷／病況簡述」？（SOAP Subjective 會使用）','取代'))return;
     snapshot(p,'更新診斷');p.dx=r.A.split(/\n\s*[＜<]inactive[＞>]/i)[0].replace(/\n{2,}/g,'\n').trim();p.updatedAt=new Date().toISOString();markDirty();toast('已更新診斷');});
