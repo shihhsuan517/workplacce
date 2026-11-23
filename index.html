@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-23e';
+const APP_VER='2026-11-23f';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -1473,6 +1473,9 @@ function buildEpisodes(p){
           e.stop=o.t; e.stopCat=o.cat;
           const nearExp=e.exp && +o.t>=+e.exp-864e5;
           if(o.cat==="EXP"){ e.status="expired"; e.stopWhy="EXP 到期停用（人工）"; }
+          // 同一時間（±10 分）另開了同類藥（例：抗生素換藥）→ 醫師停用，不是到期
+          const sw=abxClass(e.name)?p.orders.filter(x=>!x.dc && ['NEW','ST','CHG'].includes(x.cat) && Math.abs(+x.t-+o.t)<=6e5 && drugKey(x.name)!==e.key && abxClass(x.name) && !isLocal(x)):[];
+          if(sw.length && o.cat==="DC-D"){ e.status="stopped"; e.stopWhy=`DC-D 停用，同時改用 ${[...new Set(sw.map(x=>x.name.split(/[ (（]/)[0]))].join('、')}`; }
           else if(o.cat==="DC-D" && nearExp && !changed.length && !sameBack){ e.status="expired";
             const before=+e.exp-+o.t;
             e.stopWhy=before>0?`DC-D 於期滿前 ${durTxt(before)}（${e.days}期滿 ${fmt(e.exp)}），判定為到期停用`:`到期自動停用（DC-D；${e.days}期滿 ${fmt(e.exp)}）`; }
@@ -2716,7 +2719,7 @@ function deriveFromOrders(p){
     const m=parseMedLine(`${o.name} ${notes}   ${pcQty}PC ${e.freq}`);
     if(!m)return;
     if(e.unit!=='PC'){const U={MG:'mg',GM:'g',ML:'mL',UG:'mcg',CC:'mL'};m.dose=`${e.qty===''?'':fmtN(e.qty)+' '}${U[e.unit]||e.unit.toLowerCase()}`;}
-    m.route=e.route;m.fromOrders=true;m.ordKey=g.key;m.dot=g.course.dot;m.courseStart=g.course.start?ymdOf(g.course.start):'';
+    m.route=e.route;m.fromOrders=true;m.ordKey=g.key;m.dot=g.course.dot;m.gaps=(g.course.gaps||[]).filter(x=>x[1]-x[0]>=36e5);m.courseStart=g.course.start?ymdOf(g.course.start):'';
     m.expAt=e.exp?MT.fmt(e.exp):'';
     m.startAt=g.course.start?MT.fmt(g.course.start):'';m.startTs=g.course.start?+g.course.start:0;
     m.segAt=e.start?MT.fmt(e.start):'';
@@ -2934,7 +2937,7 @@ function medRow(m,p){
   if(m.cls==='pn'){const pc=pnComp(m);sub=[m.spec,pc?'組成：'+pc:''].filter(Boolean).join('　');}
   const notes=m.notes.length?' · '+m.notes.join(' · '):'';
   let extra=pedsDoseTag(m,p);
-  if(m.abx&&!m.expired){if(m.dot)extra=`<span class="tag t-abx">DOT ${m.dot}</span>`;else{const L=p.medLog[m.key];if(L)extra=`<span class="tag t-abx">D${abxDay(L,true)}</span>`;}}
+  if(m.abx&&!m.expired){if(m.dot)extra=`<span class="tag t-abx">DOT ${m.dot}</span>${(m.gaps||[]).map(g=>`<span class="tag t-warn" title="療程中斷：停用後重新開立">中斷 ${MT.fmtDay(new Date(g[0]))}–${MT.fmtDay(new Date(g[1]))}</span>`).join('')}`;else{const L=p.medLog[m.key];if(L)extra=`<span class="tag t-abx">D${abxDay(L,true)}</span>`;}}
   if(m.isDrip){const c=matchDrip(m),d=c&&p.drips[c.id];
     if(c&&d){const r=computeResult(c,+d.amp,+d.dose,+d.vol,+d.flow,parseFloat(p.wt));extra+=r.stage==='done'?`<span class="tag t-drip">${esc(doseSummary(c,r))}</span>`:'<span class="tag t-warn">未填流速</span>';}}
   if(m.expAt)extra+=`<span class="tag t-reg">有效至 ${esc(m.expAt)}</span>`;
@@ -6693,7 +6696,7 @@ function renderOverview(p){
   const R=ordersOf(p);
   if(R){
     const act=R.groups.filter(g=>g.abx&&g.open),stopped=R.groups.filter(g=>g.abx&&!g.open);
-    h+=`<div class="card" style="margin:0"><h3>抗微生物製劑 <span class="small mute">LOT ${R.lot} 天</span></h3>${act.length?act.map(g=>{const ap=abxGApprox(R,g);return kv(esc(g.label),`<b>DOT ${ap?'≥ ':''}${g.course.dot}</b> <span class="small ${ap?'under':'mute'}">${ap?`起始不明（醫囑單最早 ${g.course.start?MT.fmtDay(g.course.start):'?'}，請往前補貼醫囑）`:`自 ${g.course.start?MT.fmtDay(g.course.start):'?'}`}</span>`);}).join(''):'<div class="small mute">目前無</div>'}
+    h+=`<div class="card" style="margin:0"><h3>抗微生物製劑 <span class="small mute">LOT ${R.lot} 天</span></h3>${act.length?act.map(g=>{const ap=abxGApprox(R,g);return kv(esc(g.label),`<b>DOT ${ap?'≥ ':''}${g.course.dot}</b> <span class="small ${ap?'under':'mute'}">${ap?`起始不明（醫囑單最早 ${g.course.start?MT.fmtDay(g.course.start):'?'}，請往前補貼醫囑）`:`自 ${g.course.start?MT.fmtDay(g.course.start):'?'}`}</span>${(g.course.gaps||[]).filter(x=>x[1]-x[0]>=36e5).map(x=>` <span class="small under">中斷 ${MT.fmtDay(new Date(x[0]))}–${MT.fmtDay(new Date(x[1]))}</span>`).join('')}`);}).join(''):'<div class="small mute">目前無</div>'}
       ${stopped.length?`<div class="small mute" style="margin-top:6px">已停：${stopped.map(g=>`${esc(g.label)} ${g.course.start?MT.fmtDay(g.course.start):'?'}–${g.course.end?MT.fmtDay(g.course.end):'?'}`).join('、')}</div>`:''}</div>`;
   }else{
     const inList=new Set((p.medList||[]).filter(m=>!m.expired).map(m=>m.key));
