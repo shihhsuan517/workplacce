@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-23d';
+const APP_VER='2026-11-23e';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -5488,8 +5488,7 @@ function mergeProgress(p,r){
 }
 function renderProg(p,ro){
   const E=progSorted(p);
-  let h=ro?'':`<div class="card"><h3>貼上病程紀錄</h3><textarea id="progText" rows="5" placeholder="整份貼上 progress note（Ｓ／Ｏ／Ａ／Ｐ）。同一時間的紀錄重複貼上會更新。"></textarea>
-    <div class="row" style="margin-top:8px;justify-content:flex-end"><button class="pri" id="btnProgAdd">解析並加入</button></div></div>`;
+  let h=ro?'':`<div class="small mute" style="margin:0 0 10px">新增病程：用左上「📋 一鍵貼上」整份貼上 progress note（需有 S／A／P 段落）；同一時間的病程重複貼上會更新原本那份。</div>`;
   if(!E.length)return h+'<div class="todo">還沒有病程紀錄。</div>';
   const blk=(t,x,open)=>x?`<details ${open?'open':''} style="margin-top:8px"><summary style="cursor:pointer;font-weight:700;color:var(--navy)">${t}</summary><div style="white-space:pre-wrap;font-size:13.5px;margin-top:4px">${esc(x)}</div></details>`:'';
   h+=E.map((r,i)=>{
