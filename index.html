@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-23b';
+const APP_VER='2026-11-23c';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -4771,7 +4771,7 @@ const ioShTxt=x=>x.full?'全天':x.L.map(s=>IO_SH[s.sh]).join('＋'),ioShEn=x=>x
 const ioSign=v=>(v>0?'+':'')+fmtN(Math.round(v));
 const ioMD=d=>d.slice(5).replace('-','/');
 function ioHD(p,day){const adm=p.admitDate?new Date(p.admitDate+'T00:00:00'):null,dob=p.template==='peds'&&p.dob?new Date(p.dob+'T00:00:00'):null,x=new Date(day+'T00:00:00');
-  return dob?`DOL${Math.round((x-dob)/864e5)+1}`:adm&&x>=adm?`HD${Math.round((x-adm)/864e5)+1}`:'';}
+  return dob?`DOL${Math.round((x-dob)/864e5)+1}`:adm&&x>=adm?`入院 D${Math.round((x-adm)/864e5)+1}`:'';}
 function ioChart(p,D){
   if(!D.length)return '';
   const n=D.length,cw=Math.max(46,Math.min(84,700/n)),L=46,R=14,W=L+R+cw*n,TOP=6,PH=120,PH2=80,PH3=64,GAP=26;
