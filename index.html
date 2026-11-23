@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-23c';
+const APP_VER='2026-11-23d';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -5482,7 +5482,8 @@ function mergeProgress(p,r){
   if(ex)Object.assign(ex,r);else E.push(Object.assign({id:'g'+uid().slice(1)},r));
   const got=applyNeo(p,r.neo||{});
   const kg=r.wtG?r.wtG/1000:r.wtKg;
-  if(kg&&(!p.wtAt||r.at>=p.wtAt.slice(0,16).replace('T',' '))){p.wt=String(+kg.toFixed(3));p.wtAt=r.at;p.wtSrc=`病程 ${r.at.slice(5,10).replace('-','/')}`;got.push(`體重更新為 ${p.wt} kg`);}
+  if(kg&&(!p.wtAt||r.at>=p.wtAt.slice(0,16).replace('T',' '))){const res=weightFromSource(p,kg,`病程 ${r.at.slice(5,10).replace('-','/')}`,r.at);
+    if(res==='set')got.push(`體重更新為 ${p.wt} kg`);else if(res==='pending')got.push(`病程體重 ${fmtN(+kg.toFixed(3))} kg 與目前差距 >5%，未自動更新，請到基本資料確認`);}
   return {upd:!!ex,got};
 }
 function renderProg(p,ro){
