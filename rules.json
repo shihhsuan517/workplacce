@@ -1,6 +1,6 @@
 {
- "version": "2026-11-20a",
- "updated": "2026-11-20",
+ "version": "2026-11-24a",
+ "updated": "2026-11-24",
  "rules": [
   {
    "id": "dexmedetomidine",
@@ -3678,11 +3678,18 @@
      "sections": "Dosing: Pediatric; Altered Kidney Function (Pediatric, Adult); Altered Liver Function; Administration; Interactions; Pharmacokinetics（成人適應症細項與新生兒未納入）",
      "addedAt": "2026-11-12",
      "by": "JC"
+    },
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Ampicillin（Last Updated 11/20/26）",
+     "sections": "全文：Dosing: Neonatal; Pediatric; Adult（含各適應症）; Altered Kidney/Liver Function; Administration; Medication Safety; Interactions; Pharmacokinetics",
+     "addedAt": "2026-11-24",
+     "by": "JC"
     }
    ],
    "doseUnit": "g",
    "usual": {
-    "text": "腎功能表所用常用劑量：口服 500 mg q6h；IV 1–2 g q6h，或 2 g q4h（較重感染）。口服降階優先改 amoxicillin（生體可用率 77% vs 39–54%）。可將每日總量以 24 小時連續輸注（門診 IV 方便用）。（Lexidrug 成人適應症細項未展開）"
+    "text": "一般：IV 1–2 g q6h；嚴重或特定病原 2 g q4h（Enterococcus／Listeria 菌血症、心內膜炎、腦膜炎、骨髓炎、人工關節感染；後兩者亦可 12 g/24 h 連續輸注）。口服 500 mg q6h。口服降階優先改 amoxicillin（生體可用率 77% vs 39–54%）。",
+    "maxDaily": 12
    },
    "renal": {
     "method": "CG",
@@ -3908,16 +3915,31 @@
     {
      "re": "chloroquine",
      "text": "Chloroquine 會降低 ampicillin 濃度：間隔至少 2 小時。"
+    },
+    {
+     "re": "warfarin|acenocoumarol",
+     "text": "Penicillin 可能增加 vitamin K antagonist 抗凝作用（Risk C）：監測 INR。"
+    },
+    {
+     "re": "methotrexate",
+     "text": "Penicillin 可能增加 methotrexate 濃度（Risk C）。"
+    },
+    {
+     "re": "mycophenolate|cellcept|myfortic",
+     "text": "抗生素可能降低 mycophenolic acid 暴露量（Risk C）。"
     }
    ],
    "notes": [
+    "成人適應症：Enterococcus 菌血症 2 g q4h（低風險 7–14 天）；Listeria 菌血症 2 g q4h + gentamicin（≥14–21 天）；E. faecalis 心內膜炎 2 g q4h + ceftriaxone 或 gentamicin（通常 6 週）；細菌性腦膜炎 2 g q4h（7–21 天）。",
+    "成人適應症：院內型腹內感染（Enterococcus 高風險）2 g q4h，source control 後 4–5 天；複雜性 UTI／腎盂腎炎（Enterococcus）1–2 g q4–6h，5–7 天；骨髓炎／人工關節感染 2 g q4h 或 12 g/24 h 連續輸注；骨盆腔感染 2 g q6h（合併 gentamicin ± clindamycin）。",
     "IV 推注：≤ 500 mg 推 3–5 分鐘，> 500 mg 推 10–15 分鐘；推太快可致痙攣。",
-    "間歇輸注 10–15 分鐘，最終濃度 ≤ 30 mg/mL（NS 為首選稀釋液），泡製後 1 小時內稀釋。",
+    "間歇輸注 10–15 分鐘，最終濃度 ≤ 30 mg/mL（NS 為首選稀釋液），泡製後 1 小時內稀釋。NS 內 25°C 穩定 8 小時。",
     "時間依賴型（fT>MIC ≥ 40%；重症可能需 100%）。",
-    "t½ 1–1.8 小時；無尿 8–20 小時。"
+    "t½ 1–1.8 小時；無尿 8–20 小時。",
+    "皮疹：需區分非過敏性 ampicillin 疹（兒童 5–10%，治療 3–14 天出現、軀幹開始的暗紅斑丘疹）與過敏反應；感染性單核球增多症病人皮疹比例高，不建議使用。"
    ],
    "info": {
-    "up": "2026-10-10",
+    "up": "2026-11-24",
     "times": [
      "—",
      "PO 1–2 hr",
@@ -4036,6 +4058,652 @@
     ],
     "info": {
      "alert": "推注太快可致痙攣；IV 單日上限 8 g（重症 12 g）。"
+    }
+   },
+   "elderly": {
+    "age": 65,
+    "text": "STOPP（2023）：無症狀菌尿不建議使用 ampicillin。劑量依成人與腎功能。"
+   },
+   "neo": {
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Ampicillin（Last Updated 11/20/26）",
+      "sections": "全文：Dosing: Neonatal; Pediatric; Adult（含各適應症）; Altered Kidney/Liver Function; Administration; Medication Safety; Interactions; Pharmacokinetics",
+      "addedAt": "2026-11-24",
+      "by": "JC"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "一般（非 CNS）GA <35 週、PNA ≤7 天（或 BW ≤2 kg、PNA ≤7 天）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 50,
+      "hi": 50,
+      "unit": "mg/kg",
+      "freq": "q12h"
+     },
+     {
+      "ind": "一般（非 CNS）GA <35 週、PNA 8–28 天（或 BW ≤2 kg、PNA 8–28 天）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 75,
+      "hi": 75,
+      "unit": "mg/kg",
+      "freq": "q12h"
+     },
+     {
+      "ind": "一般（非 CNS）GA ≥35 週、PNA ≤28 天（或 BW >2 kg、PNA ≤28 天）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 50,
+      "hi": 50,
+      "unit": "mg/kg",
+      "freq": "q8h"
+     },
+     {
+      "ind": "一般（非 CNS）PNA 29–60 天（依體重表，不分 BW）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 50,
+      "hi": 50,
+      "unit": "mg/kg",
+      "freq": "q6h"
+     },
+     {
+      "ind": "腦膜炎（非 GBS）：同一般劑量表（GA <35 週 ≤7 天 50 q12h、8–28 天 75 q12h；≥35 週 50 q8h）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 50,
+      "hi": 75,
+      "unit": "mg/kg",
+      "freq": "q8–12h"
+     },
+     {
+      "ind": "GBS 腦膜炎 PNA ≤7 天（不分 GA）",
+      "routes": [
+       "IV"
+      ],
+      "lo": 100,
+      "hi": 100,
+      "unit": "mg/kg",
+      "freq": "q8h"
+     },
+     {
+      "ind": "GBS 腦膜炎 PNA 8–60 天（不分 GA）",
+      "routes": [
+       "IV"
+      ],
+      "lo": 75,
+      "hi": 75,
+      "unit": "mg/kg",
+      "freq": "q6h"
+     },
+     {
+      "ind": "炭疽（含腦膜炎）GA 32–<34 週：PNA <7 天 50 q12h、7–28 天 75 q12h；GA ≥34 週 50 q8h",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 50,
+      "hi": 75,
+      "unit": "mg/kg",
+      "freq": "q8–12h"
+     },
+     {
+      "ind": "手術預防（單次，切皮前 60 分鐘內）",
+      "routes": [
+       "IV"
+      ],
+      "when": "stat",
+      "lo": 50,
+      "hi": 50,
+      "unit": "mg/kg"
+     }
+    ],
+    "renal": {
+     "text": "Lexidrug 新生兒段未列腎功能調整。"
+    },
+    "notes": [
+     "早發型敗血症（EOS）經驗治療合併 gentamicin；血液培養 36–48 小時無菌、且無局部感染證據時可停藥。",
+     "確診 EOS 療程：GBS 菌血症（無病灶）10 天；Listeria 菌血症 10–14 天；GBS 骨關節 3–4 週；GBS 心內膜炎 ≥4 週；Enterobacterales 菌血症（非複雜）10 天。",
+     "腦膜炎療程：GBS 非複雜 14 天、腦室炎 ≥4 週；革蘭氏陰性或 Listeria ≥21 天。",
+     "輸注 10–15 分鐘；極低出生體重（GA 22–27 週）早產兒可考慮 >20 分鐘（模擬顯示峰值可能超過神經毒性閾值 140 mcg/mL）。避免與 aminoglycoside 同時輸注。",
+     "濃度：Vermont Oxford Network 建議床邊配製 100 mg/mL、藥局配製 30 mg/mL；新生兒勿用 bacteriostatic water。",
+     "新生兒 t½：PNA 2–7 天 4 小時、8–14 天 2.8 小時、15–30 天 1.7 小時。",
+     "新生兒使用可延長出血時間（平均 60 秒；VLBW 用 ≥10 天約 2 分鐘），臨床意義未明。"
+    ],
+    "info": {
+     "alert": "推注太快可致痙攣；VLBW 考慮延長輸注；避免與 aminoglycoside 同時輸注。"
+    }
+   }
+  },
+  {
+   "id": "cefotaxime",
+   "label": "Cefotaxime",
+   "names": [
+    "cefotaxime",
+    "claforan",
+    "cefotaxim"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Cefotaxime（Last Updated 11/19/26）",
+     "sections": "全文：Dosing: Neonatal; Pediatric; Adult（含各適應症）; Altered Kidney/Liver Function; Administration; Warnings; Interactions; Pharmacokinetics",
+     "addedAt": "2026-11-24",
+     "by": "JC"
+    }
+   ],
+   "doseUnit": "g",
+   "usual": {
+    "text": "一般：IV 1–2 g q6–8h；嚴重感染 2 g q4h；單日上限 12 g。腦膜炎、腦膿瘍 2 g q4–6h；菌血症 2 g q6–8h（非複雜 Enterobacterales 7 天）；壞死性軟組織感染 2 g q6h；腹內感染、SBP、化膿性關節炎、Lyme 2 g q8h；CAP（無綠膿桿菌風險）1–2 g q8h；COPD 急性惡化 1 g q8h。手術預防 1 g（≥120 kg 或 BMI >30：2 g），3 小時可追加。",
+    "maxDaily": 12
+   },
+   "renal": {
+    "method": "CG",
+    "text": "依適應症常用劑量欄（1–2 g q8h／1–2 g q6h／2 g q4h）對照 CrCl；以上為專家意見。",
+    "byRoute": {
+     "IV": {
+      "bands": [
+       {
+        "min": 50,
+        "minEx": true,
+        "max": 9999,
+        "text": "不需調整。",
+        "regimens": [
+         {
+          "gMin": 1,
+          "gMax": 2,
+          "q": [
+           8
+          ]
+         },
+         {
+          "gMin": 1,
+          "gMax": 2,
+          "q": [
+           6
+          ]
+         },
+         {
+          "g": 2,
+          "q": 4
+         }
+        ]
+       },
+       {
+        "min": 10,
+        "minEx": true,
+        "max": 50,
+        "maxIn": true,
+        "text": "常用 1–2 g q8h → 1–2 g q12h；常用 1–2 g q6h → 1–2 g q8h；常用 2 g q4h → 2 g q6–8h。",
+        "regimens": [
+         {
+          "gMin": 1,
+          "gMax": 2,
+          "q": [
+           12
+          ]
+         },
+         {
+          "gMin": 1,
+          "gMax": 2,
+          "q": [
+           8
+          ]
+         },
+         {
+          "g": 2,
+          "q": [
+           6,
+           8
+          ]
+         }
+        ]
+       },
+       {
+        "min": 0,
+        "max": 10,
+        "maxIn": true,
+        "text": "常用 1–2 g q8h → 1–2 g q24h；常用 1–2 g q6h → 1–2 g q12h；常用 2 g q4h → 2 g q12h。",
+        "regimens": [
+         {
+          "gMin": 1,
+          "gMax": 2,
+          "q": [
+           24
+          ]
+         },
+         {
+          "gMin": 1,
+          "gMax": 2,
+          "q": [
+           12
+          ]
+         },
+         {
+          "g": 2,
+          "q": 12
+         }
+        ]
+       }
+      ],
+      "HD": {
+       "text": "可被透析（約 40%）。常用 1–2 g q8h → 1–2 g q24h；常用 1–2 g q6h → 1–2 g q12h；常用 2 g q4h → 2 g q12h；透析日排定劑量在透析後給。",
+       "regimens": [
+        {
+         "gMin": 1,
+         "gMax": 2,
+         "q": [
+          24
+         ]
+        },
+        {
+         "gMin": 1,
+         "gMax": 2,
+         "q": [
+          12
+         ]
+        },
+        {
+         "g": 2,
+         "q": 12
+        }
+       ],
+       "afterHD": true
+      },
+      "PD": {
+       "text": "常用 1–2 g q8h → 1–2 g q24h；常用 1–2 g q6h → 1–2 g q12h；常用 2 g q4h → 2 g q12h。",
+       "regimens": [
+        {
+         "gMin": 1,
+         "gMax": 2,
+         "q": [
+          24
+         ]
+        },
+        {
+         "gMin": 1,
+         "gMax": 2,
+         "q": [
+          12
+         ]
+        },
+        {
+         "g": 2,
+         "q": 12
+        }
+       ]
+      },
+      "CRRT": {
+       "text": "CVVH／CVVHD／CVVHDF（high-flux、effluent 20–25 mL/kg/h）：比照 CrCl >10–50（1–2 g q8h → q12h；q6h → q8h；2 g q4h → 2 g q6–8h）。",
+       "regimens": [
+        {
+         "gMin": 1,
+         "gMax": 2,
+         "q": [
+          12
+         ]
+        },
+        {
+         "gMin": 1,
+         "gMax": 2,
+         "q": [
+          8
+         ]
+        },
+        {
+         "g": 2,
+         "q": [
+          6,
+          8
+         ]
+        }
+       ]
+      },
+      "PIRRT": {
+       "text": "PIRRT 日比照 CrCl >10–50（盡量一劑排在 PIRRT 後）；非 PIRRT 日比照 CrCl ≤10。"
+      }
+     }
+    }
+   },
+   "hepatic": {
+    "none": true,
+    "text": "仿單無肝功能調整建議（部分經肝代謝為活性代謝物 desacetylcefotaxime；肝腎功能不全 t½ 延長）。"
+   },
+   "obesity": {
+    "text": "手術預防：≥120 kg 或 BMI >30 kg/m² 給 2 g。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "依成人劑量與腎功能。"
+   },
+   "concomitant": [
+    {
+     "re": "gentamicin|amikacin|tobramycin|streptomycin",
+     "text": "Cephalosporin 可能增加 aminoglycoside 腎毒性、並降低其濃度（Risk C）。"
+    },
+    {
+     "re": "probenecid",
+     "text": "Probenecid 會增加 cefotaxime 濃度：併用時避免 >6 g/day，並監測毒性（Risk D）。"
+    },
+    {
+     "re": "warfarin|acenocoumarol",
+     "text": "Cephalosporin 可能增加 vitamin K antagonist 抗凝作用（Risk C）：監測 INR。"
+    },
+    {
+     "re": "mycophenolate|cellcept|myfortic",
+     "text": "抗生素可能降低 mycophenolic acid 暴露量（Risk C）。"
+    }
+   ],
+   "notes": [
+    "經中心靜脈快速推注（<1 分鐘）曾發生致命性心律不整：IV 推注至少 3–5 分鐘，或 15–30 分鐘間歇輸注。",
+    "療程 >10 天可能出現顆粒球低下、白血球低下、嗜中性球低下，罕見骨髓衰竭：長療程監測 CBC。",
+    "ESBL 與 carbapenemase 菌多數對 cefotaxime 抗藥；Enterococcus 天生抗藥。",
+    "Jaffé 法可能造成 creatinine 偽陽性；直接 Coombs 偽陽性。",
+    "時間依賴型：fT>MIC ≥ 40–50%（抑菌）、60–70%（殺菌）。",
+    "t½ 1–1.5 小時（活性代謝物 1.3–1.9 小時），腎或肝功能不全時延長。尿液排出約 60%。"
+   ],
+   "info": {
+    "up": "2026-11-24",
+    "times": [
+     "—",
+     "IM 30 分鐘內",
+     "t½ 1–1.5 hr"
+    ],
+    "tnote": "活性代謝物 desacetylcefotaxime t½ 1.3–1.9 小時；腎、肝功能不全延長",
+    "prep": "IV：每瓶加 10 mL 注射用水（500 mg ≈ 50、1 g ≈ 95、2 g ≈ 180 mg/mL），可再稀釋至 1000 mL（NS、D5W、D10W、D5NS、D5½NS、D5¼NS、LR）。IM：500 mg 加 2 mL、1 g 加 3 mL、2 g 加 5 mL（230–330 mg/mL），2 g 分兩處注射。NS／D5W 室溫穩定 24 小時、冷藏 5 天；避光。",
+    "alert": "經 CVC 快速推注（<1 分鐘）可致心律不整；療程 >10 天監測 CBC。"
+   },
+   "peds": {
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Cefotaxime（Last Updated 11/19/26）",
+      "sections": "全文：Dosing: Neonatal; Pediatric; Adult（含各適應症）; Altered Kidney/Liver Function; Administration; Warnings; Interactions; Pharmacokinetics",
+      "addedAt": "2026-11-24",
+      "by": "JC"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "一般（傳統間歇輸注；可用到 300 mg/kg/day；PK 模擬建議至少 q6h）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 150,
+      "hi": 180,
+      "unit": "mg/kg",
+      "per": "day",
+      "freq": "÷ q4–8h",
+      "max": {
+       "v": 2000,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "連續輸注（資料有限）",
+      "routes": [
+       "IV"
+      ],
+      "lo": 100,
+      "hi": 200,
+      "unit": "mg/kg",
+      "per": "day",
+      "freq": "24 小時連續",
+      "maxDay": {
+       "v": 12000,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "腦膜炎（可到 300 mg/kg/day ÷ q4–8h）",
+      "routes": [
+       "IV"
+      ],
+      "lo": 200,
+      "hi": 225,
+      "unit": "mg/kg",
+      "per": "day",
+      "freq": "÷ q6h",
+      "max": {
+       "v": 2000,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "腹內感染（+ metronidazole，4–7 天）、CAP、Lyme（max 6 g/day）",
+      "routes": [
+       "IV"
+      ],
+      "lo": 150,
+      "hi": 200,
+      "unit": "mg/kg",
+      "per": "day",
+      "freq": "÷ q6–8h",
+      "max": {
+       "v": 2000,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "心內膜炎（≥4 週）、壞死性軟組織感染",
+      "routes": [
+       "IV"
+      ],
+      "lo": 200,
+      "hi": 200,
+      "unit": "mg/kg",
+      "per": "day",
+      "freq": "÷ q6h",
+      "maxDay": {
+       "v": 12000,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "UTI",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 150,
+      "hi": 150,
+      "unit": "mg/kg",
+      "per": "day",
+      "freq": "÷ q6–8h",
+      "max": {
+       "v": 2000,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "手術預防（單次；≥120 kg 或 BMI >30 max 2,000 mg）",
+      "routes": [
+       "IV"
+      ],
+      "when": "stat",
+      "lo": 50,
+      "hi": 50,
+      "unit": "mg/kg",
+      "max": {
+       "v": 1000,
+       "unit": "mg"
+      }
+     }
+    ],
+    "renal": {
+     "text": "依 100–200 mg/kg/day ÷ q8h 調整：GFR 30–50 35–70 mg/kg/dose q8–12h；10–29 q12h；<10 q24h；HD、PD q24h；CRRT q12h。",
+     "bands": [
+      {
+       "min": 50,
+       "max": 9999,
+       "text": "不需調整。"
+      },
+      {
+       "min": 30,
+       "max": 50,
+       "level": "info",
+       "text": "35–70 mg/kg/dose q8–12h。"
+      },
+      {
+       "min": 10,
+       "max": 30,
+       "level": "warn",
+       "text": "35–70 mg/kg/dose q12h。"
+      },
+      {
+       "min": 0,
+       "max": 10,
+       "level": "warn",
+       "text": "35–70 mg/kg/dose q24h。"
+      }
+     ]
+    },
+    "hepatic": {
+     "none": true,
+     "text": "仿單無肝功能調整建議。"
+    },
+    "notes": [
+     "青少年播散性淋病（替代藥）1,000 mg q8h ≥7 天；HIV 青少年沙門氏菌 1,000 mg q8h。",
+     "PD 腹膜炎：腹膜內間歇 30 mg/kg q24h（long dwell）；連續 loading 500 mg/L、維持 250 mg/L（或 125 mg/L）。",
+     "IV 推注 3–5 分鐘（避免 <1 分鐘）；間歇輸注 15–30 分鐘，濃度 10–40 mg/mL（部分中心用到 60 mg/mL）；推注濃度上限 200 mg/mL。"
+    ],
+    "info": {
+     "alert": "避免快速推注（<1 分鐘）；長療程監測 CBC。"
+    }
+   },
+   "neo": {
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Cefotaxime（Last Updated 11/19/26）",
+      "sections": "全文：Dosing: Neonatal; Pediatric; Adult（含各適應症）; Altered Kidney/Liver Function; Administration; Warnings; Interactions; Pharmacokinetics",
+      "addedAt": "2026-11-24",
+      "by": "JC"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "一般 GA <32 週、PNA <7 天（或 BW ≤2 kg、PNA ≤7 天）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 50,
+      "hi": 50,
+      "unit": "mg/kg",
+      "freq": "q12h"
+     },
+     {
+      "ind": "一般 GA <32 週、PNA 7–28 天（或 BW ≤2 kg、PNA 8–28 天）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 50,
+      "hi": 50,
+      "unit": "mg/kg",
+      "freq": "q8h"
+     },
+     {
+      "ind": "一般 GA ≥32 週、PNA ≤7 天（或 BW >2 kg、PNA ≤7 天）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 50,
+      "hi": 50,
+      "unit": "mg/kg",
+      "freq": "q12h"
+     },
+     {
+      "ind": "一般 GA ≥32 週、PNA 8–28 天（體重表：BW >2 kg 為 37.5 mg/kg q6h）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 37.5,
+      "hi": 50,
+      "unit": "mg/kg",
+      "freq": "q6–8h"
+     },
+     {
+      "ind": "一般 PNA 29–60 天（依體重表，不分 BW）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 50,
+      "hi": 50,
+      "unit": "mg/kg",
+      "freq": "q6h"
+     },
+     {
+      "ind": "腦膜炎 PNA ≤7 天",
+      "routes": [
+       "IV"
+      ],
+      "lo": 100,
+      "hi": 150,
+      "unit": "mg/kg",
+      "per": "day",
+      "freq": "÷ q8–12h"
+     },
+     {
+      "ind": "腦膜炎 PNA >7 天",
+      "routes": [
+       "IV"
+      ],
+      "lo": 150,
+      "hi": 200,
+      "unit": "mg/kg",
+      "per": "day",
+      "freq": "÷ q6–8h"
+     },
+     {
+      "ind": "淋病：頭皮膿瘍或播散性（含敗血症、關節炎）× 7 天（劑量明顯低於其他建議，需臨床判斷）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "lo": 25,
+      "hi": 25,
+      "unit": "mg/kg",
+      "freq": "q12h"
+     },
+     {
+      "ind": "淋菌性新生兒眼炎（僅限無法用 ceftriaxone，如同時 IV 鈣）",
+      "routes": [
+       "IV",
+       "IM"
+      ],
+      "when": "stat",
+      "lo": 100,
+      "hi": 100,
+      "unit": "mg/kg"
+     }
+    ],
+    "renal": {
+     "text": "Lexidrug 新生兒段未列腎功能調整。"
+    },
+    "notes": [
+     "腦膜炎療程：革蘭氏陰性 ≥21 天且 CSF 培養第一次陰性後 ≥14 天；淋菌性 10–14 天。",
+     "新生兒 t½：早產兒 PNA <7 天 5.7 小時、7–28 天 3.5 小時；足月 PNA <7 天 3.4 小時、7–28 天 2 小時。Vd 中位數 0.64 L/kg。",
+     "CSF 穿透率中位數 28%（6–76%）。"
+    ],
+    "info": {
+     "alert": "避免快速推注（<1 分鐘）。"
     }
    }
   },
