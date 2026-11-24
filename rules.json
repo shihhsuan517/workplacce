@@ -1,5 +1,5 @@
 {
- "version": "2026-11-24a",
+ "version": "2026-11-24b",
  "updated": "2026-11-24",
  "rules": [
   {
@@ -2869,12 +2869,17 @@
     "adenocor"
    ],
    "status": "verified",
-   "pedsOnly": true,
    "source": [
     {
      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Adenosine",
      "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
      "addedAt": "2026-11-12",
+     "by": "JC"
+    },
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Adenosine（Last Updated 11/19/26）",
+     "sections": "全文：Dosing: Neonatal; Pediatric; Adult（PSVT、壓力測試、FFR、診斷用）; Altered Kidney/Liver Function; Administration; Contraindications; Warnings; Interactions; Pharmacokinetics",
+     "addedAt": "2026-11-24",
      "by": "JC"
     }
    ],
@@ -2937,22 +2942,66 @@
       "lo": 6,
       "hi": 12,
       "unit": "mg",
-      "text": "6 mg → 12 mg"
+      "text": "6 mg 周邊 → 12 mg，可再給 12 mg（成人經中心靜脈建議 3 mg 起）"
+     },
+     {
+      "ind": "心臟移植 <50 kg（≥6 個月；資料有限）",
+      "routes": [
+       "IV"
+      ],
+      "wtMax": 50,
+      "lo": 0.025,
+      "hi": 0.025,
+      "unit": "mg/kg",
+      "text": "0.025 mg/kg 起，可漸增"
+     },
+     {
+      "ind": "心臟移植 ≥50 kg（資料有限）",
+      "routes": [
+       "IV"
+      ],
+      "wtMin": 50,
+      "lo": 0.025,
+      "hi": 0.025,
+      "unit": "mg/kg",
+      "max": {
+       "v": 1.5,
+       "unit": "mg"
+      },
+      "text": "0.025 mg/kg 起（首劑 max 1.5 mg），可漸增"
      }
     ],
     "concomitant": [
      {
       "re": "theophylline|aminophylline",
-      "text": "Theophylline 類會降低 adenosine 效果。"
+      "text": "Theophylline 類會降低 adenosine 效果，可能需更高劑量或改用他藥（Risk D）；併用 aminophylline 增加痙攣風險。"
      },
      {
-      "re": "dipyridamole|carbamazepine",
-      "text": "Dipyridamole、carbamazepine：宜降低 adenosine 首劑。"
+      "re": "caffeine|cafcit|peyona",
+      "text": "Caffeine 會降低 adenosine 效果，可能需更高劑量或改用他藥（Risk D）。"
+     },
+     {
+      "re": "dipyridamole|aggrenox|persantin",
+      "text": "Dipyridamole 增強 adenosine 心血管作用：治療 SVT 時降低首劑（Risk D）。"
+     },
+     {
+      "re": "carbamazepine|tegretol",
+      "text": "Carbamazepine 增加高度房室阻斷風險：SVT 首劑可考慮 3 mg（Risk C）。"
+     },
+     {
+      "re": "digoxin",
+      "text": "Digoxin 可能增加 adenosine 毒性（Risk C）。"
+     },
+     {
+      "re": "landiolol|ivabradine|lacosamide|fingolimod|siponimod|ozanimod|ponesimod",
+      "text": "併用致心搏過緩藥物：加重心搏過緩或 AV block（landiolol Risk X；fingolimod、siponimod、ponesimod Risk D）。"
      }
     ],
     "notes": [
-     "快推後立即 NS 5–10 mL flush。",
-     "禁忌：二、三度 AV block、病竇症候群、氣喘／支氣管痙攣、症狀性心搏過緩。"
+     "近心端周邊（避免下肢，可能無效或需更高劑量）1–2 秒快推，立即 NS 5–10 mL flush；建議兩支針筒接三通（IV、IO 皆同）。",
+     "劑量 <600 mcg（0.6 mg）需稀釋以確保完整給藥：300 mcg/mL＝3 mg（1 mL）+ NS 9 mL；1,000 mcg/mL＝3 mg（1 mL）+ NS 2 mL。",
+     "禁忌：二、三度 AV block、病竇症候群、症狀性心搏過緩、氣喘／支氣管痙攣、預激性 AF。",
+     "不經腎、肝排除，無需調整。"
     ],
     "info": {
      "times": [
@@ -3012,8 +3061,138 @@
       "sections": "JC 核對（《兒科常用藥物劑量整理》Lexidrug 核對結果）",
       "addedAt": "2026-11-12",
       "by": "JC"
+     },
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Adenosine（Last Updated 11/19/26）",
+      "sections": "全文：Dosing: Neonatal; Pediatric; Adult（PSVT、壓力測試、FFR、診斷用）; Altered Kidney/Liver Function; Administration; Contraindications; Warnings; Interactions; Pharmacokinetics",
+      "addedAt": "2026-11-24",
+      "by": "JC"
      }
     ]
+   },
+   "doseUnit": "mg",
+   "usual": {
+    "text": "PSVT（迷走神經刺激無效的穩定病人，或不穩定病人）／穩定病人鑑別心律：周邊靜脈 6 mg 於 1–2 秒快推，立即 NS flush；1–2 分鐘無效（未終止或未出現 AV block）給 12 mg；仍無效可給第三劑 12 或 18 mg。終止後復發可重複最後有效劑量，總共 3 劑。中心靜脈：3 mg → 6 mg → 9 mg。心臟移植：1 mg 起，最多 3 mg。"
+   },
+   "doses": [
+    {
+     "ind": "PSVT／診斷 周邊靜脈（6 → 12 → 12 或 18 mg）",
+     "routes": [
+      "IV"
+     ],
+     "lo": 6,
+     "hi": 18,
+     "unit": "mg"
+    },
+    {
+     "ind": "PSVT／診斷 中心靜脈（3 → 6 → 9 mg）",
+     "routes": [
+      "IV"
+     ],
+     "lo": 3,
+     "hi": 9,
+     "unit": "mg"
+    },
+    {
+     "ind": "心臟移植（1 mg 起，最多 3 mg）",
+     "routes": [
+      "IV"
+     ],
+     "lo": 1,
+     "hi": 3,
+     "unit": "mg"
+    }
+   ],
+   "renal": {
+    "none": true,
+    "text": "不經腎臟排除，無需調整。"
+   },
+   "hepatic": {
+    "none": true,
+    "text": "不經肝臟排除，無需調整。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "老年人較易出現血行動力學變化、心搏過緩、AV block，小心使用。"
+   },
+   "concomitant": [
+    {
+     "re": "theophylline|aminophylline",
+     "text": "Theophylline 類會降低 adenosine 效果，可能需更高劑量或改用他藥（Risk D）；併用 aminophylline 增加痙攣風險。"
+    },
+    {
+     "re": "caffeine|cafcit|peyona",
+     "text": "Caffeine 會降低 adenosine 效果，可能需更高劑量或改用他藥（Risk D）。"
+    },
+    {
+     "re": "dipyridamole|aggrenox|persantin",
+     "text": "Dipyridamole 增強 adenosine 心血管作用：治療 SVT 時降低首劑（Risk D）。"
+    },
+    {
+     "re": "carbamazepine|tegretol",
+     "text": "Carbamazepine 增加高度房室阻斷風險：SVT 首劑可考慮 3 mg（Risk C）。"
+    },
+    {
+     "re": "digoxin",
+     "text": "Digoxin 可能增加 adenosine 毒性（Risk C）。"
+    },
+    {
+     "re": "landiolol|ivabradine|lacosamide|fingolimod|siponimod|ozanimod|ponesimod",
+     "text": "併用致心搏過緩藥物：加重心搏過緩或 AV block（landiolol Risk X；fingolimod、siponimod、ponesimod Risk D）。"
+    }
+   ],
+   "notes": [
+    "禁忌：二、三度 AV block、病竇症候群、症狀性心搏過緩（有功能正常的人工節律器除外）；已知或疑似支氣管收縮／氣喘；預激性心房顫動或撲動。",
+    "已知具逆向傳導的副傳導路徑勿用（可能引發心室心律不整）；不規則或多形性寬 QRS 心搏過速勿用（可能惡化為 VF）。對心房顫動、撲動、VT 無效（可用於診斷）。",
+    "需連續 ECG 監測，並備妥同步電擊與急救設備；ISMP 高警訊藥品（IV 抗心律不整藥）。",
+    "給藥：近心端周邊靜脈（勿用前臂下段、手、下肢）1–2 秒快推，立即 NS 20 mL flush；建議兩支針筒接三通。無三通時可單一針筒 adenosine 6 mg + NS 18 mL。",
+    "藥理壓力測試：周邊 140 mcg/kg/min × 6 分鐘（總量 840 mcg/kg），第 3 分鐘注射 thallium-201；測試前停 caffeine 至少 12 小時、dipyridamole 48 小時、theophylline 5 個半衰期。",
+    "FFR（off-label）：IV 140 mcg/kg/min；冠狀動脈內 右冠 40 mcg、左冠 80 mcg（以 NS 10 mL 稀釋快推）。",
+    "常見：轉換時短暫心律不整、臉潮紅、呼吸困難、胸悶；罕見長時間心搏停止、VF、支氣管痙攣、痙攣。不要冷藏（會結晶，回溫可溶）。"
+   ],
+   "info": {
+    "up": "2026-11-24",
+    "times": [
+     "立即",
+     "數秒",
+     "t½ < 10 秒"
+    ],
+    "tnote": "經紅血球與血管內皮細胞攝取代謝；作用極短",
+    "prep": "≥ 0.6 mg 不需稀釋（3 mg/mL）。室溫保存，勿冷藏。",
+    "alert": "近心端快推 + NS flush；中心靜脈、心臟移植、併用 dipyridamole／carbamazepine 要降首劑；氣喘、高度 AV block、預激性 AF 禁用。"
+   },
+   "neo": {
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Adenosine（Last Updated 11/19/26）",
+      "sections": "全文：Dosing: Neonatal; Pediatric; Adult（PSVT、壓力測試、FFR、診斷用）; Altered Kidney/Liver Function; Administration; Contraindications; Warnings; Interactions; Pharmacokinetics",
+      "addedAt": "2026-11-24",
+      "by": "JC"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "PSVT（快推 IV）",
+      "routes": [
+       "IV"
+      ],
+      "lo": 0.05,
+      "hi": 0.3,
+      "unit": "mg/kg",
+      "text": "0.05–0.1 mg/kg 起，1–2 分鐘無效每次加 0.05–0.1 mg/kg，max 0.3 mg/kg 或終止為止"
+     }
+    ],
+    "renal": {
+     "text": "不經腎臟排除。"
+    },
+    "notes": [
+     "每劑後立即 NS flush；近心端周邊靜脈快推。",
+     "劑量 <600 mcg 需稀釋：300 mcg/mL＝3 mg（1 mL）+ NS 9 mL；1,000 mcg/mL＝3 mg + NS 2 mL。",
+     "使用 caffeine（早產兒呼吸暫停）會降低 adenosine 效果，可能需更高劑量。"
+    ],
+    "info": {
+     "alert": "快推 + NS flush；小劑量需稀釋；caffeine 降低效果。"
+    }
    }
   },
   {
