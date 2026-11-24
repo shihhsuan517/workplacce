@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-24m';
+const APP_VER='2026-11-24n';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -975,7 +975,7 @@ function renderTab(p,ro){
   if(S.tab==='overview')return renderOverview(p);
   if(S.tab==='meds')return renderMeds(p,ro)+prnCard(p)+insGlyCard(p)+sedCard(p)+renderCloud(p,ro);
   if(S.tab==='drip')return renderDrip(p,ro);
-  if(S.tab==='lab')return akiCard(p,ro)+renderLab(p,ro);
+  if(S.tab==='lab')return akiCard(p,ro)+cgCard(p)+renderLab(p,ro);
   if(S.tab==='soap')return renderSoap(p,ro);
   if(S.tab==='rt')return renderRT(p,ro);
   if(S.tab==='micro')return renderMicro(p,ro);
@@ -3459,12 +3459,29 @@ function labCell(v){
   const c=v.flag==='H'?'lh':v.flag==='L'?'ll':'';
   return `<td>${esc(v.value)}${v.flag?` <span class="${c}">${v.flag}</span>`:''}</td>`;
 }
+/* Cockcroft–Gault：CrCl =（140 − 年齡）× 體重 ×（女性 0.85）÷（72 × SCr） */
+function cgParts(p){const age=ageYears(p),wt=parseFloat(p.wt),b=bodyW(p);if(p.template==='peds'||age==null||age<18||!(wt>0)||!p.sex)return null;
+  const W=[['TBW',wt]];if(b.ibw)W.push(['IBW',b.ibw]);if(b.adj!=null&&b.pct>120)W.push(['AdjBW',b.adj]);return {age,f:p.sex==='F'?0.85:1,W,dose:b.dose};}
+const cgCalc=(c,w,scr)=>(140-c.age)*w*c.f/(72*scr);
+function cgLabRows(p){const c=cgParts(p);if(!c||!hasLabs(p))return [];const cr=Object.values(p.labs.items).find(it=>it.code==='72-333'&&(!it.sampleType||it.sampleType==='B'));if(!cr)return [];
+  const ws=c.W.filter(([k])=>k==='TBW'||(k==='AdjBW'));return ws.map(([k,w])=>{const vals={};Object.entries(cr.vals).forEach(([sk,v])=>{const n=labNum(v);if(n>0)vals[sk]={value:cgCalc(c,w,n).toFixed(1)};});
+    return {code:'CALC-CG-'+k,sampleType:'計算',name:`CrCl（C-G，${k}）`,unit:'mL/min',ref:`${k} ${w.toFixed(1)} kg`,vals,calc:true};});}
+function cgCard(p){const c=cgParts(p);if(!c)return '';const cr=latestLab(p,'72-333');if(!cr)return '';const scr=labNum(cr);if(!(scr>0))return '';
+  const fx=n=>+n.toFixed(1);
+  const line=([k,w])=>`<div class="kv"><span class="k">${k} ${fx(w)} kg${k==='TBW'?' <span class="tag t-new">劑量規則預設</span>':k==='AdjBW'?' <span class="tag t-reg">肥胖規則改用</span>':' <span class="small mute">參考</span>'}</span><span style="text-align:right;font-family:ui-monospace,Menlo,monospace">(140 − ${c.age}) × ${fx(w)}${c.f!==1?' × 0.85':''} ÷ (72 × ${scr}) = <b>${cgCalc(c,w,scr).toFixed(1)}</b> mL/min</span></div>`;
+  return `<div class="card"><h3>腎功能估算 <span class="small mute">Cockcroft–Gault・最新 SCr ${scr} mg/dL（${skMD(cr.sk)}）</span></h3>
+    <div class="small" style="margin:2px 0 6px;font-family:ui-monospace,Menlo,monospace">CrCl ＝ (140 − 年齡) × 體重${c.f!==1?' × 0.85（女性）':''} ÷ (72 × SCr)</div>
+    ${c.W.map(line).join('')}
+    <div class="small mute" style="margin-top:6px">${p.sex==='F'?'女性乘 0.85。':'男性不乘校正係數（女性乘 0.85）。'}年齡 ${c.age} 歲；TBW＝基本資料體重；IBW＝${p.sex==='M'?50:45.5} + 0.91 ×（身高 − 152.4）；AdjBW＝IBW + 0.4 ×（TBW − IBW），只在 TBW >120% IBW 時列出。劑量規則的腎功能比對預設用 TBW 的 CrCl；藥品規則註明肥胖改用 AdjBW 時才改用 AdjBW。IBW 那列僅供參考。檢驗表的 Creatinine 下方另有每個時間點的 C-G 計算列。${rrtOn(p)?'<b>已在腎臟替代治療：CrCl 不適用於劑量調整。</b>':''}</div></div>`;}
 function labPanelsData(p){
   const L=p.labs,cols=labColsShown(p),groups={};
   Object.values(L.items).forEach(it=>{const k=labPanel(it.code,it.sampleType);(groups[k]=groups[k]||[]).push(it);});
   const out=[];
+  // Cockcroft–Gault 計算列（成人）：緊接在 Creatinine 之後，每個時間點各算一次
+  const cgRows=cgLabRows(p);
   LAB_ORDER.forEach(name=>{
-    const items=(groups[name]||[]).sort((a,b)=>a.code.localeCompare(b.code));if(!items.length)return;
+    let items=(groups[name]||[]).sort((a,b)=>a.code.localeCompare(b.code));if(!items.length)return;
+    const ci=items.findIndex(it=>it.code==='72-333'&&(!it.sampleType||it.sampleType==='B'));if(ci>=0&&cgRows.length)items=[...items.slice(0,ci+1),...cgRows,...items.slice(ci+1)];
     const keep=cols.filter(c=>items.some(it=>it.vals[c]));if(!keep.length)return;
     out.push({name,items,keep});
   });
@@ -3494,7 +3511,7 @@ function bindLabNotes(p,ro){
 function labTableHTML(pd,L,forCopy){
   const ed=S.editMode&&!forCopy&&!S.archive,ik=it=>it.code+'|'+it.sampleType+'|'+it.name;
   const th=pd.keep.map(c=>`<th>${L.cols[c].dateShort}<br>${L.cols[c].timeShort}${labColTag(c,L,forCopy)}${ed?`<br><button class="xdel" data-del="labcol" data-k="${c}" title="刪除這個時間點">✕</button>`:''}</th>`).join('');
-  const body=pd.items.map(it=>`<tr><td class="${forCopy?'':'litem'}" style="text-align:left;font-weight:600">${ed?`<button class="xdel" data-del="labitem" data-k="${esc(ik(it))}" title="刪除此項目">✕</button> `:''}${esc(it.name)}</td><td>${esc(it.sampleType)}</td><td>${esc(it.unit)}</td><td class="lref">${esc(it.ref)}</td>${pd.keep.map(c=>labCell(it.vals[c])).join('')}</tr>`).join('');
+  const body=pd.items.map(it=>`<tr${it.calc?' style="background:var(--chip)"':''}><td class="${forCopy?'':'litem'}" style="text-align:left;font-weight:600">${ed&&!it.calc?`<button class="xdel" data-del="labitem" data-k="${esc(ik(it))}" title="刪除此項目">✕</button> `:''}${esc(it.name)}</td><td>${esc(it.sampleType)}</td><td>${esc(it.unit)}</td><td class="lref">${esc(it.ref)}</td>${pd.keep.map(c=>labCell(it.vals[c])).join('')}</tr>`).join('');
   return `<table class="ltbl"><thead><tr><th class="${forCopy?'':'litem'}">項目</th><th>檢體</th><th>單位</th><th>參考值</th>${th}</tr></thead><tbody>${body}</tbody></table>`;
 }
 /* ===== AKI 分期（KDIGO 2026 AKI/AKD guideline，public review draft）：Table 1 判定標準、Table 6 分期、Practice Point 1.1.3／Figure 1 baseline 階層 =====
