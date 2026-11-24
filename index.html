@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-24g';
+const APP_VER='2026-11-24h';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -952,7 +952,7 @@ function renderTab(p,ro){
       ${fld(p,'wt','體重 (kg)',{ro,type:'number',step:'0.01'})}
       ${peds||p.hc?fld(p,'hc','頭圍 (cm)',{ro,type:'number',step:'0.1'}):''}
       ${peds||p.chest?fld(p,'chest','胸圍 (cm)',{ro,type:'number',step:'0.1'}):''}
-      ${peds?fld(p,'ga','GA（週）',{ro,ph:'例：38+2'}):''}
+      ${peds?(()=>{const g=gaDays(p);const w=g!=null?Math.floor(g/7):'',d=g!=null?g%7:'';return `<div class="fld"><label>GA（出生週數＋天）</label><div class="row" style="gap:4px;flex-wrap:nowrap"><input data-ga="w" type="number" min="20" max="45" step="1" value="${w}" ${ro?'disabled':''} placeholder="週" style="width:70px"><span>週 +</span><input data-ga="d" type="number" min="0" max="6" step="1" value="${d}" ${ro?'disabled':''} placeholder="天" style="width:60px"><span>天</span></div></div>`;})():''}
       ${peds?fld(p,'birthWt','出生體重 (g)',{ro,type:'number'}):''}
       ${peds?fld(p,'dob','出生日期（填了年齡自動計算）',{ro,type:'date'}):''}
       ${peds?fld(p,'birthTime','出生時間（新生兒檢驗標示生後時數）',{ro,type:'time'}):''}
@@ -1001,6 +1001,11 @@ function bindForm(p,ro){
   if($('btnAdmPaste'))$('btnAdmPaste').onclick=()=>openPaste(p.id);
   if(ro)return;
   document.querySelectorAll('[data-wtp]').forEach(b=>b.onclick=()=>{snapshot(p,'體重');if(b.dataset.wtp==='apply'){const w=p.wtPending;setWeight(p,w.kg,w.src,w.at);toast(`體重已改為 ${fmtN(w.kg)} kg`);}else delete p.wtPending;markDirty();renderMain();});
+  document.querySelectorAll('#tabBody [data-ga]').forEach(el=>el.addEventListener('input',()=>{
+    const W=document.querySelector('#tabBody [data-ga="w"]').value.trim(),D=document.querySelector('#tabBody [data-ga="d"]').value.trim();
+    if(D!==''&&(+D<0||+D>6)){toast('天數請填 0–6');return;}
+    p.ga=W===''?'':`${+W}+${D===''?0:+D}`;p.updatedAt=new Date().toISOString();markDirty();
+    const c=calcBody(p),o=$('calcOut');if(o)o.innerHTML=c.length?c.map(([a,b])=>`<div class="kv"><span class="k">${a}</span><span>${b}</span></div>`).join(''):'';}));
   document.querySelectorAll('#tabBody [data-f]').forEach(el=>{
     const ev=el.tagName==='SELECT'?'change':'input';
     el.addEventListener(ev,()=>{
@@ -5144,7 +5149,7 @@ function preHRCard(p){
   rows.forEach(x=>{const cx=X(x.r.pmaD/7),out=x.v<x.r.p5||x.v>x.r.p95;svg+=`<circle cx="${cx}" cy="${Y(x.v)}" r="2.8" fill="${out?'var(--card,#fff)':'var(--accent)'}" stroke="var(--accent)" stroke-width="1.3"><title>${x.t.slice(5,16)} HR ${x.v}｜PMA ${Math.floor(x.r.pmaD/7)}+${x.r.pmaD%7}｜${refPos(x.v,x.r)}（5th ${x.r.p5}／95th ${x.r.p95}）</title></circle>`;});
   svg+=`<text x="${W-R}" y="${Hh-2}" font-size="9.5" text-anchor="end" fill="var(--mute)">PMA（週）</text>`;
   const last=rows.slice(-12).reverse(),cnt=k=>rows.filter(x=>refPos(x.v,x.r)===k).length;
-  return `<div class="card"><h3>早產兒心跳同齡參考 <span class="small mute">GA ${ga} 週・依量測當時 PMA・只列落點</span></h3>
+  return `<div class="card"><h3>早產兒心跳同齡參考 <span class="small mute">GA ${ga}+${g%7} 週（表格依完成週數用 GA ${ga} 週列）・依量測當時 PMA・只列落點</span></h3>
     ${rows.length?`<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${Hh}" width="100%" style="max-width:${W}px;display:block">${svg}</svg></div>
     <div class="small" style="margin:4px 0">共 ${rows.length} 筆：&lt; 5th ${cnt('< 5th')}・5th–95th ${cnt('5th–95th')}・&gt; 95th ${cnt('> 95th')}</div>
     <div class="tblwrap"><table class="tbl"><thead><tr><th>時間</th><th>PMA</th><th>HR</th><th>同 GA、同 PMA 參考 5th–95th</th><th>落點</th></tr></thead><tbody>
