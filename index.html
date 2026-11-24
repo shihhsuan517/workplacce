@@ -4661,7 +4661,7 @@ function nurseGrowth(T){const g=(re)=>{const m=T.match(re);if(!m)return null;let
   if(ht&&ht>20&&ht<250)r.ht=ht;if(hc&&hc>15&&hc<70)r.hc=hc;if(cc&&cc>15&&cc<200)r.cc=cc;return Object.keys(r).length?r:null;}
 /* 【攝入排出】班別摘要格式：日期行 → 白班／小夜班／大夜班／三班 → 攝入：x 排出：y 差異：z → 項目：量 */
 const IOSUM_SH={'白班':0,'小夜班':1,'大夜班':2,'三班':'T'};
-function isIOSummary(t){t=String(t||'');return /【攝入排出】/.test(t)||(/^\s*\d{4}\/\d{1,2}\/\d{1,2}\s*$/m.test(t)&&/^\s*(白班|小夜班|大夜班|三班)\s*$/m.test(t)&&/攝入\s*[:：]\s*-?[\d.]+[\s\S]{0,20}排出\s*[:：]/.test(t));}
+function isIOSummary(t){t=String(t||'');if(/記錄者|護理記錄單|護理紀錄單|攝入總計/.test(t))return false;return /【攝入排出】/.test(t)||(/^\s*\d{4}\/\d{1,2}\/\d{1,2}\s*$/m.test(t)&&/^\s*(白班|小夜班|大夜班|三班)\s*$/m.test(t)&&/攝入\s*[:：]\s*-?[\d.]+[\s\S]{0,20}排出\s*[:：]/.test(t));}
 function parseIOSummary(t){const out=[],tot=[];let day=null,cur=null;
   const KEY={'飲食':'diet','注射':'inj','小便':'urine','尿':'urine','尿量':'urine','大便':'stool','糞便':'stool'};
   String(t||'').replace(/\r/g,'').split('\n').forEach(l=>{const L=l.trim();if(!L)return;
