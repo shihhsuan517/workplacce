@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-24d';
+const APP_VER='2026-11-24e';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -5047,7 +5047,45 @@ function vsChart(p){
   return `<div class="card"><h3>生命徵象趨勢 <span class="small mute">最近 7 天・${A.length} 筆</span></h3><div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${yb+6}" width="100%" style="max-width:${W}px;display:block">${svg}</svg></div>
     <div class="small mute">BP 粗線＝MAP、細線＝SBP（優先 A-line）；虛線為參考線（MAP 65、BT 38、SpO₂ 90），只供對照，不做判斷。</div></div>`;
 }
-function renderVSTab(p,ro){const c=vsCard(p,ro);if(!c)return '<div class="todo">尚無生命徵象。用「一鍵貼上」貼上護理記錄後顯示。</div>';return vsChart(p)+c;}
+
+/* ===== 兒科生命徵象同齡參考 =====
+   早產兒心跳：Alonzo CJ, Nagraj VP, Zschaebitz JV, Lake DE, Moorman JR, Spaeder MC. Heart rate ranges in premature neonates using high resolution physiologic data.
+   J Perinatol. 2018;38(9):1242–1245. doi:10.1038/s41372-018-0156-1. Table 2（GA 23–34 週 × PMA 23–38 週，5th／95th）。數值逐格抄自原文表格。 */
+const VSREF_ALONZO={"23":{"23":[135,177],"24":[139,179],"25":[139,180],"26":[140,180],"27":[140,181],"28":[141,180],"29":[141,181],"30":[139,184],"31":[137,183],"32":[137,182],"33":[139,186],"34":[139,185],"35":[136,187],"36":[133,188],"37":[130,187],"38":[129,189]},"24":{"24":[139,175],"25":[140,181],"26":[141,181],"27":[141,181],"28":[141,183],"29":[138,182],"30":[138,182],"31":[138,184],"32":[137,185],"33":[135,184],"34":[135,184],"35":[132,185],"36":[133,186],"37":[131,184],"38":[130,185]},"25":{"25":[137,176],"26":[142,180],"27":[141,180],"28":[141,181],"29":[138,181],"30":[136,181],"31":[137,181],"32":[138,182],"33":[135,184],"34":[137,184],"35":[135,184],"36":[132,184],"37":[132,182],"38":[131,182]},"26":{"26":[134,176],"27":[143,182],"28":[143,183],"29":[137,181],"30":[140,181],"31":[137,183],"32":[137,184],"33":[139,184],"34":[139,183],"35":[135,182],"36":[135,182],"37":[134,184],"38":[127,182]},"27":{"27":[134,178],"28":[143,182],"29":[144,184],"30":[141,182],"31":[139,183],"32":[140,184],"33":[138,183],"34":[135,184],"35":[134,185],"36":[131,183],"37":[131,184],"38":[124,184]},"28":{"28":[131,176],"29":[140,184],"30":[141,184],"31":[142,184],"32":[140,185],"33":[140,185],"34":[138,185],"35":[136,186],"36":[133,185],"37":[128,184],"38":[125,183]},"29":{"29":[130,177],"30":[141,182],"31":[142,182],"32":[141,183],"33":[143,185],"34":[142,185],"35":[139,186],"36":[137,186],"37":[136,185],"38":[134,185]},"30":{"30":[126,176],"31":[135,179],"32":[137,180],"33":[139,182],"34":[140,184],"35":[135,184],"36":[134,183],"37":[132,176],"38":[128,172]},"31":{"31":[123,176],"32":[134,180],"33":[137,182],"34":[139,185],"35":[135,186],"36":[130,185],"37":[126,188],"38":[113,185]},"32":{"32":[123,175],"33":[133,178],"34":[136,182],"35":[135,183],"36":[133,185],"37":[130,184],"38":[127,178]},"33":{"33":[119,172],"34":[130,179],"35":[133,184],"36":[133,186],"37":[132,185],"38":[131,182]},"34":{"34":[117,172],"35":[127,179],"36":[128,183],"37":[128,184],"38":[129,185]}};
+const ALONZO_CITE='Alonzo CJ, et al. J Perinatol 2018;38(9):1242–1245, Table 2';
+function preHRRef(p,t){const g=gaDays(p);if(g==null||!p.dob)return {na:'需填 GA 與出生日期'};const ga=Math.floor(g/7);
+  if(ga<23||ga>34)return {na:`GA ${ga} 週不在 Alonzo 2018 範圍（23–34 週）`};
+  const d=Math.floor((+ioT(t)-Date.parse(p.dob+'T00:00:00'))/864e5);if(d<0)return {na:'量測時間早於出生日期'};
+  const pmaD=g+d,pma=Math.floor(pmaD/7),row=VSREF_ALONZO[ga],c=row&&row[pma];
+  if(!c)return {ga,pma,pmaD,na:`PMA ${pma} 週超出表格（GA ${ga} 週：PMA ${ga}–38 週）`};
+  return {ga,pma,pmaD,p5:c[0],p95:c[1]};}
+const refPos=(v,r)=>v<r.p5?'< 5th':v>r.p95?'> 95th':'5th–95th';
+function vsRefCard(p){
+  if(p.template!=='peds')return '';const V=vsSummary(p);
+  const g=gaDays(p),ga=g!=null?Math.floor(g/7):null;
+  if(g==null||!p.dob)return `<div class="card"><h3>同齡參考 <span class="small mute">兒科</span></h3><div class="small mute">請在基本資料填寫出生日期與 GA，才能依量測當時的年齡顯示參考範圍。</div></div>`;
+  if(ga>34)return `<div class="card"><h3>同齡參考 <span class="small mute">兒科</span></h3><div class="small mute">GA ${ga} 週：早產兒心跳表（Alonzo 2018）只涵蓋 GA 23–34 週。足月兒與兒童（Fleming 2011 Lancet 百分位表）待匯入原文 Web Table 3／4 後啟用。</div></div>`;
+  const H=V?V.L.filter(x=>vsVal(x,'HR')!=null):[];
+  const rows=H.map(x=>({t:x.t,v:+vsVal(x,'HR'),r:preHRRef(p,x.t)})).filter(x=>x.r&&x.r.p5!=null);
+  const row=VSREF_ALONZO[ga],pmas=Object.keys(row).map(Number).sort((a,b)=>a-b);
+  // 圖：x＝PMA 週，帶狀＝5th–95th（每週階梯），點＝實測
+  const W=640,Hh=190,L=40,R=12,TOP=10,BOT=28,x0=pmas[0],x1=pmas[pmas.length-1]+1,yLo=Math.min(100,...rows.map(x=>x.v))-5,yHi=Math.max(200,...rows.map(x=>x.v))+5;
+  const X=w=>L+(w-x0)/(x1-x0)*(W-L-R),Y=v=>TOP+(Hh-TOP-BOT)*(1-(v-yLo)/(yHi-yLo));
+  let svg='';for(let v=Math.ceil(yLo/20)*20;v<=yHi;v+=20)svg+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-4}" y="${Y(v)+3.5}" font-size="9.5" text-anchor="end" fill="var(--mute)">${v}</text>`;
+  pmas.forEach(w=>{const c=row[w];svg+=`<rect x="${X(w)}" y="${Y(c[1])}" width="${X(w+1)-X(w)}" height="${Y(c[0])-Y(c[1])}" fill="var(--accent)" opacity=".13"><title>PMA ${w} 週：5th ${c[0]}／95th ${c[1]}（${ALONZO_CITE}）</title></rect>`;
+    svg+=`<text x="${(X(w)+X(w+1))/2}" y="${Hh-BOT+13}" font-size="9.5" text-anchor="middle" fill="var(--mute)">${w}</text>`;});
+  rows.forEach(x=>{const cx=X(x.r.pmaD/7),out=x.v<x.r.p5||x.v>x.r.p95;svg+=`<circle cx="${cx}" cy="${Y(x.v)}" r="2.8" fill="${out?'var(--card,#fff)':'var(--accent)'}" stroke="var(--accent)" stroke-width="1.3"><title>${x.t.slice(5,16)} HR ${x.v}｜PMA ${Math.floor(x.r.pmaD/7)}+${x.r.pmaD%7}｜${refPos(x.v,x.r)}（5th ${x.r.p5}／95th ${x.r.p95}）</title></circle>`;});
+  svg+=`<text x="${W-R}" y="${Hh-2}" font-size="9.5" text-anchor="end" fill="var(--mute)">PMA（週）</text>`;
+  const last=rows.slice(-12).reverse(),cnt=k=>rows.filter(x=>refPos(x.v,x.r)===k).length;
+  return `<div class="card"><h3>早產兒心跳同齡參考 <span class="small mute">GA ${ga} 週・依量測當時 PMA・只列落點</span></h3>
+    ${rows.length?`<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${Hh}" width="100%" style="max-width:${W}px;display:block">${svg}</svg></div>
+    <div class="small" style="margin:4px 0">共 ${rows.length} 筆：&lt; 5th ${cnt('< 5th')}・5th–95th ${cnt('5th–95th')}・&gt; 95th ${cnt('> 95th')}</div>
+    <div class="tblwrap"><table class="tbl"><thead><tr><th>時間</th><th>PMA</th><th>HR</th><th>同 GA、同 PMA 參考 5th–95th</th><th>落點</th></tr></thead><tbody>
+    ${last.map(x=>`<tr><td class="num">${x.t.slice(5,16).replace('-','/')}</td><td class="num">${Math.floor(x.r.pmaD/7)}+${x.r.pmaD%7}</td><td class="num"><b>${x.v}</b></td><td class="num">${x.r.p5}–${x.r.p95}</td><td>${refPos(x.v,x.r)}</td></tr>`).join('')}
+    </tbody></table></div>`:'<div class="small mute">尚無可對照的心跳紀錄（PMA 需在表格範圍內）。</div>'}
+    <div class="small mute" style="margin-top:6px">參考值：${ALONZO_CITE}（GA 23–34 週早產兒、NICU 床邊監視器資料；原文表格只公布 5th 與 95th，故只標這兩條）。色帶＝該 GA 每個 PMA 週的 5th–95th；實心點＝落在範圍內，空心點＝範圍外。滑鼠移到色帶或點上看數值。足月兒與兒童的 Fleming 2011 百分位表待匯入。</div></div>`;
+}
+function renderVSTab(p,ro){const c=vsCard(p,ro);if(!c)return '<div class="todo">尚無生命徵象。用「一鍵貼上」貼上護理記錄後顯示。</div>';return vsChart(p)+vsRefCard(p)+c;}
 function renderIO(p,ro){
   const D=ioDays(p),w=ioWt(p),o=ioStore(p),peds=p.template==='peds',U6=ioUO6(p);
   let h=ro?'':`<div class="card"><h3>貼上護理記錄／I/O 明細</h3>
