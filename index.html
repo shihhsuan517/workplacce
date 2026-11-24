@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-24i';
+const APP_VER='2026-11-24j';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -958,7 +958,7 @@ function renderTab(p,ro){
       ${peds?fld(p,'birthTime','出生時間（新生兒檢驗標示生後時數）',{ro,type:'time'}):''}
       ${fld(p,'cc','主訴（SOAP「had …」）',{ro,wide:true,ph:'貼上入院紀錄的主訴段落會自動帶入'})}
       ${fld(p,'allergy','過敏史',{ro,wide:true})}
-      ${fld(p,'dx','診斷／病況簡述（SOAP Subjective 用）',{ro,wide:true,type:'textarea',rows:3})}
+      ${fld(p,'dx',`診斷／病況簡述（SOAP Subjective 用）${p.dxSrc?`　<span class="small mute">來源：${esc(p.dxSrc)}</span>`:''}`,{ro,wide:true,type:'textarea',rows:6})}
       ${fld(p,'notes','藥師筆記',{ro,wide:true,type:'textarea',rows:4})}
     </div></div>`;
     const c=calcBody(p);
@@ -1012,6 +1012,7 @@ function bindForm(p,ro){
       const k=el.dataset.f;p[k]=el.value;p.updatedAt=new Date().toISOString();markDirty();
       if(k==='wt'){p.wtAt=nowLocal();p.wtSrc='手動輸入';delete p.wtPending;}
       if(k==='ht'||k==='hc'||k==='chest')p[k+'Src']='手動輸入';
+      if(k==='dx')p.dxSrc='手動輸入';
       if(['bed','code','name','chartNo','attending','docCode'].includes(k))renderList();
       if(['template','sex'].includes(k)){renderMain();return;}
       if(['ht','wt','sex','age','dob','ga','birthWt','birthTime'].includes(k)){
@@ -2513,8 +2514,27 @@ function previewIOSum(txt){const R=parseIOSummary(txt);
     R.shifts.forEach((c,i)=>{const at=c.day+' '+['15:00','23:00','07:00'][c.sh];o.shifts[c.day+'|'+c.sh]={day:c.day,sh:c.sh,lab:c.sh,v:c.v,pairs:c.pairs,at,srcLab:'攝入排出摘要'};
       const h=parseFloat(document.querySelector(`[data-sumh="${i}"]`).value);if(h>0&&h<8)o.shHrs[c.day+'|'+c.sh]=Math.round(h*2)/2;else delete o.shHrs[c.day+'|'+c.sh];});
     p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab='io';markDirty();renderList();renderMain();toast(`已加入 ${R.shifts.length} 班攝入排出`);};}
+/* ICU Duty Note（SBAR）：只取 Assessment 帶入「診斷／病況簡述」；其他段落（含 Background 藥品清單）一律不匯入、不影響醫囑 */
+function isDutyNote(t){t=String(t||'');return /<<\s*ICU-?Duty Note\s*>>/i.test(t)||(/\*\*\s*Situation/i.test(t)&&/\*\*\s*Assessment/i.test(t));}
+function dutyAssess(t){const m=String(t||'').replace(/\r/g,'').match(/\*\*\s*Assessment[^\n]*\n([\s\S]*?)(?=\n\s*\*\*\s*(?:Recommendation|Situation|Background)|$)/i);
+  if(!m)return '';return m[1].split('\n').map(l=>l.replace(/\s+$/,'')).join('\n').replace(/^\n+|\n+$/g,'').replace(/\n{3,}/g,'\n\n');}
+function previewDuty(txt){const A=dutyAssess(txt);
+  if(!A){$('pastePreview').innerHTML='<div class="notice bad">判斷為 ICU Duty Note，但沒有找到「**Assessment-評估」段落。</div>';return;}
+  const dt=(String(txt).match(/(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}:\d{2})/)||[]);
+  const def=pasteTarget||(S.selId&&!S.archive?S.selId:'');const opts=sortedPatients().map(x=>[x.id,`加入：${x.bed||'（未填床號）'} ${x.code||''}`]);
+  const draw=()=>{const p=S.data.patients.find(x=>x.id===$('pasteTargetSel').value);const cur=p&&p.dx&&p.dx.trim();
+    $('dutyCmp').innerHTML=`<div class="grid" style="grid-template-columns:1fr 1fr;gap:10px;margin-top:6px"><div><div class="small mute">目前「診斷／病況簡述」</div><div class="small" style="white-space:pre-wrap;border:1px solid var(--line);border-radius:8px;padding:6px;min-height:40px">${cur?esc(p.dx):'<span class="mute">（空白）</span>'}</div></div>
+      <div><div class="small mute">Duty Note Assessment${dt[0]?`（${esc(dt[0])}）`:''}</div><div class="small" style="white-space:pre-wrap;border:1px solid var(--accent);border-radius:8px;padding:6px">${esc(A)}</div></div></div>`;};
+  $('pastePreview').innerHTML=`<div class="card" style="margin-top:12px"><div class="row"><b>加入到</b><select id="pasteTargetSel" style="width:auto;min-width:260px">${opts.map(([v,t])=>`<option value="${v}" ${v===def?'selected':''}>${esc(t)}</option>`).join('')}</select></div>
+    <div class="small mute" style="margin-top:6px">判斷為 ICU Duty Note。只會把 Assessment 帶入「診斷／病況簡述」（SOAP Subjective 用）；Situation、Background（藥品清單）、Recommendation 都不匯入，不會更動醫囑或目前用藥，原文也不保存。</div>
+    <div id="dutyCmp"></div></div>
+    <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="pri" id="btnDoImport">以 Assessment 取代「診斷／病況簡述」</button></div>`;
+  draw();$('pasteTargetSel').onchange=draw;
+  $('btnDoImport').onclick=()=>{const p=S.data.patients.find(x=>x.id===$('pasteTargetSel').value);if(!p)return;ensurePatient(p);snapshot(p,'Duty Note 更新診斷');
+    p.dx=A;p.dxSrc=`ICU Duty Note ${dt[0]?dt[1]+'/'+dt[2]+'/'+dt[3]+' '+dt[4]:''}`.trim();p.updatedAt=new Date().toISOString();
+    closePaste();S.archive=null;S.selId=p.id;S.tab='basic';markDirty();renderList();renderMain();toast('已更新診斷／病況簡述（可按 ↶ 復原）');};}
 function pasteKind(t){if(!t||!t.trim())return '';
-  const K=[[isCloudMed,'雲端藥歷'],[isOrderSheet,'醫囑列印紀錄'],[isLabReport,'檢驗報告'],[isMicro,'培養／抗微生物圖譜'],[isLineRecord,'管路紀錄'],[isIOSummary,'攝入排出（班別摘要）'],[isNurseRecord,'護理記錄'],[isIOHourly,'I/O 明細'],[isRTRecord,'呼吸治療紀錄'],[isProgress,'病程紀錄'],[isAdmission,'入院紀錄'],[isConsultText,'會診'],[isExamText,'檢查報告']];
+  const K=[[isDutyNote,'ICU Duty Note（只取 Assessment）'],[isCloudMed,'雲端藥歷'],[isOrderSheet,'醫囑列印紀錄'],[isLabReport,'檢驗報告'],[isMicro,'培養／抗微生物圖譜'],[isLineRecord,'管路紀錄'],[isIOSummary,'攝入排出（班別摘要）'],[isNurseRecord,'護理記錄'],[isIOHourly,'I/O 明細'],[isRTRecord,'呼吸治療紀錄'],[isProgress,'病程紀錄'],[isAdmission,'入院紀錄'],[isConsultText,'會診'],[isExamText,'檢查報告']];
   for(const [f,l] of K){try{if(f(t))return l;}catch(e){}}return '病人資訊列／目前用藥';}
 let _pkT=null;
 function closePaste(){$('pasteOv').classList.add('hidden');$('pasteText').value='';$('pasteKind').innerHTML='';$('pastePreview').innerHTML='';lastParse=null;}
@@ -2564,6 +2584,7 @@ $('btnClosePaste').onclick=closePaste;
 $('pasteText').addEventListener('input',()=>{clearTimeout(_pkT);_pkT=setTimeout(()=>{const k=pasteKind($('pasteText').value);$('pasteKind').innerHTML=k?`判斷為：<b>${k}</b>　<span class="mute">不對的話請確認是否複製完整</span>`:'';},250);});
 const CLS_TAG={pn:['t-new','靜脈營養'],fluid:['t-reg','稀釋液'],drip:['t-drip','輸注'],abx:['t-abx','抗生素'],reg:['t-reg','常規'],prn:['t-prn','PRN'],once:['t-reg','單次'],exp:['t-exp','已到期']};
 $('btnParsePaste').onclick=()=>{
+  if(isDutyNote($('pasteText').value)){previewDuty($('pasteText').value);return;}
   if(isCloudMed($('pasteText').value)){previewCloud($('pasteText').value);return;}
   if(isOrderSheet($('pasteText').value)){previewOrders($('pasteText').value);return;}
   if(isLabReport($('pasteText').value)){previewLab($('pasteText').value);return;}
