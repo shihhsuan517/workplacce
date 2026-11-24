@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-24h';
+const APP_VER='2026-11-24i';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -2496,8 +2496,25 @@ function openPaste(targetId){
   $('pasteText').value='';$('pastePreview').innerHTML='';$('pasteKind').innerHTML='';
   $('pasteOv').classList.remove('hidden');setTimeout(()=>$('pasteText').focus(),40);
 }
+function previewIOSum(txt){const R=parseIOSummary(txt);
+  if(!R.shifts.length){$('pastePreview').innerHTML='<div class="notice bad">沒有讀到班別資料（白班／小夜班／大夜班）。</div>';return;}
+  const def=pasteTarget||(S.selId&&!S.archive?S.selId:'');const opts=sortedPatients().map(x=>[x.id,`加入：${x.bed||'（未填床號）'} ${x.code||''}`]);
+  const SH=['白班 07–15','小夜 15–23','大夜 23–07'];
+  $('pastePreview').innerHTML=`<div class="card" style="margin-top:12px"><div class="row"><b>加入到</b><select id="pasteTargetSel" style="width:auto;min-width:260px">${opts.map(([v,t])=>`<option value="${v}" ${v===def?'selected':''}>${esc(t)}</option>`).join('')}</select></div>
+    <div class="small mute" style="margin-top:6px">判斷為攝入排出班別摘要：${R.shifts.length} 班。「三班」只用來核對，不另外存。日期＝I/O 日（大夜班屬於前一天的 I/O 日，到隔天 07:00）。</div>
+    <div class="tblwrap" style="margin-top:6px"><table class="tbl"><thead><tr><th>I/O 日</th><th>班別</th><th>攝入</th><th>排出</th><th>差異</th><th>項目</th><th>實際時數</th></tr></thead><tbody>
+    ${R.shifts.map((c,i)=>`<tr><td class="num">${ioMD(c.day)}</td><td>${SH[c.sh]}</td><td class="num">${fmtN(c.v.inTot??0)}</td><td class="num">${fmtN(c.v.outTot??0)}</td><td class="num">${c.v.diff!=null?fmtN(c.v.diff):''}</td><td class="small">${c.pairs.map(([k,v])=>`${esc(k)} ${fmtN(v)}`).join('、')}</td><td><input data-sumh="${i}" type="number" min="0.5" max="8" step="0.5" value="8" style="width:56px"> h</td></tr>`).join('')}
+    </tbody></table></div>
+    ${R.tot.map(T=>`<div class="small ${T.ok?'mute':'under'}">${ioMD(T.day)} 三班 ${fmtN(T.v.inTot)}／${fmtN(T.v.outTot)}：${T.ok?`與 ${T.shifts.join('＋')} 合計相符`:'與各班合計不符'}</div>`).join('')}
+    ${R.chk.length?`<div class="notice warn" style="margin-top:6px">${R.chk.map(esc).join('<br>')}</div>`:''}
+    <div class="small mute" style="margin-top:6px">入院、轉出、手術當班不滿 8 小時，請在「實際時數」改掉（例如 18:30 入院 → 小夜班 4.5）。之後也能在 I/O 分頁的班別欄修改。尿量 mL/kg/h 依實際時數計算。</div></div>
+    <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="pri" id="btnDoImport">確認加入</button></div>`;
+  $('btnDoImport').onclick=()=>{const p=S.data.patients.find(x=>x.id===$('pasteTargetSel').value);if(!p)return;ensurePatient(p);snapshot(p,'加入攝入排出');const o=ioStore(p);o.shHrs=o.shHrs||{};
+    R.shifts.forEach((c,i)=>{const at=c.day+' '+['15:00','23:00','07:00'][c.sh];o.shifts[c.day+'|'+c.sh]={day:c.day,sh:c.sh,lab:c.sh,v:c.v,pairs:c.pairs,at,srcLab:'攝入排出摘要'};
+      const h=parseFloat(document.querySelector(`[data-sumh="${i}"]`).value);if(h>0&&h<8)o.shHrs[c.day+'|'+c.sh]=Math.round(h*2)/2;else delete o.shHrs[c.day+'|'+c.sh];});
+    p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab='io';markDirty();renderList();renderMain();toast(`已加入 ${R.shifts.length} 班攝入排出`);};}
 function pasteKind(t){if(!t||!t.trim())return '';
-  const K=[[isCloudMed,'雲端藥歷'],[isOrderSheet,'醫囑列印紀錄'],[isLabReport,'檢驗報告'],[isMicro,'培養／抗微生物圖譜'],[isLineRecord,'管路紀錄'],[isNurseRecord,'護理記錄'],[isIOHourly,'I/O 明細'],[isRTRecord,'呼吸治療紀錄'],[isProgress,'病程紀錄'],[isAdmission,'入院紀錄'],[isConsultText,'會診'],[isExamText,'檢查報告']];
+  const K=[[isCloudMed,'雲端藥歷'],[isOrderSheet,'醫囑列印紀錄'],[isLabReport,'檢驗報告'],[isMicro,'培養／抗微生物圖譜'],[isLineRecord,'管路紀錄'],[isIOSummary,'攝入排出（班別摘要）'],[isNurseRecord,'護理記錄'],[isIOHourly,'I/O 明細'],[isRTRecord,'呼吸治療紀錄'],[isProgress,'病程紀錄'],[isAdmission,'入院紀錄'],[isConsultText,'會診'],[isExamText,'檢查報告']];
   for(const [f,l] of K){try{if(f(t))return l;}catch(e){}}return '病人資訊列／目前用藥';}
 let _pkT=null;
 function closePaste(){$('pasteOv').classList.add('hidden');$('pasteText').value='';$('pasteKind').innerHTML='';$('pastePreview').innerHTML='';lastParse=null;}
@@ -2552,6 +2569,7 @@ $('btnParsePaste').onclick=()=>{
   if(isLabReport($('pasteText').value)){previewLab($('pasteText').value);return;}
   if(isMicro($('pasteText').value)){previewMicro($('pasteText').value);return;}
   if(isLineRecord($('pasteText').value)){previewLines($('pasteText').value);return;}
+  if(isIOSummary($('pasteText').value)){previewIOSum($('pasteText').value);return;}
   if(isNurseRecord($('pasteText').value)||isIOHourly($('pasteText').value)){previewIO($('pasteText').value);return;}
   if(isRTRecord($('pasteText').value)){previewRT($('pasteText').value);return;}
   if(isProgress($('pasteText').value)){previewProg($('pasteText').value);return;}
@@ -4641,6 +4659,26 @@ function isNurseRecord(t){t=String(t||'');if(/護理記錄單|護理紀錄單/.t
 function nurseGrowth(T){const g=(re)=>{const m=T.match(re);if(!m)return null;let v=+m[1];if(m[2]&&/mm/i.test(m[2]))v=v/10;return v>0?v:null;};
   const r={},ht=g(/(?:身高|身長)\s*[:：=]?\s*([\d.]+)\s*(cm|公分|mm)(?![a-z])/i),hc=g(/頭圍\s*[:：=]?\s*([\d.]+)\s*(cm|公分|mm)(?![a-z])/i),cc=g(/胸圍\s*[:：=]?\s*([\d.]+)\s*(cm|公分|mm)(?![a-z])/i);
   if(ht&&ht>20&&ht<250)r.ht=ht;if(hc&&hc>15&&hc<70)r.hc=hc;if(cc&&cc>15&&cc<200)r.cc=cc;return Object.keys(r).length?r:null;}
+/* 【攝入排出】班別摘要格式：日期行 → 白班／小夜班／大夜班／三班 → 攝入：x 排出：y 差異：z → 項目：量 */
+const IOSUM_SH={'白班':0,'小夜班':1,'大夜班':2,'三班':'T'};
+function isIOSummary(t){t=String(t||'');return /【攝入排出】/.test(t)||(/^\s*\d{4}\/\d{1,2}\/\d{1,2}\s*$/m.test(t)&&/^\s*(白班|小夜班|大夜班|三班)\s*$/m.test(t)&&/攝入\s*[:：]\s*-?[\d.]+[\s\S]{0,20}排出\s*[:：]/.test(t));}
+function parseIOSummary(t){const out=[],tot=[];let day=null,cur=null;
+  const KEY={'飲食':'diet','注射':'inj','小便':'urine','尿':'urine','尿量':'urine','大便':'stool','糞便':'stool'};
+  String(t||'').replace(/\r/g,'').split('\n').forEach(l=>{const L=l.trim();if(!L)return;
+    let m=L.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})$/);if(m){day=`${m[1]}-${pad(+m[2])}-${pad(+m[3])}`;cur=null;return;}
+    if(IOSUM_SH[L]!=null&&day){cur={day,sh:IOSUM_SH[L],lab:L,v:{},pairs:[]};(cur.sh==='T'?tot:out).push(cur);return;}
+    if(!cur)return;
+    m=L.match(/攝入\s*[:：]\s*(-?[\d.]+)\s+排出\s*[:：]\s*(-?[\d.]+)(?:\s+差異\s*[:：]\s*(-?[\d.]+))?/);if(m){cur.v.inTot=+m[1];cur.v.outTot=+m[2];if(m[3]!=null)cur.v.diff=+m[3];return;}
+    [...L.matchAll(/([^\s:：\d][^\s:：]*)\s*[:：]\s*(-?[\d.]+)/g)].forEach(([,k,v])=>{v=+v;cur.pairs.push([k,v]);const kk=KEY[k];if(kk)cur.v[kk]=(cur.v[kk]||0)+v;else{const out=/引流|嘔吐|胸管|反抽|drain|透析|脫水|其他排出/i.test(k);if(out)cur.v.otherOut=(cur.v.otherOut||0)+v;else cur.v.otherIn=(cur.v.otherIn||0)+v;}});});
+  const chk=[];
+  out.forEach(c=>{const V=c.v,inS=(V.diet||0)+(V.inj||0)+(V.otherIn||0),outS=(V.urine||0)+(V.stool||0)+(V.otherOut||0);
+    if(V.inTot!=null&&Math.abs(inS-V.inTot)>0.6)chk.push(`${ioMD(c.day)} ${c.lab}：項目攝入合計 ${fmtN(inS)} ≠ 攝入 ${fmtN(V.inTot)}`);
+    if(V.outTot!=null&&Math.abs(outS-V.outTot)>0.6)chk.push(`${ioMD(c.day)} ${c.lab}：項目排出合計 ${fmtN(outS)} ≠ 排出 ${fmtN(V.outTot)}`);
+    if(V.diff!=null&&V.inTot!=null&&Math.abs(V.inTot-V.outTot-V.diff)>0.6)chk.push(`${ioMD(c.day)} ${c.lab}：攝入 − 排出 ≠ 差異`);});
+  tot.forEach(T=>{const S=out.filter(c=>c.day===T.day),si=S.reduce((a,c)=>a+(c.v.inTot||0),0),so=S.reduce((a,c)=>a+(c.v.outTot||0),0);
+    T.ok=Math.abs(si-(T.v.inTot||0))<=0.6&&Math.abs(so-(T.v.outTot||0))<=0.6;T.shifts=S.map(c=>c.lab);
+    if(!T.ok)chk.push(`${ioMD(T.day)} 三班 ${fmtN(T.v.inTot)}／${fmtN(T.v.outTot)} ≠ 各班合計 ${fmtN(si)}／${fmtN(so)}`);});
+  return {shifts:out,tot,chk};}
 function isIOHourly(t){t=String(t||'');let n=0;t.split(/\r?\n/).forEach(l=>{if(/^\s*\d{1,2}:\d{2}[ \t]+\S.*?[ \t]+-?[\d.]+\s*$/.test(l))n++;});
   return n>=2&&/foley|尿|管灌|IWL|體表流失|引流|開水|藥物\(含水\)|攝入|排出/i.test(t);}
 // 護理記錄 → 各筆（日期行＋時間行＋內容，到「記錄者」為止）
@@ -4739,11 +4777,12 @@ function ioShifts(p){
       else if(others.length>=2&&geSum){t='24h';why='數值 ≥ 同日其他兩班合計';}}
     if(t==='24h'){d24[s.day]=Object.assign({key:k,at:s.at,pairs:s.pairs||[],why,auto:!ov[k]&&s.lab!=='24h'},V);return;}
     const sh=s.lab!=null&&s.lab!=='24h'?s.lab:s.sh;
-    R[s.day+'|'+sh]={day:s.day,sh,src:'護理記錄',in:V.in,out:V.out,urine:V.urine,iwl:null,cat:{},pairs:s.pairs||[],unc:0,key:k,at:s.at,auto:s.lab==null&&!ov[k]};});
+    R[s.day+'|'+sh]={day:s.day,sh,src:s.srcLab||'護理記錄',in:V.in,out:V.out,urine:V.urine,iwl:null,cat:{},pairs:s.pairs||[],unc:0,key:k,at:s.at,auto:s.lab==null&&!ov[k]};});
   iDays.forEach(d=>o.items[d].forEach(it=>{const t=ioT(it.t),sh=ioShOf(new Date(+t-60000)),k=d+'|'+sh;
     const r=R[k]=R[k]||{day:d,sh,src:'每小時明細',in:0,out:0,urine:0,iwl:0,cat:{},pairs:[],unc:0,uncN:[]};
     const c=ioCat(it.name);if(!c){r.unc+=it.ml;if(!r.uncN.includes(it.name))r.uncN.push(it.name);return;}
     r[IO_CATS[c][0]]+=it.ml;r.cat[c]=(r.cat[c]||0)+it.ml;if(c==='urine')r.urine+=it.ml;if(c==='iwl')r.iwl+=it.ml;}));
+  {const H=o.shHrs||{};Object.values(R).forEach(r=>{const h=H[r.day+'|'+r.sh];if(h>0&&h<8)r.h=h;});}
   Object.defineProperty(R,'d24',{value:d24,enumerable:false});
   return R;
 }
@@ -4755,7 +4794,7 @@ function ioDays(p){
     if(T&&L.length&&L.length<3){const miss=[0,1,2].filter(x=>!L.some(s=>s.sh===x));if(miss.length===1){const dv=k=>(T[k]!=null?T[k]:0)-L.reduce((a,s)=>a+(s[k]||0),0);
       if(dv('in')>=-1&&dv('out')>=-1)L.push({day,sh:miss[0],src:'由 24 小時小計推算',in:dv('in'),out:dv('out'),urine:T.urine!=null&&L.every(s=>s.urine!=null)?dv('urine'):null,cat:{},pairs:[],unc:0,derived:true});L.sort((a,b)=>a.sh-b.sh);}}
     const sum=k=>L.reduce((a,s)=>a+(s[k]||0),0),inn=T?T.in:sum('in'),out=T?T.out:sum('out'),ur=T?T.urine:L.some(s=>s.urine!=null)?sum('urine'):null,iwl=L.some(s=>s.iwl)?sum('iwl'):null;
-    cum+=inn-out;const hrs=T?24:8*L.length;
+    cum+=inn-out;const hrs=T?24:L.reduce((a,s)=>a+(s.h||8),0);
     const d0=new Date(day+'T07:00:00'),d1=new Date(+d0+864e5);
     const diu=o.ev.filter(e=>e.kind==='diu'&&ioT(e.t)>=d0&&ioT(e.t)<d1),hold=o.ev.filter(e=>e.kind==='hold'&&ioT(e.t)>=d0&&ioT(e.t)<d1);
     return {day,L,T,in:inn,out,bal:inn-out,cum,urine:ur,iwl,hrs,full:!!T||L.length===3,
@@ -4772,8 +4811,8 @@ function ioUO6(p){const o=ioStore(p),wt=ioWt(p).kg,R={};
 const IO_SHSPAN=['07:00–15:00','15:00–23:00','23:00–07:00'];
 const ioNextMD=d=>{const t=new Date(d+'T12:00:00');t.setDate(t.getDate()+1);return ymdOf(t).slice(5).replace('-','/');};
 /* 計算區間文字：全天 MM/DD 07:00–MM/DD 07:00（24 h）；不足一日列出班別時段 */
-function ioUOSpan(x){if(x.full)return `${ioMD(x.day)} 07:00–${ioNextMD(x.day)} 07:00（24 h）`;
-  return x.L.map(s=>`${s.sh===2?ioMD(x.day)+' 23:00–'+ioNextMD(x.day)+' 07:00':ioMD(x.day)+' '+IO_SHSPAN[s.sh]}`).join('、')+`（${x.hrs} h）`;}
+function ioUOSpan(x){if(x.full&&x.hrs===24)return `${ioMD(x.day)} 07:00–${ioNextMD(x.day)} 07:00（24 h）`;
+  return x.L.map(s=>`${s.sh===2?ioMD(x.day)+' 23:00–'+ioNextMD(x.day)+' 07:00':ioMD(x.day)+' '+IO_SHSPAN[s.sh]}${s.h?`（實際 ${s.h} h）`:''}`).join('、')+`（${x.hrs} h）`;}
 function ioUO6Span(d,i){const n=ioNextMD(d),m=ioMD(d);return [`${m} 07:00–13:00`,`${m} 13:00–19:00`,`${m} 19:00–${n} 01:00`,`${n} 01:00–07:00`][i];}
 const ioShTxt=x=>x.full?'全天':x.L.map(s=>IO_SH[s.sh]).join('＋'),ioShEn=x=>x.full?'':` (${x.L.map(s=>['day','evening','night'][s.sh]).join('+')} shift only)`;
 const ioSign=v=>(v>0?'+':'')+fmtN(Math.round(v));
@@ -5185,9 +5224,9 @@ function renderIO(p,ro){
       <td class="num">${x.urine!=null?fmtN(x.urine):'—'}</td><td class="num">${x.uokh!=null?`<b>${x.uokh.toFixed(2)}</b><div class="small mute" style="white-space:nowrap">${ioUOSpan(x)}</div>`:'—'}</td>
       <td class="num small">${U6[x.day]&&w.kg?U6[x.day].map(u=>`<div style="white-space:nowrap"><b>${u.kgh.toFixed(2)}</b> <span class="mute">${u.span}</span></div>`).join(''):'<span class="mute">—</span>'}</td>
       <td class="small">${x.diu.map(e=>`${e.t.slice(11)} ${esc(e.text)}`).join('<br>')||(x.diuOrd.length?`<span class="mute">醫囑：${x.diuOrd.join('、')}</span>`:'—')}${x.hold.map(e=>`<div class="under">${e.t.slice(11)} ${esc(e.text)}</div>`).join('')}</td><td class="small mute">${[...new Set(x.L.map(s=>s.src))].join('、')}</td></tr>
-      ${x.L.map(s=>`<tr><td></td><td>${IO_SH[s.sh]}${s.derived?'<div class="small mute">由 24h 推算</div>':''}${!ro&&s.key&&s.sh===2&&s.auto?`<div><button class="small" data-blk="${esc(s.key)}|24h" style="padding:0 6px">其實是 24 小時</button></div>`:''}</td><td class="num">${fmtN(s.in)}</td><td class="num">${fmtN(s.out)}</td><td class="num">${ioSign(s.in-s.out)}</td><td class="num">${s.urine!=null?fmtN(s.urine):'—'}</td><td class="num">${s.urine!=null&&w.kg?(s.urine/w.kg/8).toFixed(2):'—'}${s.urine!=null&&w.kg?`<div class="small mute" style="white-space:nowrap">${s.sh===2?ioMD(x.day)+' 23:00–'+ioNextMD(x.day)+' 07:00':ioMD(x.day)+' '+IO_SHSPAN[s.sh]}（8 h）</div>`:''}</td><td class="num mute">—</td>
+      ${x.L.map(s=>`<tr><td></td><td>${IO_SH[s.sh]}${ro||x.T?(s.h?`<div class="small under">實際 ${s.h} h</div>`:''):`<div class="small" style="white-space:nowrap"><input data-shh="${x.day}|${s.sh}" type="number" min="0.5" max="8" step="0.5" value="${s.h||8}" style="width:52px;padding:1px 4px" title="這班實際涵蓋的小時數（例：入院 18:30 → 小夜班 4.5）"> h</div>`}${s.derived?'<div class="small mute">由 24h 推算</div>':''}${!ro&&s.key&&s.sh===2&&s.auto?`<div><button class="small" data-blk="${esc(s.key)}|24h" style="padding:0 6px">其實是 24 小時</button></div>`:''}</td><td class="num">${fmtN(s.in)}</td><td class="num">${fmtN(s.out)}</td><td class="num">${ioSign(s.in-s.out)}</td><td class="num">${s.urine!=null?fmtN(s.urine):'—'}</td><td class="num">${s.urine!=null&&w.kg?(s.urine/w.kg/(s.h||8)).toFixed(2):'—'}${s.urine!=null&&w.kg?`<div class="small mute" style="white-space:nowrap">${s.sh===2?ioMD(x.day)+' 23:00–'+ioNextMD(x.day)+' 07:00':ioMD(x.day)+' '+IO_SHSPAN[s.sh]}（${s.h||8} h）</div>`:''}</td><td class="num mute">—</td>
         <td class="small mute" colspan="2">${s.pairs.length?s.pairs.map(([k,v])=>`${esc(k)} ${fmtN(v)}`).join('、'):Object.entries(s.cat).map(([c,v])=>`${IO_CATS[c][1]} ${fmtN(v)}`).join('、')}${s.unc?`<div class="under">未分類 ${fmtN(s.unc)}（${esc(s.uncN.join('、'))}）</div>`:''}</td></tr>`).join('')}`).join('')}
-    </tbody></table></div><div class="small mute" style="margin-top:4px">尿 mL/kg/h ＝ 區間尿量 ÷ 體重 ÷ 區間小時數，每個數值下方標示計算區間。全天＝07:00 至隔日 07:00（24 h）；只有部分班別時以「班數 × 8 h」計，並列出實際班別時段。6 h 區間只在有「攝入排出每小時明細」時計算（07–13、13–19、19–01、01–07）；護理記錄只有 8 小時班別小計，無法切成 6 小時。</div></div>`;
+    </tbody></table></div><div class="small mute" style="margin-top:4px">尿 mL/kg/h ＝ 區間尿量 ÷ 體重 ÷ 區間小時數，每個數值下方標示計算區間。全天＝07:00 至隔日 07:00（24 h）；只有部分班別時以「班數 × 8 h」計，並列出實際班別時段；某班不滿 8 小時（例如入院、轉出、手術當班）可在班別欄改「h」數，mL/kg/h 會依實際時數重算（全天也會改用實際總時數）。6 h 區間只在有「攝入排出每小時明細」時計算（07–13、13–19、19–01、01–07）；護理記錄只有 8 小時班別小計，無法切成 6 小時。</div></div>`;
   h+=bmCard(p);
   // 未分類項目
   const unc=new Set();Object.values(o.items).forEach(L=>L.forEach(it=>{if(!ioCat(it.name))unc.add(it.name);}));
@@ -5204,10 +5243,12 @@ function bindIO(p,ro){
   if($('btnWtApply'))$('btnWtApply').onclick=()=>{snapshot(p,'更新體重');const L=wtSeries(p).slice(-1)[0];setWeight(p,$('btnWtApply').dataset.kg,`護理記錄 ${L?L.t.slice(5,10).replace('-','/'):''}`,L?L.t:null);markDirty();renderMain();toast('已更新基本資料體重（劑量計算會改用新體重）');};
   document.querySelectorAll('[data-wtdel]').forEach(b=>b.onclick=e=>{e.preventDefault();const [t,kg]=b.dataset.wtdel.split('|');snapshot(p,'刪除體重');const o=ioStore(p);o.wts=o.wts.filter(w=>!(w.t===t&&String(w.kg)===kg));markDirty();renderMain();});
   if($('btnIOAdd'))$('btnIOAdd').onclick=()=>{const t=$('ioText').value;if(!t.trim()){toast('沒有內容');return;}
+    if(isIOSummary(t)){openPaste(p.id);$('pasteText').value=t;previewIOSum(t);return;}
     if(isNurseRecord(t)||isIOHourly(t)){const dd=$('ioDay').value;openPaste(p.id);$('pasteText').value=t;previewIO(t,{day:dd});return;}
     if(!isNurseRecord(t)&&!isIOHourly(t)){const v=nurseVitals(t);if(v&&Object.keys(v).length>=2){snapshot(p,'加入生命徵象');const o=ioStore(p);o.vs=o.vs||[];o.vs.push(Object.assign({t:ioLocal(new Date()),manual:true},v));markDirty();renderMain();toast('已加入一筆生命徵象（沒有日期，時間記為現在）');return;}toast('看不出是護理記錄、I/O 明細或生命徵象');return;}
     snapshot(p,'加入 I/O');const r=ioImport(p,t,$('ioDay').value);markDirty();renderMain();
     toast(r.kind==='nurse'?`已加入 ${r.ns} 班 I/O 小計${r.nv?`、${r.nv} 筆生命徵象`:''}${r.nw?`、${r.nw} 筆體重`:''}${r.ne?`、${r.ne} 筆事件（利尿劑／管灌／排便）`:''}`:`已加入 ${ioMD(r.day)} 明細 ${r.ni} 筆`);};
+  document.querySelectorAll('[data-shh]').forEach(el=>el.onchange=()=>{const v=parseFloat(el.value),o=ioStore(p);o.shHrs=o.shHrs||{};snapshot(p,'修改班別時數');if(!(v>0)||v>=8)delete o.shHrs[el.dataset.shh];else o.shHrs[el.dataset.shh]=Math.round(v*2)/2;markDirty();renderMain();});
   document.querySelectorAll('[data-blk]').forEach(b=>b.onclick=()=>{const [k1,k2,t]=b.dataset.blk.split('|');const o=ioStore(p);o.blkType=o.blkType||{};o.blkType[k1+'|'+k2]=t;markDirty();renderMain();});
   document.querySelectorAll('[data-iomap]').forEach(el=>el.onchange=()=>{const st=S.data.settings;st.ioMap=st.ioMap||{};if(el.value)st.ioMap[el.dataset.iomap]=el.value;else st.ioMap[el.dataset.iomap]='';markDirty();renderMain();});
   document.querySelectorAll('[data-iodel]').forEach(b=>b.onclick=async e=>{e.preventDefault();const d=b.dataset.iodel;if(!await confirmBox('刪除 I/O',`刪除 ${esc(ioMD(d))} 這一天的 I/O（班別小計與明細）？`,'刪除',true))return;
