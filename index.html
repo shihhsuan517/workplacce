@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-24n';
+const APP_VER='2026-11-24o';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -973,7 +973,7 @@ function renderTab(p,ro){
     return h;
   }
   if(S.tab==='overview')return renderOverview(p);
-  if(S.tab==='meds')return renderMeds(p,ro)+prnCard(p)+insGlyCard(p)+sedCard(p)+renderCloud(p,ro);
+  if(S.tab==='meds')return crrtCard(p,ro)+renderMeds(p,ro)+prnCard(p)+insGlyCard(p)+sedCard(p)+renderCloud(p,ro);
   if(S.tab==='drip')return renderDrip(p,ro);
   if(S.tab==='lab')return akiCard(p,ro)+cgCard(p)+renderLab(p,ro);
   if(S.tab==='soap')return renderSoap(p,ro);
@@ -3082,6 +3082,8 @@ async function copyText(text){
   catch(e){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy');}catch(_){}ta.remove();return ok;}
 }
 function bindMeds(p,ro){
+  document.querySelectorAll('[data-crrt]').forEach(el=>el.onchange=()=>{p.crrt=p.crrt||{};p.crrt[el.dataset.crrt]=el.value;markDirty();renderMain();});
+  document.querySelectorAll('[data-apttctl]').forEach(el=>el.onchange=()=>{S.data.settings=S.data.settings||{};S.data.settings.apttCtl=el.value;markDirty();renderMain();});
   if($('btnRepaste'))$('btnRepaste').onclick=()=>openPaste(p.id);
   if($('btnCopySoapMeds'))$('btnCopySoapMeds').onclick=async()=>{toast(await copyText(medsSoapText(p))?'已複製用藥清單':'複製失敗');};
   if($('startDet'))$('startDet').addEventListener('toggle',e=>{S.startOpen=e.target.open;});
@@ -3527,6 +3529,41 @@ function akiBase(p,C){const A=p.aki||{},adm=p.admitDate?Date.parse(p.admitDate+'
   if(C.length&&!A.admAKI){const a=adm!=null?C.find(x=>x.t>=adm-864e5):C[0];if(a)return {v:a.v,lvl:2,t:a.t,txt:`第 2 層：入院時 SCr ${a.v}（${fmt(a.t)}）`};}
   if(C.length){const m=C.reduce((a,b)=>b.v<a.v?b:a);return {v:m.v,lvl:3,t:m.t,txt:`第 3 層：住院期間最低 SCr ${m.v}（${fmt(m.t)}）`};}
   const age=ageYears(p),v=scrForEgfr(75,age,p.sex);return v?{v,lvl:4,txt:`第 4 層：以 CKD-EPI 2021 假設 eGFR 75 回推 SCr ${v}（${age} 歲、${p.sex==='F'?'女':'男'}）`}:null;}
+/* 尿量區段：6 小時區間（每小時明細）／8 小時班別（可不滿 8 h）／手動區間；24 小時合計不納入 */
+function uoSegs(p,D){D=D||ioDays(p);const segs=[];const U6=ioUO6(p);
+  D.forEach(x=>{if(U6[x.day])U6[x.day].forEach((w,i)=>segs.push({t0:+new Date(x.day+'T07:00:00')+i*6*36e5,h:6,slot:6,ml:w.ml,lab:w.span}));
+    else if(!x.T)x.L.forEach(sh=>{if(sh.urine==null)return;const t0=+new Date(x.day+'T07:00:00')+sh.sh*8*36e5;segs.push({t0,h:sh.h||8,slot:8,ml:sh.urine,lab:`${ioMD(x.day)} ${['07–15','15–23','23–07'][sh.sh]}`});});});
+  ((p.aki||{}).uMan||[]).forEach(m=>{const a=Date.parse(m.from),b=Date.parse(m.to);if(!(b>a)||!(+m.ml>=0))return;const h=(b-a)/36e5;
+    const md=t=>{const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
+    for(let i=segs.length-1;i>=0;i--){const g=segs[i],ge=g.t0+g.slot*36e5;if(g.t0<b&&ge>a)segs.splice(i,1);}
+    segs.push({t0:a,h,slot:h,ml:+m.ml,lab:`手動 ${md(a)}–${md(b)}`,man:true});});
+  return segs.sort((a,b)=>a.t0-b.t0);}
+/* ===== 腎臟替代治療適應症：本院《重症加護單位業務手冊》2026/5 第四版 附錄三 p.42（Indications of Hemodialysis） ===== */
+const MAN_CITE='本院《重症加護單位業務手冊》2026 年 5 月第四次修訂';
+function labNow(p,code){const v=latestLab(p,code,'B');if(!v)return null;const n=labNum(v),t=tsOf(v.sk);return n===n?{v:n,t,old:t&&Date.now()-t>72*36e5,md:skMD(v.sk)}:null;}
+function rrtInd(p){const S=uoSegs(p),M=(p.aki||{}).rrtMan||{},out=[];
+  // 最近連續 ≥12 小時的尿量，換算成 12 小時
+  let u12=null;{let h=0,ml=0,i=S.length-1,last=null;while(i>=0){const g=S[i];if(last&&Math.abs(g.t0+g.slot*36e5-last.t0)>1)break;h+=g.h;ml+=g.ml;last=g;i--;if(h>=12)break;}
+    if(h>=12&&last)u12={ml12:ml*12/h,ml,h,from:last.lab,to:S[S.length-1].lab};}
+  const L=k=>labNow(p,k),fmtL=(x,u)=>x?`${x.v}${u||''}（${x.md}${x.old?'，>72 小時前':''}）`:'無資料';
+  const K=L('72-356'),pH=L('72C530'),BUN=L('72-307'),Na=L('72-355'),Ca=L('72-327');
+  const bt=(vsList(p).filter(x=>x.BT!=null&&+ioT(x.t)>=Date.now()-24*36e5).map(x=>x.BT));
+  const u12t=u12?`最近 ${u12.h} 小時 ${fmtN(u12.ml)} mL → 換算 12 小時 ${fmtN(Math.round(u12.ml12))} mL（${u12.from}${u12.to!==u12.from?' 至 '+u12.to:''}）`:'沒有連續 ≥12 小時的尿量資料';
+  out.push({k:1,lab:'Oliguria（urine output <200 ml/12h）',met:u12?u12.ml12<200:null,val:u12t});
+  out.push({k:2,lab:'Anuria／extreme oliguria（<50 ml/12h）',met:u12?u12.ml12<50:null,val:u12t});
+  out.push({k:3,lab:'Hyperkalemia（K⁺ >6.5 mmol/L）',met:K?K.v>6.5:null,val:fmtL(K)});
+  out.push({k:4,lab:'Severe metabolic acidemia（pH <7.1）',met:pH?pH.v<7.1:null,val:fmtL(pH)});
+  out.push({k:5,lab:'Azotemia（Blood urea >85 mg/dL）',met:BUN?BUN.v>85:null,val:fmtL(BUN)});
+  [[6,'Clinically significant organ edema（especially lung）'],[7,'Uremic encephalopathy'],[8,'Uremic pericarditis'],[9,'Uremic neuropathy／myopathy']].forEach(([k,l])=>out.push({k,lab:l,met:!!M[k],man:true}));
+  out.push({k:10,lab:'Severe electrolyte imbalance（Na⁺ >160 或 <115 mmol/L）, hypercalcemia',met:(Na&&(Na.v>160||Na.v<115))||!!M[10],val:`Na ${fmtL(Na)}；Ca ${fmtL(Ca)}（hypercalcemia 手冊未定門檻，請手動勾選）`,man10:true});
+  out.push({k:11,lab:'Hyperthermia',met:!!M[11],man:true,val:bt.length?`24 小時內 BT 最高 ${Math.max(...bt)}℃（手冊未定門檻）`:''});
+  out.push({k:12,lab:'Drug overdose or intoxication with dialysable toxin',met:!!M[12],man:true});
+  return out;}
+function rrtIndHTML(p,ro){const R=rrtInd(p),n=R.filter(x=>x.met).length;
+  return `<details style="margin-top:8px" ${n?'open':''}><summary style="cursor:pointer;font-weight:700">腎臟替代治療適應症 <span class="small ${n?'under':'mute'}">符合 ${n} 項</span></summary>
+    <div class="small mute" style="margin:4px 0">手冊原文：The presence of at least one of the above criteria is sufficient to initiate renal replacement therapy in a critically ill patient. The presence of two of these criteria makes renal replacement urgent and mandatory.（只列符合項目，不做是否透析的建議）</div>
+    ${R.map(x=>`<div class="kv"><span class="k">${x.met?'✔':x.met===null?'？':'—'} ${x.k}. ${esc(x.lab)}</span><span style="text-align:right" class="small">${x.val?esc(x.val):''}${(x.man||x.man10)&&!ro?` <label style="white-space:nowrap"><input type="checkbox" data-rrtman="${x.k}" style="width:auto" ${((p.aki||{}).rrtMan||{})[x.k]?'checked':''}> ${x.k===10?'hypercalcemia':'手動勾選'}</label>`:''}</span></div>`).join('')}
+    <div class="small mute" style="margin-top:4px">出處：${MAN_CITE}，附錄三 p.42。12 小時尿量取最近連續 ≥12 小時的資料（班別／6 小時區間／手動區間）等比例換算；只有 24 小時合計的日子不納入；符合 Anuria 時必然也符合 Oliguria，依手冊條列各算一項。檢驗取最新值，超過 72 小時會註明。</div></details>`;}
 function akiEval(p){if(p.template==='peds')return null;const C=crSeries(p),B=akiBase(p,C),now=C.length?C[C.length-1].t:Date.now(),from=now-7*864e5,fmt=t=>{const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
   // C 軸
   let c={st:0,why:'未達標準'};const W=C.filter(x=>x.t>=from);
@@ -3540,14 +3577,7 @@ function akiEval(p){if(p.template==='peds')return null;const C=crSeries(p),B=aki
   const D=ioDays(p);
   if(!ibw)uNa='需身高與性別才能計算 IBW（新定義以理想體重計）';
   else if(!D.length)uNa='尚無 I/O 資料';
-  else{const segs=[];const U6=ioUO6(p);
-    D.forEach(x=>{if(U6[x.day])U6[x.day].forEach((w,i)=>segs.push({t0:+new Date(x.day+'T07:00:00')+i*6*36e5,h:6,slot:6,ml:w.ml,lab:w.span}));
-      else if(!x.T)x.L.forEach(sh=>{if(sh.urine==null)return;const t0=+new Date(x.day+'T07:00:00')+sh.sh*8*36e5;segs.push({t0,h:sh.h||8,slot:8,ml:sh.urine,lab:`${ioMD(x.day)} ${['07–15','15–23','23–07'][sh.sh]}`});});});
-    ((p.aki||{}).uMan||[]).forEach(m=>{const a=Date.parse(m.from),b=Date.parse(m.to);if(!(b>a)||!(+m.ml>=0))return;const h=(b-a)/36e5;
-      const md=t=>{const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
-      for(let i=segs.length-1;i>=0;i--){const g=segs[i],ge=g.t0+g.slot*36e5;if(g.t0<b&&ge>a)segs.splice(i,1);}
-      segs.push({t0:a,h,slot:h,ml:+m.ml,lab:`手動 ${md(a)}–${md(b)}`,man:true});});
-    segs.sort((a,b)=>a.t0-b.t0);const S7=segs.filter(g=>g.t0>=Date.now()-8*864e5);
+  else{const segs=uoSegs(p,D);const S7=segs.filter(g=>g.t0>=Date.now()-8*864e5);
     const runs=(test)=>{const R=[];let cur=null;S7.forEach((g,i)=>{const rate=g.ml/ibw/g.h,ok=test(g,rate),prev=S7[i-1],cont=prev&&Math.abs(g.t0-(prev.t0+prev.slot*36e5))<1;
       if(ok){if(cur&&cont)cur.segs.push(g);else{cur={segs:[g]};R.push(cur);}}else cur=null;});
       return R.map(r=>({h:r.segs.reduce((a,g)=>a+g.h,0),ml:r.segs.reduce((a,g)=>a+g.ml,0),from:r.segs[0].lab,to:r.segs[r.segs.length-1].lab}));};
@@ -3585,8 +3615,10 @@ function akiCard(p,ro,compact){const E=akiEval(p);if(!E)return '';if(!E.C.length
       <div class="fld"><label>U 期別手動指定（優先於自動判讀）</label><select data-akiov="st">${[['','不指定（自動）'],['0','U0'],['1','U1'],['2','U2'],['3','U3']].map(([v,l])=>`<option value="${v}" ${String(((A.uOv)||{}).st??'')===v?'selected':''}>${l}</option>`).join('')}</select></div>
       <div class="fld"><label>手動指定理由</label><input data-akiov="note" value="${esc(((A.uOv)||{}).note||'')}" placeholder="例：護理記錄 11/22 18:00 起尿量 <10 mL/h"></div>
       <div class="fld"><label>損傷標記（B）</label><select data-aki="B">${[['','未檢測'],['B0','B0 陰性'],['B1','B1 陽性']].map(([v,l])=>`<option value="${v}" ${(A.B||'')===v?'selected':''}>${l}</option>`).join('')}</select></div></div></details>`}
+    ${rrtIndHTML(p,ro)}
     <div class="small mute" style="margin-top:6px">依據：${AKI_CITE}。C1：48 小時內上升 ≥0.3 mg/dl 或 1.5–1.9 倍；C2：2.0–2.9 倍；C3：≥3.0 倍、SCr ≥4.0 mg/dl 或開始 RRT。U1：&lt;0.5 mL/kg/h 6–12 小時；U2：&lt;0.5 &gt;12 小時；U3：&lt;0.3 &gt;24 小時或無尿 &gt;12 小時（以 IBW 計；連續班別或 6 小時區間相接才累計；某班不滿 8 小時以實際時數計）。整體期別取 C、U 最高者。依公開審查草案，正式版數字可能調整。只看最近 7 天。</div></div>`;}
 function bindAki(p){
+  document.querySelectorAll('[data-rrtman]').forEach(el=>el.onchange=()=>{p.aki=p.aki||{};p.aki.rrtMan=p.aki.rrtMan||{};if(el.checked)p.aki.rrtMan[el.dataset.rrtman]=true;else delete p.aki.rrtMan[el.dataset.rrtman];markDirty();renderMain();});
   if($('btnAkiUAdd'))$('btnAkiUAdd').onclick=()=>{const a=$('akiUFrom').value,b=$('akiUTo').value,ml=$('akiUMl').value;
     if(!a||!b||ml===''){toast('請填起訖時間與尿量');return;}if(Date.parse(b)<=Date.parse(a)){toast('結束時間要晚於開始時間');return;}
     snapshot(p,'加入尿量區間');p.aki=p.aki||{};(p.aki.uMan=p.aki.uMan||[]).push({from:a,to:b,ml:+ml});p.aki.uMan.sort((x,y)=>x.from.localeCompare(y.from));markDirty();renderMain();};
@@ -5007,6 +5039,8 @@ function nurseVitals(T){
   put('FS',g('F',/F\/S\s*[:：]\s*(\d+)/.source));
   const gc=T.match(/E\s*(\d)\s*V\s*(\d|E|T|A)\s*M\s*(\d)/);if(gc)v.GCS=`E${gc[1]}V${gc[2]}M${gc[3]}`;
   put('RASS',g('R',/RASS\)?\s*[:：]\s*(-?\d)/.source));put('ICDSC',g('I',/ICDSC[）)]?\s*[:：]\s*(\d+)/.source));put('CPOT',g('P',/CPOT\)?】?\s*[:：]\s*(\d+)/.source));
+  {const cm=T.match(/CAM-?ICU[^:：\n]{0,10}[:：]?\s*(陽性|陰性|positive|negative|\(\s*[+＋]\s*\)|\(\s*[-－]\s*\)|[+＋](?![\d])|[-－](?![\d])|無法評估|UTA)/i);
+   if(cm){const x=cm[1];v.CAM=/陽|posi|\+|＋/i.test(x)?'+':/無法|UTA/i.test(x)?'UTA':'-';}}
   return Object.keys(v).length?v:null;
 }
 function vsList(p){return (ioStore(p).vs||[]).slice().sort((a,b)=>a.t.localeCompare(b.t));}
@@ -5152,14 +5186,15 @@ function insGlyCard(p){
 // ---- 顯示：鎮靜、疼痛、譫妄評分（用藥）
 const SED_RX=/midazolam|dormicum|propofol|fresofol|dexmedetomidine|precedex|lorazepam|fentanyl|morphine|remifentanil|ketamine|cisatracurium|nimbex|rocuronium|haloperidol|quetiapine/i;
 function sedCard(p){
-  const V=vsList(p).filter(x=>x.RASS!=null||x.CPOT!=null||x.GCS||x.ICDSC!=null);if(!V.length)return '';
+  const V=vsList(p).filter(x=>x.RASS!=null||x.CPOT!=null||x.GCS||x.ICDSC!=null||x.CAM);if(!V.length)return '';
+  const camTxt=A=>{const a=A.map(x=>x.CAM).filter(Boolean);if(!a.length)return '—';const c=k=>a.filter(x=>x===k).length;return [c('+')?`陽性×${c('+')}`:'',c('-')?`陰性×${c('-')}`:'',c('UTA')?`無法評估×${c('UTA')}`:''].filter(Boolean).join('、');};
   const days={};V.forEach(x=>(days[x.t.slice(0,10)]=days[x.t.slice(0,10)]||[]).push(x));
   const rg=(A,k)=>{const a=A.map(x=>x[k]).filter(v=>v!=null);return a.length?(Math.min(...a)===Math.max(...a)?String(a[0]):`${Math.min(...a)} ～ ${Math.max(...a)}`):'—';};
   const rows=Object.keys(days).sort().reverse().map(d=>{const A=days[d].sort((a,b)=>a.t.localeCompare(b.t)),g=A.filter(x=>x.GCS);
-    return `<tr><td class="num"><b>${d.slice(5).replace('-','/')}</b></td><td class="num">${rg(A,'RASS')}</td><td class="num">${rg(A,'CPOT')}</td><td class="num">${g.length?esc(g[g.length-1].GCS)+(g.length>1&&g[0].GCS!==g[g.length-1].GCS?`<div class="small mute">由 ${esc(g[0].GCS)}</div>`:''):'—'}</td><td class="num">${rg(A,'ICDSC')}</td>
+    return `<tr><td class="num"><b>${d.slice(5).replace('-','/')}</b></td><td class="num">${rg(A,'RASS')}</td><td class="num">${rg(A,'CPOT')}</td><td class="num">${g.length?esc(g[g.length-1].GCS)+(g.length>1&&g[0].GCS!==g[g.length-1].GCS?`<div class="small mute">由 ${esc(g[0].GCS)}</div>`:''):'—'}</td><td class="num">${rg(A,'ICDSC')}</td><td class="small">${camTxt(A)}</td>
       <td class="small">${medsOnDay(p,d,SED_RX,true).join('、')||'—'}</td></tr>`;}).join('');
-  return `<div class="card"><h3>鎮靜、疼痛、譫妄評分 <span class="small mute">護理記錄・只列數字</span></h3><div class="tblwrap"><table class="tbl"><thead><tr><th>日期</th><th>RASS</th><th>CPOT</th><th>GCS（當日最後）</th><th>ICDSC</th><th>同期鎮靜／止痛／NMBA（醫囑）</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="small mute" style="margin-top:4px">RASS、CPOT、ICDSC 為當日範圍；同期用藥依醫囑紀錄（當天使用中或 3 天內停用）。</div></div>`;
+  return `<div class="card"><h3>鎮靜、疼痛、譫妄評分 <span class="small mute">護理記錄・只列數字</span></h3><div class="tblwrap"><table class="tbl"><thead><tr><th>日期</th><th>RASS</th><th>CPOT</th><th>GCS（當日最後）</th><th>ICDSC</th><th>CAM-ICU</th><th>同期鎮靜／止痛／NMBA（醫囑）</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="small mute" style="margin-top:4px">RASS、CPOT、ICDSC 為當日範圍，CAM-ICU 為當日各次結果；同期用藥依醫囑紀錄（當天使用中或 3 天內停用）。</div></div>`;
 }
 // ---- 顯示：管灌內容與耐受度（TPN／營養）
 const hasFeed=p=>!!(p&&p.io&&(p.io.ev||[]).some(e=>/^(fOrder|feed|grv|cg|npo|hold)$/.test(e.kind)));
@@ -5287,7 +5322,54 @@ function aapCard(p){if(p.template!=='peds')return '';const V=vsSummary(p);if(!V)
     <details style="margin-top:4px"><summary class="small mute" style="cursor:pointer">逐筆落點（最近 8 筆）</summary><div class="tblwrap"><table class="tbl"><thead><tr><th>時間</th><th>SBP</th><th>落點</th><th>DBP</th><th>落點</th><th>來源</th></tr></thead><tbody>
     ${ok.slice(-8).reverse().map(x=>`<tr><td class="num">${md(x.t)}</td><td class="num"><b>${x.b.s}</b></td><td>${aapPos(x.b.s,x.r.s)}</td><td class="num">${x.b.d??''}</td><td>${x.b.d!=null?aapPos(x.b.d,x.r.d):''}</td><td class="small mute">${x.b.src}</td></tr>`).join('')}</tbody></table></div></details>
     <div class="small mute" style="margin-top:6px">參考值：${AAP_CITE[p.sex]}。表中 50th、90th、95th 以體重正常（BMI &lt; 85th）兒童、quantile regression 推得；欄位依身高百分位或實測身高選擇（此處取最接近的欄，不做內插）。原文另以這些百分位分級（Table 3），本面板只列落點。藍＝SBP、紫＝DBP；BP 優先用 A-line，沒有時用 NBP。</div></div>`;}
-function vsRefCard(p){if(p.template!=='peds')return '';return preHRCard(p)+flemCard(p)+aapCard(p);}
+/* 新生兒院內標準：本院《重症加護單位業務手冊》p.15（新生兒加護病房住院或轉入標準）：新生兒休克＝平均動脈壓小於出生週數；急性腎衰竭＝尿量 <0.5 ml/kg/hr 或 Cr >1.5 mg/dL */
+function neoManCard(p){if(p.template!=='peds')return '';const g=gaDays(p);if(g==null||!p.dob)return '';const days=dobDays(p);if(days==null||days>=92)return '';
+  const ga=Math.floor(g/7),V=vsSummary(p),md=t=>t.slice(5,16).replace('-','/');
+  const B=V?V.L.filter(x=>+ioT(x.t)>=+V.end-7*864e5).map(x=>({t:x.t,b:vsBP(x)})).filter(x=>x.b&&x.b.m!=null):[];
+  const low=B.filter(x=>x.b.m<ga),D=ioDays(p),lastU=[...D].reverse().find(x=>x.uokh!=null),cr=labNow(p,'72-333');
+  return `<div class="card"><h3>新生兒院內標準 <span class="small mute">出生週數 GA ${ga} 週・出生後 ${days} 天・只列數字</span></h3>
+    <div class="kv"><span class="k">MAP &lt; 出生週數（${ga}）</span><span style="text-align:right">${B.length?`最近 7 天 ${B.length} 筆中 <b>${low.length}</b> 筆${low.length?`（最低 ${Math.min(...low.map(x=>x.b.m))}，${md(low.sort((a,b)=>a.b.m-b.b.m)[0].t)}）`:''}・最新 MAP ${B[B.length-1].b.m}（${md(B[B.length-1].t)}，${B[B.length-1].b.src}）`:'<span class="mute">尚無 MAP 紀錄</span>'}</span></div>
+    <div class="kv"><span class="k">尿量 &lt; 0.5 mL/kg/hr</span><span style="text-align:right">${lastU?`${lastU.uokh.toFixed(2)} mL/kg/h（${esc(ioUOSpan(lastU))}）`:'<span class="mute">尚無 I/O</span>'}</span></div>
+    <div class="kv"><span class="k">Cr &gt; 1.5 mg/dL</span><span style="text-align:right">${cr?`${cr.v}（${cr.md}${cr.old?'，>72 小時前':''}）`:'<span class="mute">尚無檢驗</span>'}</span></div>
+    <div class="small mute" style="margin-top:6px">出處：${MAN_CITE} p.15「新生兒加護病房住院或轉入標準」：新生兒休克＝平均動脈壓小於出生週數；急性腎衰竭＝尿液排出量 &lt;0.5 ml/kg/hr 或 Cr &gt;1.5 mg/dL。適用簽住年齡小於三個月之新生兒（此處依出生日期判斷 &lt; 92 天）。尿量以 I/O 分頁的計算體重（實際體重）計。</div></div>`;}
+/* ===== CRRT 院內規範核對：本院《重症加護單位業務手冊》附錄三 附件二（CRRT 醫囑）p.46–47 ===== */
+const KCL_MAN=[[6,2],[7.5,2.5],[9,3],[10.5,3.5],[12,4]];
+function apttRatio(p){const it=hasLabs(p)?Object.values(p.labs.items).find(x=>x.code==='72A038'):null;if(!it)return null;const v=latestLab(p,'72A038','');if(!v)return null;const sec=labNum(v);
+  const st=(S.data.settings||{}).apttCtl;let ctl=parseFloat(st),src='設定的對照值';
+  if(!(ctl>0)){const m=String(it.ref||'').match(/([\d.]+)\s*[-~～]\s*([\d.]+)/);if(m){ctl=(+m[1]+ +m[2])/2;src=`參考值 ${it.ref} 中點（估算）`;}}
+  return {sec,ctl:ctl>0?ctl:null,r:ctl>0?sec/ctl:null,src,md:skMD(v.sk),old:Date.now()-tsOf(v.sk)>72*36e5};}
+function crrtCard(p,ro){if(!p.rrt||p.rrt.status!=='crrt')return '';const C=p.crrt||{},peds=p.template==='peds',wt=parseFloat(p.wt);
+  const ar=apttRatio(p),inr=labNow(p,'72C037'),plt=labNow(p,'72I001'),uh=+C.hepMlh>0?+C.hepMlh*500:null;
+  const pltK=plt?(plt.v>1000?plt.v/1000:plt.v):null;
+  const chk=(lab,cond,val)=>`<div class="kv"><span class="k">${cond?'✔':cond===null?'？':'—'} ${lab}</span><span style="text-align:right" class="small">${val}</span></div>`;
+  const fx=x=>x?`${x.v}（${x.md}${x.old?'，>72 小時前':''}）`:'無資料';
+  let h='';
+  if(peds){h=`<div class="small">兒科 CRRT 醫囑（p.46–47）：HF 440、DF030、Heparin free；hemofilter priming 用 heparin 2,500 U／1 L N/S（2.5 U/mL），最後以 N/S 沖管；ACT STAT 及 Q2H，維持 160–220 秒，ACT &lt;160 秒請通知腎臟科；Exchange 700 mL/hr、Predilution 60%、Blood flow 60 mL/min、Weight loss −20 mL/hr。</div>`;}
+  else{h=`<div class="row small" style="gap:6px;margin:4px 0">CRRT heparin 速率 ${ro?`<b>${C.hepMlh||'—'}</b>`:`<input type="number" step="0.5" min="0" data-crrt="hepMlh" value="${esc(C.hepMlh||'')}" style="width:80px">`} mL/hr（1 mL = 500 U）${uh!=null?`→ <b>${fmtN(uh)}</b> U/hr`:''}</div>
+    ${chk('aPTT ratio 1.5–2（目標）',ar&&ar.r!=null?(ar.r>=1.5&&ar.r<=2):null,ar?`aPTT ${ar.sec} 秒${ar.r!=null?` ÷ ${+ar.ctl.toFixed(1)} = <b>${ar.r.toFixed(2)}</b>（${esc(ar.src)}）`:'（無對照值）'}（${ar.md}${ar.old?'，>72 小時前':''}）`:'無 aPTT 資料')}
+    <div class="small" style="margin:6px 0 2px"><b>禁忌</b>（INR &gt;2、aPTTr &gt;2、Plt &lt;50K、24 小時內出血、術後 12 小時）</div>
+    ${chk('INR > 2',inr?inr.v>2:null,fx(inr))}${chk('aPTT ratio > 2',ar&&ar.r!=null?ar.r>2:null,ar&&ar.r!=null?ar.r.toFixed(2):'—')}${chk('Plt < 50K',pltK!=null?pltK<50:null,plt?`${fmtN(+pltK.toFixed(0))}K（${plt.md}${plt.old?'，>72 小時前':''}）`:'無資料')}
+    <div class="small mute">24 小時內出血、術後 12 小時：需臨床確認。</div>
+    <div class="small" style="margin:6px 0 2px"><b>通知醫師</b>（INR &gt;3、aPTTr &gt;3、Plt &lt;50K、出血、手術、heparin &gt;2000 U/hr）</div>
+    ${chk('INR > 3',inr?inr.v>3:null,fx(inr))}${chk('aPTT ratio > 3',ar&&ar.r!=null?ar.r>3:null,ar&&ar.r!=null?ar.r.toFixed(2):'—')}${chk('heparin > 2000 U/hr',uh!=null?uh>2000:null,uh!=null?fmtN(uh)+' U/hr':'未填速率')}
+    <div class="small" style="margin-top:6px">起始參考：Loading ${wt>0?(wt>60?'1500 U（BW &gt;60 kg）':wt<60?'1000 U（BW &lt;60 kg）':'BW 剛好 60 kg，手冊未定（&gt;60 為 1500 U、&lt;60 為 1000 U）'):'需體重'}；維持 aPTT ratio &lt;1.5 起 500 U/hr，1.5–2 或無基準值起 250 U/hr；每次 ±250 U/hr（0.5 mL/hr）。</div>
+    ${ro?'':`<div class="row small" style="gap:6px;margin-top:4px">aPTT 對照值（秒）<input type="number" step="0.1" data-apttctl value="${esc((S.data.settings||{}).apttCtl||'')}" style="width:80px" placeholder="院內正常平均"><span class="mute">未填時以參考值中點估算</span></div>`}`;}
+  // KCl
+  const kml=parseFloat(C.kclMl),theo=v=>v*2.012/5.0;
+  const kRow=KCL_MAN.map(([ml,m])=>`<tr><td class="num">${ml}</td><td class="num">${m}</td><td class="num mute">${theo(ml).toFixed(2)}</td></tr>`).join('');
+  const kRes=kml>0?(()=>{const hit=KCL_MAN.find(([ml])=>Math.abs(ml-kml)<1e-6);return `手冊：${hit?`<b>${hit[1]}</b> mEq/L`:'表中無此量'}；理論換算 ${theo(kml).toFixed(2)} mEq/L`;})():'';
+  // labs frequency
+  const need=[['BUN','72-307'],['Cr','72-333'],['Na','72-355'],['K','72-356'],['Cl','72-357'],['Ca','72-327'],['P','72-329'],['Lactate','72-419']];
+  const lab=(n,c,lim)=>{const x=labNow(p,c);const ok=x&&x.t&&Date.now()-x.t<=lim*36e5;return `<span class="tag ${ok?'t-new':'t-warn'}" title="${x?'最新 '+x.md:'無資料'}">${n} ${ok?'✓':'缺'}${x?' '+x.md:''}</span>`;};
+  return `<div class="card"><h3>CRRT 院內規範核對 <span class="small mute">${peds?'兒科':'成人'}・只列數字</span></h3>${h}
+    <details style="margin-top:8px"><summary style="cursor:pointer;font-weight:700">Prismasol 5000 mL 加 15% KCl 換算</summary>
+      <table class="tbl" style="margin-top:6px;max-width:420px"><thead><tr><th>15% KCl (mL)</th><th>手冊 K⁺ (mEq/L)</th><th>理論換算</th></tr></thead><tbody>${kRow}</tbody></table>
+      <div class="row small" style="gap:6px;margin-top:4px">醫囑 KCl ${ro?'':`<input type="number" step="0.5" min="0" data-crrt="kclMl" value="${esc(C.kclMl||'')}" style="width:70px">`} mL ${kRes}</div>
+      <div class="small under" style="margin-top:4px">注意：15% KCl 約 2.01 mEq/mL，加入 5,000 mL 理論上 6 mL ≈ 2.4 mEq/L；手冊數值相當於以約 6 L 計算，兩者不一致，建議向腎臟科或藥劑部確認手冊表格的依據。</div></details>
+    <div style="margin-top:8px"><b class="small">檢驗頻率</b>（BUN、Cr、Na、K、Cl、Ca、P、Lactate 每天；Mg 每週一、四）<div style="margin-top:4px">${need.map(([n,c])=>lab(n,c,30)).join(' ')} ${lab('Mg','72-343',4*24)}</div>
+      <div class="small mute">每日項目以 30 小時內有值為「✓」；Mg 以 4 天內有值為「✓」。</div></div>
+    <div class="small mute" style="margin-top:6px">出處：${MAN_CITE}，附錄三 附件二 CRRT 醫囑 p.46–47。基本資料的腎臟替代治療設為「CRRT 進行中」時顯示。</div></div>`;}
+function vsRefCard(p){if(p.template!=='peds')return '';return neoManCard(p)+preHRCard(p)+flemCard(p)+aapCard(p);}
 function preHRCard(p){
   const V=vsSummary(p);
   const g=gaDays(p),ga=g!=null?Math.floor(g/7):null;
