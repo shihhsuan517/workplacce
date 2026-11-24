@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-24l';
+const APP_VER='2026-11-24m';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -3526,6 +3526,10 @@ function akiEval(p){if(p.template==='peds')return null;const C=crSeries(p),B=aki
   else{const segs=[];const U6=ioUO6(p);
     D.forEach(x=>{if(U6[x.day])U6[x.day].forEach((w,i)=>segs.push({t0:+new Date(x.day+'T07:00:00')+i*6*36e5,h:6,slot:6,ml:w.ml,lab:w.span}));
       else if(!x.T)x.L.forEach(sh=>{if(sh.urine==null)return;const t0=+new Date(x.day+'T07:00:00')+sh.sh*8*36e5;segs.push({t0,h:sh.h||8,slot:8,ml:sh.urine,lab:`${ioMD(x.day)} ${['07–15','15–23','23–07'][sh.sh]}`});});});
+    ((p.aki||{}).uMan||[]).forEach(m=>{const a=Date.parse(m.from),b=Date.parse(m.to);if(!(b>a)||!(+m.ml>=0))return;const h=(b-a)/36e5;
+      const md=t=>{const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
+      for(let i=segs.length-1;i>=0;i--){const g=segs[i],ge=g.t0+g.slot*36e5;if(g.t0<b&&ge>a)segs.splice(i,1);}
+      segs.push({t0:a,h,slot:h,ml:+m.ml,lab:`手動 ${md(a)}–${md(b)}`,man:true});});
     segs.sort((a,b)=>a.t0-b.t0);const S7=segs.filter(g=>g.t0>=Date.now()-8*864e5);
     const runs=(test)=>{const R=[];let cur=null;S7.forEach((g,i)=>{const rate=g.ml/ibw/g.h,ok=test(g,rate),prev=S7[i-1],cont=prev&&Math.abs(g.t0-(prev.t0+prev.slot*36e5))<1;
       if(ok){if(cur&&cont)cur.segs.push(g);else{cur={segs:[g]};R.push(cur);}}else cur=null;});
@@ -3538,9 +3542,11 @@ function akiEval(p){if(p.template==='peds')return null;const C=crSeries(p),B=aki
     else if(r5&&r5.h>12)u={st:2,why:'< 0.5 持續 >12 小時：'+dsc(r5)};
     else if(r5&&r5.h>=6)u={st:1,why:'< 0.5 持續 6–12 小時：'+dsc(r5)};
     else if(r5)u={st:0,why:`< 0.5 但持續未達 6 小時：${dsc(r5)}`};
-    if(D.some(x=>x.T))uNa='部分日期只有 24 小時合計，無法確認持續時間，未納入';}
+    if(D.some(x=>x.T)){const man=(p.aki||{}).uMan||[];const miss=D.filter(x=>x.T&&!man.some(m=>Date.parse(m.from)<+new Date(x.day+'T07:00:00')+864e5&&Date.parse(m.to)>+new Date(x.day+'T07:00:00')));
+      if(miss.length)uNa=`${miss.map(x=>ioMD(x.day)).join('、')} 只有 24 小時合計，無法確認持續時間，未納入；可在下方「手動輸入尿量區間」補上`;}}
+  const ov=(p.aki||{}).uOv;if(ov&&ov.st!==''&&ov.st!=null){u={st:+ov.st,why:`手動指定${ov.note?'：'+ov.note:''}`,man:true};}
   const Bx=(p.aki||{}).B||'';
-  return {C,B,c,u,uNa,ibw,Bx,stage:Math.max(c.st,u.st)};}
+  return {C,B,c,u,uNa:u.man?'':uNa,ibw,Bx,stage:Math.max(c.st,u.st)};}
 function akiCard(p,ro,compact){const E=akiEval(p);if(!E)return '';if(!E.C.length&&!ioDays(p).length)return '';
   const A=p.aki||{},bl=E.Bx==='B1'?'B1':E.Bx==='B0'?'B0':'B 未檢測';
   const head=`AKI ${E.stage?`第 ${E.stage} 期`:'未達分期'}：C${E.c.st}・${E.uNa&&!E.u.st?'U？':'U'+E.u.st}・${bl}${!E.stage&&E.Bx==='B1'?'（C0U0B1：功能正常但結構受損）':''}`;
@@ -3551,14 +3557,24 @@ function akiCard(p,ro,compact){const E=akiEval(p);if(!E)return '';if(!E.C.length
     <div class="kv"><span class="k">U（尿量）</span><span style="text-align:right">${E.uNa&&!E.u.st?`<span class="mute">${esc(E.uNa)}</span>`:`U${E.u.st}：${esc(E.u.why)}${E.uNa?`<div class="small mute">${esc(E.uNa)}</div>`:''}`}</span></div>
     <div class="kv"><span class="k">Baseline SCr</span><span style="text-align:right">${E.B?esc(E.B.txt):'<span class="mute">無</span>'}</span></div>
     <div class="kv"><span class="k">cystatin C</span><span style="text-align:right" class="mute">院內代碼尚未對應，未納入</span></div>
-    ${ro?'':`<details style="margin-top:6px"><summary class="small" style="cursor:pointer">設定 baseline 與損傷標記</summary><div class="grid" style="margin-top:6px">
+    ${ro?'':`<details style="margin-top:6px"><summary class="small" style="cursor:pointer">設定 baseline、尿量區間與損傷標記${(A.uMan||[]).length||((A.uOv||{}).st??'')!==''?'（有手動資料）':''}</summary><div class="grid" style="margin-top:6px">
       <div class="fld"><label>入院前門診 SCr（第 1 層，入院前 8–365 天）</label><input type="number" step="0.01" data-akib="v" value="${esc((A.base||{}).v||'')}"></div>
       <div class="fld"><label>日期</label><input type="date" data-akib="date" value="${esc((A.base||{}).date||'')}"></div>
       <div class="fld"><label>取法</label><select data-akib="how">${['','平均值','中位數','最近一次'].map(x=>`<option ${((A.base||{}).how||'')===x?'selected':''}>${x}</option>`).join('')}</select></div>
       <div class="fld"><label>入院時已疑似 AKI（社區型）</label><select data-aki="admAKI"><option value="" ${A.admAKI?'':'selected'}>否（可用入院 SCr）</option><option value="1" ${A.admAKI?'selected':''}>是（跳過第 2 層）</option></select></div>
+      <div class="fld wide"><label>手動輸入尿量區間（無法判定時使用；會取代該時段的自動資料，以 IBW 計算平均 mL/kg/h）</label>
+        ${((A.uMan)||[]).map((m,i)=>{const h=(Date.parse(m.to)-Date.parse(m.from))/36e5;return `<div class="small" style="margin:2px 0">${esc(m.from.replace('T',' '))} – ${esc(m.to.replace('T',' '))}（${+h.toFixed(1)} h）尿量 ${esc(m.ml)} mL${E.ibw&&h>0?` → <b>${(+m.ml/E.ibw/h).toFixed(2)}</b> mL/kg/h`:''} <button class="small" data-akiumdel="${i}">刪除</button></div>`;}).join('')}
+        <div class="row" style="gap:6px;flex-wrap:wrap"><input type="datetime-local" id="akiUFrom" style="width:auto"><span>至</span><input type="datetime-local" id="akiUTo" style="width:auto"><input type="number" id="akiUMl" min="0" step="1" placeholder="尿量 mL" style="width:100px"><button class="small" id="btnAkiUAdd">加入區間</button></div></div>
+      <div class="fld"><label>U 期別手動指定（優先於自動判讀）</label><select data-akiov="st">${[['','不指定（自動）'],['0','U0'],['1','U1'],['2','U2'],['3','U3']].map(([v,l])=>`<option value="${v}" ${String(((A.uOv)||{}).st??'')===v?'selected':''}>${l}</option>`).join('')}</select></div>
+      <div class="fld"><label>手動指定理由</label><input data-akiov="note" value="${esc(((A.uOv)||{}).note||'')}" placeholder="例：護理記錄 11/22 18:00 起尿量 <10 mL/h"></div>
       <div class="fld"><label>損傷標記（B）</label><select data-aki="B">${[['','未檢測'],['B0','B0 陰性'],['B1','B1 陽性']].map(([v,l])=>`<option value="${v}" ${(A.B||'')===v?'selected':''}>${l}</option>`).join('')}</select></div></div></details>`}
     <div class="small mute" style="margin-top:6px">依據：${AKI_CITE}。C1：48 小時內上升 ≥0.3 mg/dl 或 1.5–1.9 倍；C2：2.0–2.9 倍；C3：≥3.0 倍、SCr ≥4.0 mg/dl 或開始 RRT。U1：&lt;0.5 mL/kg/h 6–12 小時；U2：&lt;0.5 &gt;12 小時；U3：&lt;0.3 &gt;24 小時或無尿 &gt;12 小時（以 IBW 計；連續班別或 6 小時區間相接才累計；某班不滿 8 小時以實際時數計）。整體期別取 C、U 最高者。依公開審查草案，正式版數字可能調整。只看最近 7 天。</div></div>`;}
-function bindAki(p){document.querySelectorAll('[data-akib]').forEach(el=>el.onchange=()=>{p.aki=p.aki||{};p.aki.base=p.aki.base||{};p.aki.base[el.dataset.akib]=el.value;if(!p.aki.base.v)delete p.aki.base;markDirty();renderMain();});
+function bindAki(p){
+  if($('btnAkiUAdd'))$('btnAkiUAdd').onclick=()=>{const a=$('akiUFrom').value,b=$('akiUTo').value,ml=$('akiUMl').value;
+    if(!a||!b||ml===''){toast('請填起訖時間與尿量');return;}if(Date.parse(b)<=Date.parse(a)){toast('結束時間要晚於開始時間');return;}
+    snapshot(p,'加入尿量區間');p.aki=p.aki||{};(p.aki.uMan=p.aki.uMan||[]).push({from:a,to:b,ml:+ml});p.aki.uMan.sort((x,y)=>x.from.localeCompare(y.from));markDirty();renderMain();};
+  document.querySelectorAll('[data-akiumdel]').forEach(b=>b.onclick=()=>{snapshot(p,'刪除尿量區間');p.aki.uMan.splice(+b.dataset.akiumdel,1);markDirty();renderMain();});
+  document.querySelectorAll('[data-akiov]').forEach(el=>el.onchange=()=>{p.aki=p.aki||{};p.aki.uOv=p.aki.uOv||{};p.aki.uOv[el.dataset.akiov]=el.value;markDirty();renderMain();});document.querySelectorAll('[data-akib]').forEach(el=>el.onchange=()=>{p.aki=p.aki||{};p.aki.base=p.aki.base||{};p.aki.base[el.dataset.akib]=el.value;if(!p.aki.base.v)delete p.aki.base;markDirty();renderMain();});
   document.querySelectorAll('[data-aki]').forEach(el=>el.onchange=()=>{p.aki=p.aki||{};p.aki[el.dataset.aki]=el.value;markDirty();renderMain();});}
 function renderLab(p,ro){
   let h=`<div class="row" style="margin-bottom:10px">${ro?'':'<button class="pri" id="btnLabPaste">📋 貼上檢驗報告</button>'}`;
