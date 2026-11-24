@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-24e';
+const APP_VER='2026-11-24f';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -5060,11 +5060,46 @@ function preHRRef(p,t){const g=gaDays(p);if(g==null||!p.dob)return {na:'需填 G
   if(!c)return {ga,pma,pmaD,na:`PMA ${pma} 週超出表格（GA ${ga} 週：PMA ${ga}–38 週）`};
   return {ga,pma,pmaD,p5:c[0],p95:c[1]};}
 const refPos=(v,r)=>v<r.p5?'< 5th':v>r.p95?'> 95th':'5th–95th';
-function vsRefCard(p){
-  if(p.template!=='peds')return '';const V=vsSummary(p);
+
+/* 足月兒與兒童心跳、呼吸：Fleming S, Thompson M, Stevens R, et al. Normal ranges of heart rate and respiratory rate in children from birth to 18 years of age:
+   a systematic review of observational studies. Lancet 2011;377:1011–1018. Web appendix：Web Table 4（呼吸）、Web Table 5（心跳）。數值逐格抄自原文。 */
+const VSREF_FLEMING={"RR":[{"lab":"0–3個月","lo":0.0,"hi":0.25,"v":[25,34,40,43,52,57,66]},{"lab":"3–6個月","lo":0.25,"hi":0.5,"v":[24,33,38,41,49,55,64]},{"lab":"6–9個月","lo":0.5,"hi":0.75,"v":[23,31,36,39,47,52,61]},{"lab":"9–12個月","lo":0.75,"hi":1.0,"v":[22,30,35,37,45,50,58]},{"lab":"12–18個月","lo":1.0,"hi":1.5,"v":[21,28,32,35,42,46,53]},{"lab":"18–24個月","lo":1.5,"hi":2.0,"v":[19,25,29,31,36,40,46]},{"lab":"2–3歲","lo":2,"hi":3,"v":[18,22,25,28,31,34,38]},{"lab":"3–4歲","lo":3,"hi":4,"v":[17,21,23,25,27,29,33]},{"lab":"4–6歲","lo":4,"hi":6,"v":[17,20,21,23,25,27,29]},{"lab":"6–8歲","lo":6,"hi":8,"v":[16,18,20,21,23,24,27]},{"lab":"8–12歲","lo":8,"hi":12,"v":[14,16,18,19,21,22,25]},{"lab":"12–15歲","lo":12,"hi":15,"v":[12,15,16,18,19,21,23]},{"lab":"15–18歲","lo":15,"hi":18,"v":[11,13,15,16,18,19,22]}],"HR":[{"lab":"Birth","lo":null,"hi":null,"v":[90,107,116,127,138,148,164]},{"lab":"0–3個月","lo":0.0,"hi":0.25,"v":[107,123,133,143,154,164,181]},{"lab":"3–6個月","lo":0.25,"hi":0.5,"v":[104,120,129,140,150,159,175]},{"lab":"6–9個月","lo":0.5,"hi":0.75,"v":[98,114,123,134,143,152,168]},{"lab":"9–12個月","lo":0.75,"hi":1.0,"v":[93,109,118,128,137,145,161]},{"lab":"12–18個月","lo":1.0,"hi":1.5,"v":[88,103,112,123,132,140,156]},{"lab":"18–24個月","lo":1.5,"hi":2.0,"v":[82,98,106,116,126,135,149]},{"lab":"2–3歲","lo":2,"hi":3,"v":[76,92,100,110,119,128,142]},{"lab":"3–4歲","lo":3,"hi":4,"v":[70,86,94,104,113,123,136]},{"lab":"4–6歲","lo":4,"hi":6,"v":[65,81,89,98,108,117,131]},{"lab":"6–8歲","lo":6,"hi":8,"v":[59,74,82,91,101,111,123]},{"lab":"8–12歲","lo":8,"hi":12,"v":[52,67,75,84,93,103,115]},{"lab":"12–15歲","lo":12,"hi":15,"v":[47,62,69,78,87,96,108]},{"lab":"15–18歲","lo":15,"hi":18,"v":[43,58,65,73,83,92,104]}]};
+const FLEM_CITE={HR:'Fleming S, et al. Lancet 2011;377:1011–1018, Web Table 5',RR:'Fleming S, et al. Lancet 2011;377:1011–1018, Web Table 4'};
+const FLEM_C=[1,10,25,50,75,90,99];
+function ageAt(p,t){const tt=+ioT(t);if(p.dob)return (tt-Date.parse(p.dob+'T00:00:00'))/864e5;const y=ageYears(p);return y!=null?y*365.25+0.5:null;}
+function flemRef(p,k,t){const d=ageAt(p,t);if(d==null||d<0)return {na:'需出生日期或年齡'};
+  const g=gaDays(p);if(g!=null&&g<259&&p.dob&&g+d<259)return {na:'PMA < 37 週（Fleming 為足月兒與兒童資料）'};
+  const yr=d/365.25;if(yr>=18)return {na:'≥ 18 歲'};const R=VSREF_FLEMING[k];
+  let r=null;if(k==='HR'&&d<1&&p.dob)r=R[0];else r=R.find(x=>x.lo!=null&&yr>=x.lo-1e-9&&yr<x.hi);
+  return r?{lab:r.lab,v:r.v,d}:{na:'年齡不在表格範圍'};}
+function flemPos(v,a){if(v<a[0])return '< 1st';if(v>a[6])return '> 99th';for(let i=0;i<6;i++)if(v<=a[i+1])return `${FLEM_C[i]}–${FLEM_C[i+1]}th`;return '';}
+function flemChart(rows,k){if(!rows.length)return '';const W=640,H=170,L=40,R=12,TOP=8,BOT=24,t0=+ioT(rows[0].t),t1=Math.max(+ioT(rows[rows.length-1].t),t0+36e5);
+  const lo=Math.min(...rows.map(x=>Math.min(x.v,x.r.v[0])))-3,hi=Math.max(...rows.map(x=>Math.max(x.v,x.r.v[6])))+3;
+  const X=t=>L+(t-t0)/(t1-t0)*(W-L-R),Y=v=>TOP+(H-TOP-BOT)*(1-(v-lo)/(hi-lo)),st=hi-lo>80?20:10;let s='';
+  for(let v=Math.ceil(lo/st)*st;v<=hi;v+=st)s+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-4}" y="${Y(v)+3.5}" font-size="9.5" text-anchor="end" fill="var(--mute)">${v}</text>`;
+  // 依年齡段分段畫 1–99、10–90、25–75 色帶與中位數
+  const seg=[];rows.forEach(x=>{const l=seg[seg.length-1];if(l&&l.lab===x.r.lab)l.t1=+ioT(x.t);else seg.push({lab:x.r.lab,v:x.r.v,t0:+ioT(x.t),t1:+ioT(x.t)});});
+  seg.forEach((g,i)=>{const a=X(i?g.t0:t0),b=X(i<seg.length-1?seg[i+1].t0:t1);[[0,6,.08],[1,5,.12],[2,4,.16]].forEach(([p,q,o])=>s+=`<rect x="${a}" y="${Y(g.v[q])}" width="${Math.max(1,b-a)}" height="${Y(g.v[p])-Y(g.v[q])}" fill="var(--accent)" opacity="${o}"><title>${g.lab}：${FLEM_C[p]}th ${g.v[p]}／${FLEM_C[q]}th ${g.v[q]}（${FLEM_CITE[k]}）</title></rect>`);
+    s+=`<line x1="${a}" x2="${b}" y1="${Y(g.v[3])}" y2="${Y(g.v[3])}" stroke="var(--accent)" stroke-dasharray="3 3"/><text x="${a+3}" y="${TOP+10}" font-size="9.5" fill="var(--mute)">${g.lab}</text>`;});
+  rows.forEach(x=>{const out=x.v<x.r.v[0]||x.v>x.r.v[6];s+=`<circle cx="${X(+ioT(x.t))}" cy="${Y(x.v)}" r="2.6" fill="${out?'var(--card,#fff)':'var(--accent)'}" stroke="var(--accent)" stroke-width="1.3"><title>${x.t.slice(5,16)} ${k} ${x.v}｜${x.r.lab}｜${flemPos(x.v,x.r.v)}</title></circle>`;});
+  const md=t=>t.slice(5,10).replace('-','/');s+=`<text x="${L}" y="${H-6}" font-size="9.5" fill="var(--mute)">${md(rows[0].t)}</text><text x="${W-R}" y="${H-6}" font-size="9.5" text-anchor="end" fill="var(--mute)">${md(rows[rows.length-1].t)}</text>`;
+  return `<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block">${s}</svg></div>`;}
+function flemCard(p){const V=vsSummary(p);if(!V)return '';const L7=V.L.filter(x=>+ioT(x.t)>=+V.end-7*864e5);
+  const mk=k=>L7.filter(x=>vsVal(x,k)!=null).map(x=>({t:x.t,v:+vsVal(x,k),r:flemRef(p,k,x.t)}));
+  const all={HR:mk('HR'),RR:mk('RR')},ok={HR:all.HR.filter(x=>x.r.v),RR:all.RR.filter(x=>x.r.v)};
+  if(!ok.HR.length&&!ok.RR.length){const na=(all.HR[0]||all.RR[0]||{}).r;return na&&na.na?`<div class="card"><h3>同齡百分位 <span class="small mute">Fleming 2011</span></h3><div class="small mute">不適用：${esc(na.na)}</div></div>`:'';}
+  const blk=k=>{const R=ok[k];if(!R.length)return '';const last=R[R.length-1];
+    return `<div style="margin-top:8px"><b>${k==='HR'?'心跳':'呼吸'}</b> <span class="small mute">最近 7 天 ${R.length} 筆・最新 ${last.t.slice(5,16).replace('-','/')}：${k} <b>${last.v}</b> → <b>${flemPos(last.v,last.r.v)}</b>（${last.r.lab}）</span>${flemChart(R,k)}</div>`;};
+  const tb=k=>{const R=ok[k].slice(-8).reverse();return R.map(x=>`<tr><td class="num">${x.t.slice(5,16).replace('-','/')}</td><td>${k}</td><td class="num"><b>${x.v}</b></td><td>${x.r.lab}</td><td class="num small">${x.r.v.join('／')}</td><td>${flemPos(x.v,x.r.v)}</td></tr>`).join('');};
+  return `<div class="card"><h3>同齡百分位 <span class="small mute">Fleming 2011・依量測當時年齡・只列落點</span></h3>${blk('HR')}${blk('RR')}
+    <details style="margin-top:6px"><summary class="small mute" style="cursor:pointer">逐筆落點（最近 8 筆）</summary><div class="tblwrap"><table class="tbl"><thead><tr><th>時間</th><th>項目</th><th>值</th><th>年齡段</th><th>1／10／25／50／75／90／99th</th><th>落點</th></tr></thead><tbody>${tb('HR')}${tb('RR')}</tbody></table></div></details>
+    <div class="small mute" style="margin-top:6px">參考值：心跳 ${FLEM_CITE.HR}；呼吸 ${FLEM_CITE.RR}（健康兒童 69 篇研究彙整）。色帶由淺到深＝1–99th、10–90th、25–75th，虛線＝中位數；實心點在 1st–99th 內，空心點在外。心跳「Birth」列只用於出生當天（原文定義為 immediate neonatal period）；之後依年齡段。早產兒 PMA &lt; 37 週不套用。原文提醒：社區與自動儀器（如 ECG）量得的心跳較高，人工計數在幼兒可能低估。</div></div>`;}
+function vsRefCard(p){if(p.template!=='peds')return '';return preHRCard(p)+flemCard(p);}
+function preHRCard(p){
+  const V=vsSummary(p);
   const g=gaDays(p),ga=g!=null?Math.floor(g/7):null;
-  if(g==null||!p.dob)return `<div class="card"><h3>同齡參考 <span class="small mute">兒科</span></h3><div class="small mute">請在基本資料填寫出生日期與 GA，才能依量測當時的年齡顯示參考範圍。</div></div>`;
-  if(ga>34)return `<div class="card"><h3>同齡參考 <span class="small mute">兒科</span></h3><div class="small mute">GA ${ga} 週：早產兒心跳表（Alonzo 2018）只涵蓋 GA 23–34 週。足月兒與兒童（Fleming 2011 Lancet 百分位表）待匯入原文 Web Table 3／4 後啟用。</div></div>`;
+  if(g==null||!p.dob)return p.dob||ageYears(p)!=null?'':`<div class="card"><h3>同齡參考 <span class="small mute">兒科</span></h3><div class="small mute">請在基本資料填寫出生日期（早產兒另填 GA），才能依量測當時的年齡顯示參考範圍。</div></div>`;
+  if(ga>34)return '';
   const H=V?V.L.filter(x=>vsVal(x,'HR')!=null):[];
   const rows=H.map(x=>({t:x.t,v:+vsVal(x,'HR'),r:preHRRef(p,x.t)})).filter(x=>x.r&&x.r.p5!=null);
   const row=VSREF_ALONZO[ga],pmas=Object.keys(row).map(Number).sort((a,b)=>a-b);
@@ -5083,7 +5118,7 @@ function vsRefCard(p){
     <div class="tblwrap"><table class="tbl"><thead><tr><th>時間</th><th>PMA</th><th>HR</th><th>同 GA、同 PMA 參考 5th–95th</th><th>落點</th></tr></thead><tbody>
     ${last.map(x=>`<tr><td class="num">${x.t.slice(5,16).replace('-','/')}</td><td class="num">${Math.floor(x.r.pmaD/7)}+${x.r.pmaD%7}</td><td class="num"><b>${x.v}</b></td><td class="num">${x.r.p5}–${x.r.p95}</td><td>${refPos(x.v,x.r)}</td></tr>`).join('')}
     </tbody></table></div>`:'<div class="small mute">尚無可對照的心跳紀錄（PMA 需在表格範圍內）。</div>'}
-    <div class="small mute" style="margin-top:6px">參考值：${ALONZO_CITE}（GA 23–34 週早產兒、NICU 床邊監視器資料；原文表格只公布 5th 與 95th，故只標這兩條）。色帶＝該 GA 每個 PMA 週的 5th–95th；實心點＝落在範圍內，空心點＝範圍外。滑鼠移到色帶或點上看數值。足月兒與兒童的 Fleming 2011 百分位表待匯入。</div></div>`;
+    <div class="small mute" style="margin-top:6px">參考值：${ALONZO_CITE}（GA 23–34 週早產兒、NICU 床邊監視器資料；原文表格只公布 5th 與 95th，故只標這兩條）。色帶＝該 GA 每個 PMA 週的 5th–95th；實心點＝落在範圍內，空心點＝範圍外。滑鼠移到色帶或點上看數值。PMA ≥ 37 週後改用下方 Fleming 2011。</div></div>`;
 }
 function renderVSTab(p,ro){const c=vsCard(p,ro);if(!c)return '<div class="todo">尚無生命徵象。用「一鍵貼上」貼上護理記錄後顯示。</div>';return vsChart(p)+vsRefCard(p)+c;}
 function renderIO(p,ro){
