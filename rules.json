@@ -1,5 +1,5 @@
 {
- "version": "2026-11-24b",
+ "version": "2026-11-24c",
  "updated": "2026-11-24",
  "rules": [
   {
@@ -3194,6 +3194,271 @@
      "alert": "快推 + NS flush；小劑量需稀釋；caffeine 降低效果。"
     }
    }
+  },
+  {
+   "id": "caffeine",
+   "label": "Caffeine citrate",
+   "names": [
+    "caffeine",
+    "cafcit",
+    "peyona",
+    "caffeine citrate"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Caffeine（Last Updated 11/19/26）",
+     "sections": "Dosing: Neonatal; Pediatric; Altered Kidney/Liver Function; Administration; Warnings; Interactions; Reference Range; Pharmacokinetics（成人適應症細項：ECT、硬膜穿刺後頭痛、提神，貼上時未展開）",
+     "addedAt": "2026-11-24",
+     "by": "JC"
+    }
+   ],
+   "doseUnit": "mg",
+   "usual": {
+    "text": "成人適應症（ECT 誘發痙攣增強、硬膜穿刺後頭痛、提神）貼上時未展開，資料庫未收錄劑量。注意 caffeine citrate 不可與 caffeine sodium benzoate 互換（後者 caffeine base 為總量 50%）。"
+   },
+   "renal": {
+    "none": true,
+    "text": "任何程度腎功能不全皆不需調整（原型與活性代謝物尿液排出低）。"
+   },
+   "hepatic": {
+    "text": "仿單無調整建議，小心使用（肝硬化 t½ 延長）。"
+   },
+   "concomitant": [
+    {
+     "re": "adenosine|adenocor|adenozer|regadenoson",
+     "text": "Caffeine 會降低 adenosine／regadenoson 效果：可能需更高劑量或改用他藥；診斷檢查前停 caffeine（adenosine 24 小時、regadenoson 12 小時）（Risk D）。"
+    },
+    {
+     "re": "theophylline|aminophylline|doxofylline|etofylline|acebrophylline",
+     "text": "併用其他 methylxanthine：毒性相加（doxofylline、etofylline、acebrophylline Risk X）；新生兒 caffeine 與 theophylline 可互相轉換。"
+    },
+    {
+     "re": "ciprofloxacin|norfloxacin|fluvoxamine|pipemidic",
+     "text": "CYP1A2 抑制劑會增加 caffeine 濃度（Risk C）。"
+    },
+    {
+     "re": "tizanidine",
+     "text": "Caffeine（弱 CYP1A2 抑制）增加 tizanidine 濃度：盡量避免，併用需監測低血壓、心搏過緩、嗜睡（Risk D）。"
+    },
+    {
+     "re": "clozapine",
+     "text": "增加 clozapine 濃度並降低痙攣閾值（Risk C）。"
+    },
+    {
+     "re": "lithium",
+     "text": "Caffeine 會降低 lithium 濃度（Risk C）。"
+    },
+    {
+     "re": "dipyridamole|persantin",
+     "text": "降低 IV dipyridamole 顯影效果：影像檢查前停 caffeine 24 小時（Risk D）。"
+    },
+    {
+     "re": "warfarin",
+     "text": "可能降低 warfarin 抗凝作用（Risk C）。"
+    },
+    {
+     "re": "formoterol|indacaterol|olodaterol|symbicort",
+     "text": "增加 β2 致效劑副作用與低血鉀（Risk C）。"
+    },
+    {
+     "re": "rifampin|rifampicin|phenytoin|carbamazepine|phenobarbital",
+     "text": "CYP1A2 誘導劑可能降低 caffeine 濃度（Risk C）。"
+    }
+   ],
+   "notes": [
+    "避免用於焦慮、躁動、顫抖；有症狀心律不整避免；心血管疾病、消化性潰瘍／GERD、癲癇病史小心（降低痙攣閾值）。",
+    "經 CYP1A2 代謝；成人 t½ 約 5 小時，懷孕與肝硬化延長。"
+   ],
+   "info": {
+    "up": "2026-11-24",
+    "times": [
+     "—",
+     "PO 0.5–2 hr（早產兒）",
+     "t½ 5 hr（成人）／72–96 hr（新生兒）"
+    ],
+    "tnote": "新生兒 86% 原型由尿液排出",
+    "prep": "Caffeine citrate 20 mg/mL（＝ base 10 mg/mL），可用 D5W 稀釋至 10 mg/mL；注射液可口服。",
+    "alert": "Citrate 劑量是 base 的 2 倍；不可與 sodium benzoate 劑型互換。"
+   },
+   "peds": {
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Caffeine（Last Updated 11/19/26）",
+      "sections": "Dosing: Neonatal; Pediatric; Altered Kidney/Liver Function; Administration; Warnings; Interactions; Reference Range; Pharmacokinetics（成人適應症細項：ECT、硬膜穿刺後頭痛、提神，貼上時未展開）",
+      "addedAt": "2026-11-24",
+      "by": "JC"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "提神（OTC，caffeine base）≥12 歲",
+      "routes": [
+       "PO"
+      ],
+      "ageMin": 12,
+      "lo": 100,
+      "hi": 200,
+      "unit": "mg",
+      "freq": "q3–4h PRN"
+     }
+    ],
+    "renal": {
+     "text": "仿單無調整（未研究），小心使用。"
+    },
+    "hepatic": {
+     "text": "仿單無調整（未研究），小心使用。"
+    },
+    "concomitant": [
+     {
+      "re": "adenosine|adenocor|adenozer|regadenoson",
+      "text": "Caffeine 會降低 adenosine／regadenoson 效果：可能需更高劑量或改用他藥；診斷檢查前停 caffeine（adenosine 24 小時、regadenoson 12 小時）（Risk D）。"
+     },
+     {
+      "re": "theophylline|aminophylline|doxofylline|etofylline|acebrophylline",
+      "text": "併用其他 methylxanthine：毒性相加（doxofylline、etofylline、acebrophylline Risk X）；新生兒 caffeine 與 theophylline 可互相轉換。"
+     },
+     {
+      "re": "ciprofloxacin|norfloxacin|fluvoxamine|pipemidic",
+      "text": "CYP1A2 抑制劑會增加 caffeine 濃度（Risk C）。"
+     },
+     {
+      "re": "tizanidine",
+      "text": "Caffeine（弱 CYP1A2 抑制）增加 tizanidine 濃度：盡量避免，併用需監測低血壓、心搏過緩、嗜睡（Risk D）。"
+     },
+     {
+      "re": "clozapine",
+      "text": "增加 clozapine 濃度並降低痙攣閾值（Risk C）。"
+     },
+     {
+      "re": "lithium",
+      "text": "Caffeine 會降低 lithium 濃度（Risk C）。"
+     },
+     {
+      "re": "dipyridamole|persantin",
+      "text": "降低 IV dipyridamole 顯影效果：影像檢查前停 caffeine 24 小時（Risk D）。"
+     },
+     {
+      "re": "warfarin",
+      "text": "可能降低 warfarin 抗凝作用（Risk C）。"
+     },
+     {
+      "re": "formoterol|indacaterol|olodaterol|symbicort",
+      "text": "增加 β2 致效劑副作用與低血鉀（Risk C）。"
+     },
+     {
+      "re": "rifampin|rifampicin|phenytoin|carbamazepine|phenobarbital",
+      "text": "CYP1A2 誘導劑可能降低 caffeine 濃度（Risk C）。"
+     }
+    ],
+    "notes": [
+     "OTC 不可用於 <12 歲。",
+     "嬰兒 ≥9 個月以後 t½ 約 5 小時。"
+    ],
+    "info": {
+     "alert": "Citrate 劑量是 base 的 2 倍。"
+    }
+   },
+   "neo": {
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug) Pediatric and Neonatal — Caffeine（Last Updated 11/19/26）",
+      "sections": "Dosing: Neonatal; Pediatric; Altered Kidney/Liver Function; Administration; Warnings; Interactions; Reference Range; Pharmacokinetics（成人適應症細項：ECT、硬膜穿刺後頭痛、提神，貼上時未展開）",
+      "addedAt": "2026-11-24",
+      "by": "JC"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "早產兒呼吸暫停（GA <32 週）負荷劑量，caffeine citrate（較高劑量 40 mg/kg 可減少呼吸暫停與拔管失敗）",
+      "routes": [
+       "PO",
+       "IV",
+       "NG",
+       "OG"
+      ],
+      "when": "stat",
+      "lo": 20,
+      "hi": 40,
+      "unit": "mg/kg"
+     },
+     {
+      "ind": "早產兒呼吸暫停 維持劑量，caffeine citrate（負荷後 24 小時開始；持續呼吸暫停可加量，至 20 mg/kg/dose 曾被報告）",
+      "routes": [
+       "PO",
+       "IV",
+       "NG",
+       "OG"
+      ],
+      "lo": 5,
+      "hi": 10,
+      "unit": "mg/kg",
+      "freq": "q24h"
+     }
+    ],
+    "renal": {
+     "text": "腎功能不全小心使用，監測血中濃度並調整（未研究）。新生兒 86% 原型由尿液排出。"
+    },
+    "hepatic": {
+     "text": "肝功能不全小心使用，監測血中濃度並調整（未研究）。"
+    },
+    "concomitant": [
+     {
+      "re": "adenosine|adenocor|adenozer|regadenoson",
+      "text": "Caffeine 會降低 adenosine／regadenoson 效果：可能需更高劑量或改用他藥；診斷檢查前停 caffeine（adenosine 24 小時、regadenoson 12 小時）（Risk D）。"
+     },
+     {
+      "re": "theophylline|aminophylline|doxofylline|etofylline|acebrophylline",
+      "text": "併用其他 methylxanthine：毒性相加（doxofylline、etofylline、acebrophylline Risk X）；新生兒 caffeine 與 theophylline 可互相轉換。"
+     },
+     {
+      "re": "ciprofloxacin|norfloxacin|fluvoxamine|pipemidic",
+      "text": "CYP1A2 抑制劑會增加 caffeine 濃度（Risk C）。"
+     },
+     {
+      "re": "tizanidine",
+      "text": "Caffeine（弱 CYP1A2 抑制）增加 tizanidine 濃度：盡量避免，併用需監測低血壓、心搏過緩、嗜睡（Risk D）。"
+     },
+     {
+      "re": "clozapine",
+      "text": "增加 clozapine 濃度並降低痙攣閾值（Risk C）。"
+     },
+     {
+      "re": "lithium",
+      "text": "Caffeine 會降低 lithium 濃度（Risk C）。"
+     },
+     {
+      "re": "dipyridamole|persantin",
+      "text": "降低 IV dipyridamole 顯影效果：影像檢查前停 caffeine 24 小時（Risk D）。"
+     },
+     {
+      "re": "warfarin",
+      "text": "可能降低 warfarin 抗凝作用（Risk C）。"
+     },
+     {
+      "re": "formoterol|indacaterol|olodaterol|symbicort",
+      "text": "增加 β2 致效劑副作用與低血鉀（Risk C）。"
+     },
+     {
+      "re": "rifampin|rifampicin|phenytoin|carbamazepine|phenobarbital",
+      "text": "CYP1A2 誘導劑可能降低 caffeine 濃度（Risk C）。"
+     }
+    ],
+    "notes": [
+     "劑量以 caffeine citrate 表示；caffeine base 為 citrate 的一半。",
+     "開始時機未定：部分專家建議 <1,250 g 出生後即開始；>1,250 g 若呼吸暫停頻繁／嚴重，或呼吸器病人拔管前。",
+     "停藥：一般在 PMA 33–35 週且 5–7 天無呼吸暫停時；GA <28 週可能需更久。停藥後因 t½ 長（72–96 小時）需持續監測呼吸暫停至少 5 天。",
+     "治療濃度 8–20 mcg/mL（上半段 15–20 可能較好）；>20 可能有毒性；>50 為中毒。",
+     "給藥：負荷劑量至少 30 分鐘、維持劑量至少 10 分鐘輸注；口服不需配合餵食。VON 標準濃度 20 mg/mL（不稀釋），可用 D5W 稀釋至 10 mg/mL。",
+     "監測壞死性腸炎（NEC；大型試驗未見增加）。高劑量（36 小時共 80 mg/kg 負荷）小腦出血增加（36% vs 10%）；40 mg/kg 負荷 + 20 mg/kg/day 與標準劑量相比 IVH、PVL、死亡無差異。",
+     "新生兒禁用含 sodium benzoate 劑型（gasping syndrome、膽紅素置換）。",
+     "副作用：心搏過速、躁動、餵食不耐、血糖高或低、尿量與尿鈉／尿鈣增加。"
+    ],
+    "info": {
+     "alert": "Citrate 劑量；監測心率、呼吸暫停次數、必要時血中濃度（8–20 mcg/mL）；禁用 sodium benzoate 劑型。"
+    }
+   },
+   "excludeRe": "ergotamine|cafergot|acetaminophen|paracetamol|propyphenazone|aspirin|codeine|ibuprofen|benzoate|orphenadrine|dihydroergot"
   },
   {
    "id": "diazepam",
