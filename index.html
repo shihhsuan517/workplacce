@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-24j';
+const APP_VER='2026-11-24k';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -863,7 +863,7 @@ function renderMain(){
   if(S.tab==='basic'){bindPali(p,ro);bindRRT(p,ro);}
   if(S.tab==='meds'){bindMeds(p,ro);bindCloud(p,ro);}
   if(S.tab==='drip')bindDrip(p,ro);
-  if(S.tab==='lab')bindLab(p,ro);
+  if(S.tab==='lab'){bindLab(p,ro);if(!ro)bindAki(p);}
   if(S.tab==='soap')bindSoap(p,ro);
   if(S.tab==='rt')RT.mount(p,rtCtx(p));
   if(S.tab==='micro')bindMicro(p,ro);
@@ -975,7 +975,7 @@ function renderTab(p,ro){
   if(S.tab==='overview')return renderOverview(p);
   if(S.tab==='meds')return renderMeds(p,ro)+prnCard(p)+insGlyCard(p)+sedCard(p)+renderCloud(p,ro);
   if(S.tab==='drip')return renderDrip(p,ro);
-  if(S.tab==='lab')return renderLab(p,ro);
+  if(S.tab==='lab')return akiCard(p,ro)+renderLab(p,ro);
   if(S.tab==='soap')return renderSoap(p,ro);
   if(S.tab==='rt')return renderRT(p,ro);
   if(S.tab==='micro')return renderMicro(p,ro);
@@ -3497,6 +3497,69 @@ function labTableHTML(pd,L,forCopy){
   const body=pd.items.map(it=>`<tr><td class="${forCopy?'':'litem'}" style="text-align:left;font-weight:600">${ed?`<button class="xdel" data-del="labitem" data-k="${esc(ik(it))}" title="刪除此項目">✕</button> `:''}${esc(it.name)}</td><td>${esc(it.sampleType)}</td><td>${esc(it.unit)}</td><td class="lref">${esc(it.ref)}</td>${pd.keep.map(c=>labCell(it.vals[c])).join('')}</tr>`).join('');
   return `<table class="ltbl"><thead><tr><th class="${forCopy?'':'litem'}">項目</th><th>檢體</th><th>單位</th><th>參考值</th>${th}</tr></thead><tbody>${body}</tbody></table>`;
 }
+/* ===== AKI 分期（KDIGO 2026 AKI/AKD guideline，public review draft）：Table 1 判定標準、Table 6 分期、Practice Point 1.1.3／Figure 1 baseline 階層 =====
+   只列依據與數字、不做處置建議；成人限定；cystatin C 未對應院內代碼前不計。 */
+const AKI_CITE='KDIGO 2026 AKI/AKD guideline（public review draft）Table 1、Table 6；baseline 依 Practice Point 1.1.3 / Figure 1';
+function crSeries(p){if(!hasLabs(p))return [];const out=[];Object.values(p.labs.items).filter(it=>it.code==='72-333'&&(!it.sampleType||it.sampleType==='B')).forEach(it=>Object.entries(it.vals).forEach(([sk,v])=>{const n=labNum(v),t=tsOf(sk);if(n>0&&t)out.push({t,v:n,sk});}));
+  return out.sort((a,b)=>a.t-b.t);}
+// CKD-EPI 2021（Inker LA, et al. N Engl J Med 2021;385:1737–1749）反推 eGFR 75 的 SCr
+function scrForEgfr(eg,age,sex){if(!(age>0)||!sex)return null;const f=sex==='F',k=f?0.7:0.9,a=f?-0.241:-0.302,g=s=>142*Math.pow(Math.min(s/k,1),a)*Math.pow(Math.max(s/k,1),-1.2)*Math.pow(0.9938,age)*(f?1.012:1);
+  let lo=0.1,hi=15;for(let i=0;i<60;i++){const m=(lo+hi)/2;if(g(m)>eg)lo=m;else hi=m;}return +((lo+hi)/2).toFixed(2);}
+function akiBase(p,C){const A=p.aki||{},adm=p.admitDate?Date.parse(p.admitDate+'T00:00:00'):null,fmt=t=>{const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()}`;};
+  if(A.base&&+A.base.v>0)return {v:+A.base.v,lvl:1,txt:`第 1 層：入院前門診 SCr ${A.base.v}${A.base.date?`（${A.base.date}）`:''}${A.base.how?`，${A.base.how}`:''}`};
+  if(C.length&&!A.admAKI){const a=adm!=null?C.find(x=>x.t>=adm-864e5):C[0];if(a)return {v:a.v,lvl:2,t:a.t,txt:`第 2 層：入院時 SCr ${a.v}（${fmt(a.t)}）`};}
+  if(C.length){const m=C.reduce((a,b)=>b.v<a.v?b:a);return {v:m.v,lvl:3,t:m.t,txt:`第 3 層：住院期間最低 SCr ${m.v}（${fmt(m.t)}）`};}
+  const age=ageYears(p),v=scrForEgfr(75,age,p.sex);return v?{v,lvl:4,txt:`第 4 層：以 CKD-EPI 2021 假設 eGFR 75 回推 SCr ${v}（${age} 歲、${p.sex==='F'?'女':'男'}）`}:null;}
+function akiEval(p){if(p.template==='peds')return null;const C=crSeries(p),B=akiBase(p,C),now=C.length?C[C.length-1].t:Date.now(),from=now-7*864e5,fmt=t=>{const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
+  // C 軸
+  let c={st:0,why:'未達標準'};const W=C.filter(x=>x.t>=from);
+  const up=(st,why)=>{if(st>c.st)c={st,why};};
+  W.forEach(x=>{if(B){const r=x.v/B.v;if(r>=3)up(3,`SCr ${x.v}（${fmt(x.t)}）÷ baseline ${B.v} = ${r.toFixed(2)} 倍（≥3.0）`);else if(r>=2)up(2,`SCr ${x.v}（${fmt(x.t)}）÷ baseline ${B.v} = ${r.toFixed(2)} 倍（2.0–2.9）`);else if(r>=1.5)up(1,`SCr ${x.v}（${fmt(x.t)}）÷ baseline ${B.v} = ${r.toFixed(2)} 倍（1.5–1.9）`);}
+    if(x.v>=4)up(3,`SCr ${x.v} ≥ 4.0 mg/dl（${fmt(x.t)}）`);
+    C.filter(y=>y.t<x.t&&x.t-y.t<=48*36e5).forEach(y=>{if(x.v-y.v>=0.3-1e-9)up(1,`48 小時內上升 ${(x.v-y.v).toFixed(2)} mg/dl（${y.v} ${fmt(y.t)} → ${x.v} ${fmt(x.t)}）`);});});
+  if(rrtOn(p))up(3,`已開始腎臟替代療法（${rrtLabel(p.rrt.status)}）`);
+  // U 軸：依 IBW，用連續班別（或 6 小時區間）判斷持續時間
+  const bw=bodyW(p),ibw=bw.ibw;let u={st:0,why:'未達標準'},uNa='';
+  const D=ioDays(p);
+  if(!ibw)uNa='需身高與性別才能計算 IBW（新定義以理想體重計）';
+  else if(!D.length)uNa='尚無 I/O 資料';
+  else{const segs=[];const U6=ioUO6(p);
+    D.forEach(x=>{if(U6[x.day])U6[x.day].forEach((w,i)=>segs.push({t0:+new Date(x.day+'T07:00:00')+i*6*36e5,h:6,slot:6,ml:w.ml,lab:w.span}));
+      else if(!x.T)x.L.forEach(sh=>{if(sh.urine==null)return;const t0=+new Date(x.day+'T07:00:00')+sh.sh*8*36e5;segs.push({t0,h:sh.h||8,slot:8,ml:sh.urine,lab:`${ioMD(x.day)} ${['07–15','15–23','23–07'][sh.sh]}`});});});
+    segs.sort((a,b)=>a.t0-b.t0);const S7=segs.filter(g=>g.t0>=Date.now()-8*864e5);
+    const runs=(test)=>{const R=[];let cur=null;S7.forEach((g,i)=>{const rate=g.ml/ibw/g.h,ok=test(g,rate),prev=S7[i-1],cont=prev&&Math.abs(g.t0-(prev.t0+prev.slot*36e5))<1;
+      if(ok){if(cur&&cont)cur.segs.push(g);else{cur={segs:[g]};R.push(cur);}}else cur=null;});
+      return R.map(r=>({h:r.segs.reduce((a,g)=>a+g.h,0),ml:r.segs.reduce((a,g)=>a+g.ml,0),from:r.segs[0].lab,to:r.segs[r.segs.length-1].lab}));};
+    const best=(R)=>R.sort((a,b)=>b.h-a.h)[0];
+    const r5=best(runs((g,r)=>r<0.5)),r3=best(runs((g,r)=>r<0.3)),r0=best(runs((g)=>g.ml<=0));
+    const dsc=r=>`${r.from}${r.to!==r.from?' 至 '+r.to:''}，共 ${r.h} 小時，平均 ${(r.ml/ibw/r.h).toFixed(2)} mL/kg/h（IBW ${ibw.toFixed(1)} kg）`;
+    if((r3&&r3.h>24))u={st:3,why:'< 0.3 持續 >24 小時：'+dsc(r3)};
+    else if(r0&&r0.h>12)u={st:3,why:'無尿 >12 小時：'+dsc(r0)};
+    else if(r5&&r5.h>12)u={st:2,why:'< 0.5 持續 >12 小時：'+dsc(r5)};
+    else if(r5&&r5.h>=6)u={st:1,why:'< 0.5 持續 6–12 小時：'+dsc(r5)};
+    else if(r5)u={st:0,why:`< 0.5 但持續未達 6 小時：${dsc(r5)}`};
+    if(D.some(x=>x.T))uNa='部分日期只有 24 小時合計，無法確認持續時間，未納入';}
+  const Bx=(p.aki||{}).B||'';
+  return {C,B,c,u,uNa,ibw,Bx,stage:Math.max(c.st,u.st)};}
+function akiCard(p,ro,compact){const E=akiEval(p);if(!E)return '';if(!E.C.length&&!ioDays(p).length)return '';
+  const A=p.aki||{},bl=E.Bx==='B1'?'B1':E.Bx==='B0'?'B0':'B 未檢測';
+  const head=`AKI ${E.stage?`第 ${E.stage} 期`:'未達分期'}：C${E.c.st}・${E.uNa&&!E.u.st?'U？':'U'+E.u.st}・${bl}${!E.stage&&E.Bx==='B1'?'（C0U0B1：功能正常但結構受損）':''}`;
+  if(compact)return `<div class="kv"><span class="k">AKI（KDIGO 2026 草案）</span><span style="text-align:right"><b>${head.replace(/^AKI /,'')}</b></span></div>`;
+  return `<div class="card"><h3>AKI 分期 <span class="small mute">KDIGO 2026 草案・只列依據</span></h3>
+    <div style="font-size:16px;margin:4px 0"><b>${head}</b></div>
+    <div class="kv"><span class="k">C（SCr）</span><span style="text-align:right">C${E.c.st}：${esc(E.c.why)}</span></div>
+    <div class="kv"><span class="k">U（尿量）</span><span style="text-align:right">${E.uNa&&!E.u.st?`<span class="mute">${esc(E.uNa)}</span>`:`U${E.u.st}：${esc(E.u.why)}${E.uNa?`<div class="small mute">${esc(E.uNa)}</div>`:''}`}</span></div>
+    <div class="kv"><span class="k">Baseline SCr</span><span style="text-align:right">${E.B?esc(E.B.txt):'<span class="mute">無</span>'}</span></div>
+    <div class="kv"><span class="k">cystatin C</span><span style="text-align:right" class="mute">院內代碼尚未對應，未納入</span></div>
+    ${ro?'':`<details style="margin-top:6px"><summary class="small" style="cursor:pointer">設定 baseline 與損傷標記</summary><div class="grid" style="margin-top:6px">
+      <div class="fld"><label>入院前門診 SCr（第 1 層，入院前 8–365 天）</label><input type="number" step="0.01" data-akib="v" value="${esc((A.base||{}).v||'')}"></div>
+      <div class="fld"><label>日期</label><input type="date" data-akib="date" value="${esc((A.base||{}).date||'')}"></div>
+      <div class="fld"><label>取法</label><select data-akib="how">${['','平均值','中位數','最近一次'].map(x=>`<option ${((A.base||{}).how||'')===x?'selected':''}>${x}</option>`).join('')}</select></div>
+      <div class="fld"><label>入院時已疑似 AKI（社區型）</label><select data-aki="admAKI"><option value="" ${A.admAKI?'':'selected'}>否（可用入院 SCr）</option><option value="1" ${A.admAKI?'selected':''}>是（跳過第 2 層）</option></select></div>
+      <div class="fld"><label>損傷標記（B）</label><select data-aki="B">${[['','未檢測'],['B0','B0 陰性'],['B1','B1 陽性']].map(([v,l])=>`<option value="${v}" ${(A.B||'')===v?'selected':''}>${l}</option>`).join('')}</select></div></div></details>`}
+    <div class="small mute" style="margin-top:6px">依據：${AKI_CITE}。C1：48 小時內上升 ≥0.3 mg/dl 或 1.5–1.9 倍；C2：2.0–2.9 倍；C3：≥3.0 倍、SCr ≥4.0 mg/dl 或開始 RRT。U1：&lt;0.5 mL/kg/h 6–12 小時；U2：&lt;0.5 &gt;12 小時；U3：&lt;0.3 &gt;24 小時或無尿 &gt;12 小時（以 IBW 計；連續班別或 6 小時區間相接才累計；某班不滿 8 小時以實際時數計）。整體期別取 C、U 最高者。依公開審查草案，正式版數字可能調整。只看最近 7 天。</div></div>`;}
+function bindAki(p){document.querySelectorAll('[data-akib]').forEach(el=>el.onchange=()=>{p.aki=p.aki||{};p.aki.base=p.aki.base||{};p.aki.base[el.dataset.akib]=el.value;if(!p.aki.base.v)delete p.aki.base;markDirty();renderMain();});
+  document.querySelectorAll('[data-aki]').forEach(el=>el.onchange=()=>{p.aki=p.aki||{};p.aki[el.dataset.aki]=el.value;markDirty();renderMain();});}
 function renderLab(p,ro){
   let h=`<div class="row" style="margin-bottom:10px">${ro?'':'<button class="pri" id="btnLabPaste">📋 貼上檢驗報告</button>'}`;
   if(!hasLabs(p))return h+'</div><div class="todo">還沒有檢驗資料。把 HIS 檢驗報告整份（含表頭與 True 開頭的資料行）貼上即可，可以分次貼上累積。</div>';
@@ -6844,6 +6907,7 @@ function renderOverview(p){
     ${(()=>{const b=bodyW(p);return (b.bmi?kv('BMI',`${b.bmi.toFixed(1)} <span class="small ${b.catCls}">${b.cat}</span>`):'')+(b.ibw?kv('IBW／AdjBW',`${b.ibw.toFixed(1)}／${b.adj!=null?b.adj.toFixed(1):'—'} kg`):'')+(b.dose?kv('給藥體重',`${b.dose.w.toFixed(1)} kg <span class="small mute">${b.dose.t.split('（')[0]}</span>`):'');})()}
     ${kv('入院',p.admitDate?`${esc(p.admitDate)}（第 ${hd} 天）`:'—')}
     ${p.rrt&&p.rrt.status&&p.rrt.status!=='none'?kv('腎臟替代治療',`${esc(rrtLabel(p.rrt.status))}${rrtNext(p)?` <span class="small mute">下次 ${rrtNext(p).slice(5).replace('-','/')}${rrtNext(p)===ymd()?'（今天）':''}</span>`:''}`):''}
+    ${akiCard(p,true,true)}
     ${kv('過敏',esc(p.allergy||'—'))}
     ${p.dx?`<div class="small" style="margin-top:6px;white-space:pre-wrap">${esc(p.dx)}</div>`:''}</div>`;
   if(p.template==='peds'){const pr=paliEval(p);if(pr&&(pr.eligible||pr.flags.length>1||pr.inOrder))h+=renderPali(p,true,true);
