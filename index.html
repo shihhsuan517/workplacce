@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-24k';
+const APP_VER='2026-11-24l';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -829,7 +829,7 @@ $('btnAddPt').onclick=()=>{
 };
 
 const TPL={adult:'成人一般',peds:'兒科',ami:'AMI',hf:'HF'};
-const TABS=[['overview','總覽'],['basic','基本資料'],['prog','病程'],['lines','管路'],['meds','用藥'],['drip','輸注速算'],['tpn','TPN／營養'],['vs','生命徵象'],['io','I/O'],['lab','檢驗'],['micro','抗微生物圖譜'],['exam','檢查報告'],['consult','會診'],['rt','呼吸治療'],['soap','SOAP'],['rules','劑量規則'],['ai','AI 判讀']];
+const TABS=[['overview','總覽'],['basic','基本資料'],['lines','管路'],['meds','用藥'],['drip','輸注速算'],['tpn','TPN／營養'],['vs','生命徵象'],['io','I/O'],['lab','檢驗'],['micro','抗微生物圖譜'],['exam','檢查報告'],['consult','會診'],['rt','呼吸治療'],['soap','SOAP'],['rules','劑量規則'],['ai','AI 判讀']];
 
 function curPatient(){return S.archive?S.archive.patient:S.data.patients.find(p=>p.id===S.selId)||null;}
 
@@ -980,7 +980,7 @@ function renderTab(p,ro){
   if(S.tab==='rt')return renderRT(p,ro);
   if(S.tab==='micro')return renderMicro(p,ro);
   if(S.tab==='exam')return renderExam(p,ro);
-  if(S.tab==='prog')return renderProg(p,ro);
+  if(S.tab==='prog'){S.tab='overview';return renderOverview(p);}
   if(S.tab==='ai')return renderAI(p,ro);
   if(S.tab==='rules')return renderRules(p,ro);
   if(S.tab==='lines')return renderLines(p,ro);
@@ -5762,11 +5762,11 @@ function previewProg(txt){
       ['出生資料',[n.dob?'出生 '+n.dob:'',n.ga?'GA '+n.ga:'',n.birthWt?'BBW '+n.birthWt+' g':''].filter(Boolean).join('、')],
       ['Vital',r.vs?Object.entries(r.vs).filter(([,v])=>v).map(([k,v])=>k+' '+v).join('、'):''],['Assessment',oneLine(r.A,300)],['Plan',oneLine(r.P,300)]]
       .filter(([,v])=>v).map(([k,v])=>`<tr><td style="white-space:nowrap"><b>${k}</b></td><td>${esc(v)}</td></tr>`).join('')}</tbody></table></div>
-    <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="pri" id="btnDoImport">確認加入</button></div>`;
+    ${r.A?`<label class="small" style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="progDxChk" style="width:auto"> 用這份病程的 Assessment 取代「診斷／病況簡述」</label>`:''}<div class="row" style="margin-top:12px;justify-content:flex-end"><button class="pri" id="btnDoImport">確認加入</button></div>`;
   $('btnDoImport').onclick=()=>{
     const tid=$('pasteTargetSel').value;let p=tid!=='new'?S.data.patients.find(x=>x.id===tid):null;const isNew=!p;
     if(!p){p=newPatient();S.data.patients.push(p);}ensurePatient(p);if(!isNew)snapshot(p,'加入病程');
-    const x=mergeProgress(p,r);p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab='prog';markDirty();renderList();renderMain();
+    const x=mergeProgress(p,r);if($('progDxChk')&&$('progDxChk').checked&&r.A){p.dx=r.A.split(/\n\s*[＜<]inactive[＞>]/i)[0].replace(/\n{2,}/g,'\n').trim();p.dxSrc=`病程 ${r.at}`;x.got.push('已更新診斷／病況簡述');}p.updatedAt=new Date().toISOString();closePaste();S.archive=null;S.selId=p.id;S.tab='basic';markDirty();renderList();renderMain();
     toast(`${isNew?'已新增病患並':'已'}加入病程${x.got.length?'；'+x.got.join('、'):''}`);};
 }
 
