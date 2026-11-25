@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-24o';
+const APP_VER='2026-11-25a';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -829,7 +829,7 @@ $('btnAddPt').onclick=()=>{
 };
 
 const TPL={adult:'成人一般',peds:'兒科',ami:'AMI',hf:'HF'};
-const TABS=[['overview','總覽'],['basic','基本資料'],['lines','管路'],['meds','用藥'],['drip','輸注速算'],['tpn','TPN／營養'],['vs','生命徵象'],['io','I/O'],['lab','檢驗'],['micro','抗微生物圖譜'],['exam','檢查報告'],['consult','會診'],['rt','呼吸治療'],['soap','SOAP'],['rules','劑量規則'],['ai','AI 判讀']];
+const TABS=[['overview','總覽'],['basic','基本資料'],['lines','管路'],['meds','用藥'],['drip','輸注速算'],['tpn','TPN／營養'],['vs','生命徵象／血糖'],['io','I/O'],['lab','檢驗'],['micro','抗微生物圖譜'],['exam','檢查報告'],['consult','會診'],['rt','呼吸治療'],['soap','SOAP'],['rules','劑量規則'],['ai','AI 判讀']];
 
 function curPatient(){return S.archive?S.archive.patient:S.data.patients.find(p=>p.id===S.selId)||null;}
 
@@ -973,7 +973,7 @@ function renderTab(p,ro){
     return h;
   }
   if(S.tab==='overview')return renderOverview(p);
-  if(S.tab==='meds')return crrtCard(p,ro)+renderMeds(p,ro)+prnCard(p)+insGlyCard(p)+sedCard(p)+renderCloud(p,ro);
+  if(S.tab==='meds')return crrtCard(p,ro)+renderMeds(p,ro)+prnCard(p)+sedCard(p)+renderCloud(p,ro);
   if(S.tab==='drip')return renderDrip(p,ro);
   if(S.tab==='lab')return akiCard(p,ro)+cgCard(p)+renderLab(p,ro);
   if(S.tab==='soap')return renderSoap(p,ro);
@@ -5102,7 +5102,7 @@ function prnCard(p){
         <td class="small">${x.before?`${x.metric} <b>${esc(String(x.before.v))}</b> <span class="mute">${x.before.t.slice(11)}</span>`:'—'}</td><td class="small">${x.after?`${x.metric} <b>${esc(String(x.after.v))}</b> <span class="mute">${md(x.after.t)}</span>`:'—'}</td></tr>`).join('')}
       </tbody></table></div></details>`;}).join('');
   return `<div class="card"><h3>PRN 實際給藥 <span class="small mute">護理記錄・最新紀錄 ${md(ioLocal(new Date(endT)))}・只列紀錄</span></h3>${rows}
-    <div class="small mute" style="margin-top:6px">只列護理記錄中「依醫囑給予 … PRN」的實際給藥（胰島素列在下方「胰島素與血糖」）。給藥前後數值：降壓藥看 SBP、退燒藥看 BT、胰島素看 F/S、鴉片類看 CPOT、鎮靜藥看 RASS（前 3 小時內最近一筆、後 20 分鐘～4 小時內第一筆）。次數以最新一筆護理紀錄往回計算。</div></div>`;
+    <div class="small mute" style="margin-top:6px">只列護理記錄中「依醫囑給予 … PRN」的實際給藥（胰島素與血糖在「生命徵象／血糖」分頁）。給藥前後數值：降壓藥看 SBP、退燒藥看 BT、胰島素看 F/S、鴉片類看 CPOT、鎮靜藥看 RASS（前 3 小時內最近一筆、後 20 分鐘～4 小時內第一筆）。次數以最新一筆護理紀錄往回計算。</div></div>`;
 }
 /* =====================================================================
    護理記錄延伸擷取：胰島素／血糖、鎮靜疼痛譫妄評分、管灌與耐受度、管路事件、發燒
@@ -5169,7 +5169,7 @@ function nurseLinesApply(p,evs){
   if(L.nurseDone.length>3000)L.nurseDone=L.nurseDone.slice(-3000);
   if(add||chg)L.at=new Date().toISOString();return {add,chg};
 }
-// ---- 顯示：胰島素與血糖（用藥）
+// ---- 顯示：血糖紀錄與胰島素（生命徵象／血糖分頁）
 function insGlyCard(p){
   const o=ioStore(p),ins=o.ev.filter(e=>e.kind==='ins'),d50=o.ev.filter(e=>e.kind==='d50'),fs=vsList(p).filter(x=>x.FS!=null);
   if(!ins.length&&!fs.length)return '';
@@ -5180,7 +5180,7 @@ function insGlyCard(p){
     return `<tr><td class="num"><b>${md(d)}</b></td><td class="small">${D.fs.sort((a,b)=>a.t.localeCompare(b.t)).map(x=>`<span style="white-space:nowrap">${x.t.slice(11)} <b class="${x.FS<70?'over':x.FS>180?'under':''}">${x.FS}</b></span>`).join('　')||'—'}</td>
       <td class="num">${v.length?`${Math.min(...v)}–${Math.max(...v)}`:'—'}</td><td class="num">${v.filter(x=>x<70).length||''}</td><td class="num">${v.filter(x=>x>180).length||''}</td>
       <td class="small">${D.ins.sort((a,b)=>a.t.localeCompare(b.t)).map(x=>`<span style="white-space:nowrap">${x.t.slice(11)} ${esc(x.drug)} <b>${x.units??'?'}</b> U ${esc(x.route)} ${esc(x.freq)}</span>`).join('<br>')||'—'}${D.d50.map(x=>`<div class="over">${x.t.slice(11)} ${esc(x.text)}</div>`).join('')}</td><td class="num">${tot||''}</td></tr>`;}).join('');
-  return `<div class="card"><h3>胰島素與血糖 <span class="small mute">護理記錄・依日曆日・只列數字</span></h3><div class="tblwrap"><table class="tbl"><thead><tr><th>日期</th><th>F/S（mg/dL）</th><th>範圍</th><th>&lt;70</th><th>&gt;180</th><th>胰島素實際給藥</th><th>當日 U</th></tr></thead><tbody>${rows}</tbody></table></div>
+  return `<div class="card"><h3>血糖紀錄與胰島素 <span class="small mute">護理記錄・依日曆日・只列數字</span></h3><div class="tblwrap"><table class="tbl"><thead><tr><th>日期</th><th>F/S（mg/dL）</th><th>範圍</th><th>&lt;70</th><th>&gt;180</th><th>胰島素實際給藥</th><th>當日 U</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="small mute" style="margin-top:4px">F/S 取自護理記錄；胰島素包含「依醫囑給予」與「藥名、劑量：… UN，部位」兩種寫法，同一筆重複記載只算一次。紅字 &lt;70、橘字 &gt;180。給予 50% glucose 會另外列出。</div></div>`;
 }
 // ---- 顯示：鎮靜、疼痛、譫妄評分（用藥）
@@ -5395,7 +5395,7 @@ function preHRCard(p){
     </tbody></table></div>`:'<div class="small mute">尚無可對照的心跳紀錄（PMA 需在表格範圍內）。</div>'}
     <div class="small mute" style="margin-top:6px">參考值：${ALONZO_CITE}（GA 23–34 週早產兒、NICU 床邊監視器資料；原文表格只公布 5th 與 95th，故只標這兩條）。色帶＝該 GA 每個 PMA 週的 5th–95th；實心點＝落在範圍內，空心點＝範圍外。滑鼠移到色帶或點上看數值。PMA ≥ 37 週後改用下方 Fleming 2011。</div></div>`;
 }
-function renderVSTab(p,ro){const c=vsCard(p,ro);if(!c)return '<div class="todo">尚無生命徵象。用「一鍵貼上」貼上護理記錄後顯示。</div>';return vsChart(p)+vsRefCard(p)+c;}
+function renderVSTab(p,ro){const c=vsCard(p,ro);if(!c)return insGlyCard(p)||'<div class="todo">尚無生命徵象。用「一鍵貼上」貼上護理記錄後顯示。</div>';return vsChart(p)+insGlyCard(p)+vsRefCard(p)+c;}
 function renderIO(p,ro){
   const D=ioDays(p),w=ioWt(p),o=ioStore(p),peds=p.template==='peds',U6=ioUO6(p);
   let h=ro?'':`<div class="card"><h3>貼上護理記錄／I/O 明細</h3>
@@ -5537,7 +5537,7 @@ function previewIO(txt,opt){
     const gDiff=GF.filter(([k])=>GL[k]&&parseFloat(p[k])!==GL[k][GK[k]]),gEmpty=gDiff.every(([k])=>!(parseFloat(p[k])>0));
     $('ioChk').innerHTML=
       cb('ioChkIO',true,'生命徵象、I/O 分頁',`生命徵象 ${R.vs.length} 筆（新 ${nv}，含 RASS／CPOT／GCS／ICDSC）・I/O 小計 ${R.shifts.length} 組・體重 ${R.wts.length} 筆・排便／利尿劑事件 ${io.filter(e=>/^(bm|diu)/.test(e.kind)).length} 筆`)
-      +(medN?cb('ioChkMed',true,'用藥分頁',`PRN ${prn.length} 次・胰島素 ${insN} 次・50% glucose ${d50N} 次・皮疹／過敏紀錄 ${adrN} 筆（評分與發燒來自生命徵象）`):'')
+      +(medN?cb('ioChkMed',true,'用藥分頁（胰島素與血糖顯示在生命徵象／血糖分頁）',`PRN ${prn.length} 次・胰島素 ${insN} 次・50% glucose ${d50N} 次・皮疹／過敏紀錄 ${adrN} 筆（評分與發燒來自生命徵象）`):'')
       +(feedN?cb('ioChkFeed',true,'TPN／營養分頁：管灌內容與耐受度',`管灌醫囑 ${R.ev.filter(e=>e.kind==='fOrder').length}・灌食 ${R.ev.filter(e=>e.kind==='feed').length} 次・反抽 ${R.ev.filter(e=>e.kind==='grv').length}・暫停 ${R.ev.filter(e=>e.kind==='hold').length}・coffee ground ${R.ev.filter(e=>e.kind==='cg').length}`):'')
       +(R.lines.length?cb('ioChkLine',true,'管路分頁',`置入／更換／移除 ${R.lines.filter(x=>x.act!=='status').length} 個事件；入院時已留置的管路依首次提及時間建立（已有紀錄者不重複）`):'')
       +(wDiff?cb('ioChkWt',!(cur>0),'基本資料體重',`${cur>0?`目前 ${fmtN(cur)} kg（${esc(p.wtSrc||'來源未記錄')}）→ 改為`:'目前空白 → 帶入'} <b>${W.kg<10?(+W.kg.toFixed(3))+' kg（'+Math.round(W.kg*1000)+' g）':fmtN(W.kg)+' kg'}</b>（護理記錄 ${md(W.t)}）；會影響所有劑量計算`):W?`<div class="small mute" style="margin:4px 0">基本資料體重 ${fmtN(cur)} kg 與護理記錄最新體重相同，不需更新</div>`:'')
