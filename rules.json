@@ -1,6 +1,6 @@
 {
- "version": "2026-11-24c",
- "updated": "2026-11-24",
+ "version": "2026-11-25b",
+ "updated": "2026-11-25",
  "rules": [
   {
    "id": "dexmedetomidine",
@@ -5533,6 +5533,750 @@
     ],
     "info": {
      "alert": "需 TDM；腎毒性、耳毒性。EID 依年齡劑量較高（<2 歲 9.5 mg/kg）。"
+    }
+   }
+  },
+  {
+   "id": "polymyxin-b",
+   "label": "Polymyxin B",
+   "names": [
+    "polymyxin b",
+    "polymyxin-b",
+    "polymyxin",
+    "poly-b",
+    "polymixin b"
+   ],
+   "excludeRe": "neomycin|bacitracin|trimethoprim|gramicidin|dexamethasone|oint|ophth|eye|polysporin|neosporin|otic|ear",
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug Multinational) — Polymyxin B（Last Updated 11/24/26）",
+     "sections": "Dosing: Adult; Older Adult; Altered Kidney/Liver Function; Obesity; Pediatric; Administration; Preparation; Warnings; Adverse Reactions; Interactions; Monitoring; Reference Range; Pharmacokinetics（Boxed Warning 段落內文貼上時未展開）",
+     "addedAt": "2026-11-25",
+     "by": "JC"
+    }
+   ],
+   "doseUnit": "units",
+   "weight": {
+    "basis": "TBW",
+    "note": "體重正常者用實際體重；病態肥胖資料少，可考慮 AdjBW。"
+   },
+   "usual": {
+    "text": "XDR 革蘭氏陰性菌（如 A. baumannii、難治 P. aeruginosa），其他藥物無法使用時保留使用：IV loading 20,000–25,000 units/kg，之後 12,500–15,000 units/kg q12h；通常併用其他抗生素。10,000 units = 1 mg。單次輸注 >2,000,000 units 安全資料有限，但 PK 不支持設上限。UTI 需用 polymyxin 時偏好 colistimethate。"
+   },
+   "doses": [
+    {
+     "ind": "IV 負荷劑量",
+     "routes": [
+      "IV"
+     ],
+     "when": "stat",
+     "lo": 20000,
+     "hi": 25000,
+     "unit": "units/kg"
+    },
+    {
+     "ind": "IV 維持劑量（loading 後）",
+     "routes": [
+      "IV"
+     ],
+     "lo": 12500,
+     "hi": 15000,
+     "unit": "units/kg",
+     "freq": "q12h"
+    },
+    {
+     "ind": "吸入（輔助，併全身治療；off-label）",
+     "routes": [
+      "INHA",
+      "NEB",
+      "INH"
+     ],
+     "lo": 500000,
+     "hi": 500000,
+     "unit": "units",
+     "freq": "q12h"
+    },
+    {
+     "ind": "腦室內／鞘內（輔助，併全身治療；用不含防腐劑劑型）",
+     "routes": [
+      "IT",
+      "IVT",
+      "ITH"
+     ],
+     "lo": 50000,
+     "hi": 50000,
+     "unit": "units",
+     "freq": "QD"
+    }
+   ],
+   "renal": {
+    "none": true,
+    "text": "IV：任何程度腎功能不全皆不需調整（仿單建議減量，但多數臨床資料顯示總清除率不受腎功能明顯影響；減量可能導致暴露不足、治療失敗與抗藥性）。HD（透析性不明）：不需調整，透析日其中一劑在透析後給。PD、CRRT：不需調整。PIRRT：不需調整，治療日其中一劑在 PIRRT 後給。ARC（測得尿液 CrCl ≥130 mL/min/1.73m²）：無特定建議，可能需較高劑量，建議 TDM。"
+   },
+   "hepatic": {
+    "none": true,
+    "text": "仿單無肝功能調整建議。"
+   },
+   "obesity": {
+    "text": "PK 不支持在高體重者設絕對劑量上限，但單次 >2,000,000 units 安全資料有限，輸注相關副作用可能隨劑量增加；病態肥胖資料少，可考慮以 AdjBW 計算。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "依成人劑量。高齡為腎毒性風險因子之一。"
+   },
+   "concomitant": [
+    {
+     "re": "gentamicin|amikacin|tobramycin|streptomycin|isepamicin|netilmicin",
+     "text": "Aminoglycoside：增加腎毒性與神經毒性（Risk X：避免併用）。"
+    },
+    {
+     "re": "kanamycin",
+     "text": "Kanamycin：增加毒性，不建議併用（Risk D）。"
+    },
+    {
+     "re": "colistimethate|colistin|colimycin",
+     "text": "Colistimethate：腎毒性、神經毒性與神經肌肉阻斷相加，一般不建議併用；必須併用時密切監測（Risk D）。吸入 colistin 亦需留意。"
+    },
+    {
+     "re": "bacitracin",
+     "text": "Bacitracin（全身性）：增加腎毒性（Risk X）。"
+    },
+    {
+     "re": "methoxyflurane",
+     "text": "Methoxyflurane：增加腎毒性（Risk X）。"
+    },
+    {
+     "re": "cisatracurium|rocuronium|vecuronium|atracurium|succinylcholine|pancuronium",
+     "text": "神經肌肉阻斷劑：polymyxin B 增強阻斷作用（Risk C），注意呼吸麻痺，尤其麻醉或肌肉鬆弛劑使用後。"
+    },
+    {
+     "re": "mycophenolate|cellcept|myfortic",
+     "text": "抗生素可能降低 mycophenolic acid 暴露量（Risk C）。"
+    }
+   ],
+   "notes": [
+    "Boxed Warning（標題）：限適當使用、腎毒性、神經毒性、避免併用其他腎／神經毒性藥物、神經肌肉阻斷、懷孕安全性未建立。",
+    "腎毒性：腎功能正常者盛行率約 46%，中位發生時間約第 9 天；風險因子包括既有腎功能不全、高齡、脫水。監測 BUN、SCr、尿液分析；尿量下降或 BUN 上升可能需停藥。",
+    "神經毒性：口周／肢端麻木、頭暈、嗜睡、躁動、運動失調、視力模糊；可能神經肌肉阻斷致呼吸麻痺。",
+    "其他：輸注部位血栓靜脈炎、皮膚色素沉著、低血鈣／低血鉀／低血鎂／低血鈉、橫紋肌溶解、藥物熱、CDAD。",
+    "IV 輸注 1 小時；500,000 units 溶於 300–500 mL D5W（1,000–1,667 units/mL）。吸入前約 20 分鐘先給 β2 致效劑。腦室給藥後夾管 15–60 分鐘。",
+    "PK/PD：濃度依賴型，目標 AUC24 約 50–100 mg·h/L 或 Css,avg 2–4 mg/L；AUC24 >100 與腎毒性風險增加相關；目標血中濃度 2 mg/L，>5 mcg/mL 為成人毒性濃度。t½ 10.1–13.6 小時；重症病人尿液原型排出中位數 4%。",
+    "不建議用於 UTI（主要非腎臟清除）；不進入 CSF 或眼內，腦膜炎優先局部給藥。"
+   ],
+   "info": {
+    "up": "2026-11-25",
+    "times": [
+     "—",
+     "IM 2 hr 內",
+     "t½ 10–14 hr"
+    ],
+    "tnote": "10,000 units = 1 mg；不經腎臟為主要清除",
+    "prep": "IV：500,000 units 溶於 300–500 mL D5W，輸注 1 小時（兒科 60–90 分鐘）。鞘內：500,000 units 溶於 10 mL 不含防腐劑 NS（50,000 units/mL）。復溶後冷藏，72 小時內用完。",
+    "alert": "以 units 開立，10,000 units = 1 mg，注意單位與途徑；腎、神經毒性；避免併用 aminoglycoside。ISMP 高警訊（鞘內）。"
+   },
+   "peds": {
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug Multinational) — Polymyxin B（Last Updated 11/24/26）",
+      "sections": "Dosing: Adult; Older Adult; Altered Kidney/Liver Function; Obesity; Pediatric; Administration; Preparation; Warnings; Adverse Reactions; Interactions; Monitoring; Reference Range; Pharmacokinetics（Boxed Warning 段落內文貼上時未展開）",
+      "addedAt": "2026-11-25",
+      "by": "JC"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "嚴重 MDR 感染（非腦膜炎）IV，常用 25,000–30,000（報告範圍 15,000–40,000）",
+      "routes": [
+       "IV"
+      ],
+      "lo": 25000,
+      "hi": 30000,
+      "unit": "units/kg",
+      "per": "day",
+      "freq": "÷ q12h",
+      "maxDayKg": {
+       "v": 40000,
+       "unit": "units"
+      }
+     },
+     {
+      "ind": "IV 負荷（依成人建議）",
+      "routes": [
+       "IV"
+      ],
+      "when": "stat",
+      "lo": 25000,
+      "hi": 25000,
+      "unit": "units/kg"
+     },
+     {
+      "ind": "鞘內 <2 歲：20,000 units QD × 3–4 天或 25,000 units QOD，之後 25,000 units QOD 至 CSF 培養陰性後 ≥2 週",
+      "routes": [
+       "IT",
+       "ITH"
+      ],
+      "ageMax": 2,
+      "lo": 20000,
+      "hi": 25000,
+      "unit": "units"
+     },
+     {
+      "ind": "鞘內 ≥2 歲：50,000 units QD × 3–4 天，之後 QOD 至 CSF 培養陰性後 ≥2 週",
+      "routes": [
+       "IT",
+       "ITH"
+      ],
+      "ageMin": 2,
+      "lo": 50000,
+      "hi": 50000,
+      "unit": "units"
+     }
+    ],
+    "renal": {
+     "text": "仿單建議減量，但依成人經驗可能不需調整。治療中出現腎毒性（BUN 上升或尿量下降）考慮停藥。HD：無建議，不需補充劑量。"
+    },
+    "hepatic": {
+     "text": "仿單無肝功能調整建議。"
+    },
+    "concomitant": [
+     {
+      "re": "gentamicin|amikacin|tobramycin|streptomycin|isepamicin|netilmicin",
+      "text": "Aminoglycoside：增加腎毒性與神經毒性（Risk X：避免併用）。"
+     },
+     {
+      "re": "kanamycin",
+      "text": "Kanamycin：增加毒性，不建議併用（Risk D）。"
+     },
+     {
+      "re": "colistimethate|colistin|colimycin",
+      "text": "Colistimethate：腎毒性、神經毒性與神經肌肉阻斷相加，一般不建議併用；必須併用時密切監測（Risk D）。吸入 colistin 亦需留意。"
+     },
+     {
+      "re": "bacitracin",
+      "text": "Bacitracin（全身性）：增加腎毒性（Risk X）。"
+     },
+     {
+      "re": "methoxyflurane",
+      "text": "Methoxyflurane：增加腎毒性（Risk X）。"
+     },
+     {
+      "re": "cisatracurium|rocuronium|vecuronium|atracurium|succinylcholine|pancuronium",
+      "text": "神經肌肉阻斷劑：polymyxin B 增強阻斷作用（Risk C），注意呼吸麻痺，尤其麻醉或肌肉鬆弛劑使用後。"
+     },
+     {
+      "re": "mycophenolate|cellcept|myfortic",
+      "text": "抗生素可能降低 mycophenolic acid 暴露量（Risk C）。"
+     }
+    ],
+    "notes": [
+     "仿單建議 max 25,000 units/kg/day，但 ≤12 歲小型病例報告用到 40,000 units/kg/day；成人經驗單次 >30,000 units/kg 或每日 >2,000,000 units 安全資料極少。",
+     "IM（25,000–40,000 units/kg/day ÷ q4–6h）因注射部位劇痛，不建議常規使用。",
+     "眼用：0.1–0.25% 每小時 1–3 滴；結膜下注射 ≤100,000 units/day 且全身加眼用合計 ≤25,000 units/kg/day。",
+     "兒科 IV 輸注 60–90 分鐘或連續輸注；終濃度 1,000–1,667 units/mL（D5W）。"
+    ],
+    "info": {
+     "alert": "以 units 開立、注意途徑；腎、神經毒性。"
+    }
+   }
+  },
+  {
+   "id": "fluconazole",
+   "label": "Fluconazole",
+   "names": [
+    "fluconazole",
+    "diflucan",
+    "fluzole",
+    "flucon",
+    "fluconazol"
+   ],
+   "status": "verified",
+   "source": [
+    {
+     "ref": "Lexicomp (UpToDate Lexidrug Multinational) — Fluconazole（Last Updated 11/19/26）",
+     "sections": "Dosing: Adult（Candidiasis treatment 展開；prophylaxis、cryptococcal、coccidioido 等未展開）; Older Adult; Altered Kidney/Liver Function; Obesity; Pediatric（General、ECMO；適應症細項僅 esophageal/oropharyngeal 取自 Dental 段）; Administration; Contraindications; Warnings; Adverse Reactions; Interactions; Monitoring; Pharmacokinetics",
+     "addedAt": "2026-11-25",
+     "by": "JC"
+    }
+   ],
+   "doseUnit": "mg",
+   "weight": {
+    "basis": "TBW",
+    "note": "<50 kg 或 >90 kg 考慮體重基準劑量（loading 12 mg/kg、維持 6 mg/kg，用實際體重）。"
+   },
+   "usual": {
+    "text": "侵襲性念珠菌（candidemia、腹內感染、眼內炎等）：Day 1 loading 800 mg（12 mg/kg），之後 400 mg（6 mg/kg）QD；fluconazole 敏感的 C. glabrata 800 mg（12 mg/kg）QD。食道：Day 1 400 mg，之後 200–400 mg QD 14–21 天。口咽：Day 1 200 mg，之後 100–200 mg QD 7–14 天。泌尿道：膀胱炎 200 mg QD × 2 週；腎盂腎炎 200–400 mg QD × 2 週。陰道：150 mg 單劑。上限未確立，少數病人用到 1,600 mg/day 可耐受。",
+    "maxDaily": 1600
+   },
+   "doses": [
+    {
+     "ind": "侵襲性念珠菌 Day 1 loading（12 mg/kg）",
+     "routes": [
+      "IV",
+      "PO",
+      "NG"
+     ],
+     "when": "stat",
+     "lo": 400,
+     "hi": 1600,
+     "unit": "mg"
+    },
+    {
+     "ind": "全身性念珠菌維持（candidemia、IAI、骨關節、心臟、CNS、眼內炎等；6–12 mg/kg）",
+     "routes": [
+      "IV",
+      "PO",
+      "NG"
+     ],
+     "lo": 400,
+     "hi": 800,
+     "unit": "mg",
+     "freq": "QD"
+    },
+    {
+     "ind": "食道／泌尿道（3–6 mg/kg）",
+     "routes": [
+      "IV",
+      "PO",
+      "NG"
+     ],
+     "lo": 200,
+     "hi": 400,
+     "unit": "mg",
+     "freq": "QD"
+    },
+    {
+     "ind": "口咽、PD 腹膜炎、慢性抑制",
+     "routes": [
+      "IV",
+      "PO",
+      "NG"
+     ],
+     "lo": 100,
+     "hi": 200,
+     "unit": "mg",
+     "freq": "QD"
+    },
+    {
+     "ind": "陰道念珠菌（單劑或 q72h）、intertrigo（每週）",
+     "routes": [
+      "PO"
+     ],
+     "lo": 150,
+     "hi": 150,
+     "unit": "mg"
+    }
+   ],
+   "renal": {
+    "method": "CG",
+    "text": "CG 估算。陰道念珠菌單劑治療不需調整。多次給藥：loading／初始劑量給 100%，維持劑量依 CrCl 調整。",
+    "byRoute": {
+     "IV": {
+      "bands": [
+       {
+        "min": 50,
+        "minEx": true,
+        "max": 9999,
+        "text": "CrCl >50：不需調整。"
+       },
+       {
+        "min": 0,
+        "max": 50,
+        "maxIn": true,
+        "level": "warn",
+        "text": "CrCl ≤50：loading／初始劑量給 100%，之後每日維持劑量減 50%。"
+       }
+      ],
+      "HD": {
+       "text": "可被透析（low-flux 33–38%）。每週三次（透析後）：loading／初始與維持劑量皆不需調整，但維持劑量只在透析日、透析後給（一週 3 次）。或每日一次：loading 100% 後維持劑量減 50% QD，透析日於透析後給。仿單另建議非透析日依 CrCl 給減量劑量，但透析間期濃度下降很少，似無必要。",
+       "afterHD": true
+      },
+      "PD": {
+       "text": "Loading／初始劑量 100%，維持劑量減 50%。PD 相關腹膜炎的適應症劑量已內含調整。"
+      },
+      "CRRT": {
+       "text": "CVVH／CVVHD／CVVHDF（high-flux、effluent 20–25 mL/kg/h 或 1.5–3 L/h）：常用 200 mg QD → 400 mg QD；常用 400 mg QD → loading 800 mg，之後 800 mg/day（分 1–2 次）；常用 800 mg QD → loading 1,200 mg，之後 1,200 mg/day（分 1–2 次）。無尿者無腎小管再吸收，CRRT 總清除率為健康人 1.5–2.3 倍。"
+      },
+      "PIRRT": {
+       "text": "PIRRT（effluent 4–5 L/h、每日 8–10 小時）：loading 100%；維持 400 mg QD 或 BID（最佳劑量未確立，依病原、MIC、免疫狀態與嚴重度選擇）。"
+      }
+     },
+     "PO": {
+      "bands": [
+       {
+        "min": 50,
+        "minEx": true,
+        "max": 9999,
+        "text": "CrCl >50：不需調整。"
+       },
+       {
+        "min": 0,
+        "max": 50,
+        "maxIn": true,
+        "level": "warn",
+        "text": "CrCl ≤50：loading／初始劑量給 100%，之後每日維持劑量減 50%。"
+       }
+      ],
+      "HD": {
+       "text": "可被透析（low-flux 33–38%）。每週三次（透析後）：loading／初始與維持劑量皆不需調整，但維持劑量只在透析日、透析後給（一週 3 次）。或每日一次：loading 100% 後維持劑量減 50% QD，透析日於透析後給。仿單另建議非透析日依 CrCl 給減量劑量，但透析間期濃度下降很少，似無必要。",
+       "afterHD": true
+      },
+      "PD": {
+       "text": "Loading／初始劑量 100%，維持劑量減 50%。PD 相關腹膜炎的適應症劑量已內含調整。"
+      },
+      "CRRT": {
+       "text": "CVVH／CVVHD／CVVHDF（high-flux、effluent 20–25 mL/kg/h 或 1.5–3 L/h）：常用 200 mg QD → 400 mg QD；常用 400 mg QD → loading 800 mg，之後 800 mg/day（分 1–2 次）；常用 800 mg QD → loading 1,200 mg，之後 1,200 mg/day（分 1–2 次）。無尿者無腎小管再吸收，CRRT 總清除率為健康人 1.5–2.3 倍。"
+      },
+      "PIRRT": {
+       "text": "PIRRT（effluent 4–5 L/h、每日 8–10 小時）：loading 100%；維持 400 mg QD 或 BID（最佳劑量未確立，依病原、MIC、免疫狀態與嚴重度選擇）。"
+      }
+     }
+    }
+   },
+   "hepatic": {
+    "none": true,
+    "text": "CTP A–C（含治療中惡化）不需調整。疑似 fluconazole 肝損傷通常不需處置即可恢復；需處置時減量或停藥後約 2 週內可逆，再挑戰可能復發。定期監測 AST、ALT、ALP。"
+   },
+   "obesity": {
+    "def": "BMI>=30",
+    "text": "BMI ≥30（侵襲性念珠菌治療）：用實際體重；Day 1 loading 12 mg/kg（最多 1,600 mg），之後 6 mg/kg QD（上限未確立：800–1,600 mg）；每日 1,600 mg 可耐受。非重症可省略 loading。其他適應症同樣原則。"
+   },
+   "elderly": {
+    "age": 65,
+    "text": "依成人劑量。≥65 歲半衰期約 46 小時（成人約 30 小時）。≥85 歲無症狀念珠菌尿不需治療（除嗜中性白血球低下或泌尿道處置）。"
+   },
+   "concomitant": [
+    {
+     "re": "erythromycin|pimozide|quinidine|cisapride",
+     "text": "禁忌（Risk X）：fluconazole 增加 QTc 延長與該藥濃度，禁止併用。"
+    },
+    {
+     "re": "voriconazole",
+     "text": "Voriconazole（Risk X）：濃度與 QTc 延長增加，避免併用。"
+    },
+    {
+     "re": "domperidone|ivabradine|lemborexant|aprepitant|fosaprepitant|ziprasidone|lomitapide|eletriptan",
+     "text": "Risk X：fluconazole 抑制 CYP3A4 致濃度上升或 QTc 延長，避免併用。"
+    },
+    {
+     "re": "amiodarone|dronedarone",
+     "text": "Amiodarone／dronedarone（Risk D）：QTc 延長與濃度上升，考慮替代；併用時監測 QTc 與心律不整。"
+    },
+    {
+     "re": "quetiapine|methadone",
+     "text": "Quetiapine／methadone（Risk D）：QTc 延長與濃度上升，考慮替代；併用時監測 QTc。"
+    },
+    {
+     "re": "haloperidol|ondansetron|levofloxacin|moxifloxacin|ciprofloxacin|pentamidine|escitalopram|olanzapine|risperidone",
+     "text": "QT 延長藥物（Risk C）：監測 QTc 與心律不整，尤其有其他 QT 風險因子者。"
+    },
+    {
+     "re": "citalopram",
+     "text": "Citalopram：QTc 延長與濃度上升；併用時 citalopram 最多 20 mg/day（fluconazole 為強效 CYP2C19 抑制劑）。"
+    },
+    {
+     "re": "clopidogrel",
+     "text": "Clopidogrel（Risk D）：強效 CYP2C19 抑制降低活性代謝物，可能療效下降；盡量用替代藥。"
+    },
+    {
+     "re": "warfarin|coumadin|acenocoumarol",
+     "text": "Warfarin（Risk D）：濃度上升；考慮替代，併用時 warfarin 減量 10–20% 並密切監測 INR。"
+    },
+    {
+     "re": "tacrolimus|prograf|advagraf",
+     "text": "Tacrolimus（Risk D）：濃度上升，密切監測血中濃度，通常需減量。"
+    },
+    {
+     "re": "sirolimus|everolimus",
+     "text": "Sirolimus／everolimus：濃度上升（sirolimus Risk D），監測濃度、可能需減量。"
+    },
+    {
+     "re": "cyclosporin",
+     "text": "Cyclosporine（Risk C）：濃度上升，監測血中濃度。"
+    },
+    {
+     "re": "rifampin|rifampicin|rifadin",
+     "text": "Rifampin（Risk D）：降低 fluconazole 濃度並增加 rifampin 毒性；考慮提高 fluconazole 劑量並監測療效。"
+    },
+    {
+     "re": "midazolam|alprazolam|triazolam",
+     "text": "Midazolam／alprazolam／triazolam（Risk D）：濃度上升致鎮靜延長、呼吸抑制；考慮替代或減量（鼻噴 midazolam 避免併用）。"
+    },
+    {
+     "re": "fentanyl|oxycodone|hydrocodone|tramadol|alfentanil|sufentanil|buprenorphine",
+     "text": "Opioid（CYP3A4）：濃度上升，監測呼吸抑制與鎮靜；fentanyl 考慮減量，停 fluconazole 後可能需回調。"
+    },
+    {
+     "re": "phenytoin|fosphenytoin",
+     "text": "Phenytoin（Risk C）：濃度上升（CYP2C19／2C9 抑制），監測血中濃度。"
+    },
+    {
+     "re": "carbamazepine",
+     "text": "Carbamazepine（Risk C）：濃度上升，監測。"
+    },
+    {
+     "re": "glimepiride|gliclazide|glipizide|glibenclamide|glyburide",
+     "text": "Sulfonylurea（Risk C）：濃度上升，注意低血糖。"
+    },
+    {
+     "re": "theophylline|aminophylline",
+     "text": "Theophylline（Risk C）：濃度上升，監測。"
+    },
+    {
+     "re": "tolvaptan|samsca",
+     "text": "Tolvaptan：濃度上升；Samsca 避免併用。"
+    },
+    {
+     "re": "colchicine",
+     "text": "Colchicine：濃度上升；依腎肝功能與 P-gp 抑制劑併用，可能需避免、減量或加強監測。"
+    },
+    {
+     "re": "simvastatin|atorvastatin|lovastatin|fluvastatin",
+     "text": "Statin：濃度上升（Risk C；fluvastatin 最多 20 mg BID），注意肌病變。"
+    },
+    {
+     "re": "rivaroxaban|apixaban|dabigatran",
+     "text": "DOAC（Risk C）：濃度或抗凝作用增加，監測出血。"
+    },
+    {
+     "re": "ticagrelor",
+     "text": "Ticagrelor（Risk C）：濃度上升，監測出血。"
+    },
+    {
+     "re": "ruxolitinib|tofacitinib|venetoclax|ibrutinib",
+     "text": "Ruxolitinib／tofacitinib／venetoclax／ibrutinib（Risk D）：濃度上升，需依該藥仿單減量（ruxolitinib 併用時 fluconazole 不超過 200 mg/day）。"
+    },
+    {
+     "re": "omeprazole|lansoprazole|esomeprazole",
+     "text": "PPI（Risk C）：CYP2C19 抑制致濃度上升，通常臨床意義小。"
+    },
+    {
+     "re": "diazepam",
+     "text": "Diazepam（Risk C）：CYP2C19 抑制致濃度上升，注意鎮靜。"
+    },
+    {
+     "re": "cyclophosphamide",
+     "text": "Cyclophosphamide（Risk C）：可能增加 bilirubin、SCr 與濃度，監測。"
+    }
+   ],
+   "notes": [
+    "禁忌：併用會延長 QTc 的 CYP3A4 受質（如 erythromycin、pimozide、quinidine）。",
+    "強效 CYP2C19、中度 CYP2C9 與 CYP3A4 抑制劑，交互作用多，需查交互作用資料庫調整。",
+    "QT 延長與 torsades de pointes（上市後）；監測心電圖、鉀。",
+    "肝毒性（含肝衰竭）、SJS/TEN、DRESS、AGEP；監測 LFT、腎功能、鉀與皮疹。",
+    "Candidemia 適用對象：非嗜中性白血球低下、非重症、無抗藥高風險；療程至首次血液培養陰性且症狀緩解後 ≥14 天。Echinocandin 起始後穩定、培養陰性且敏感者 5–7 天可降階為口服 fluconazole。",
+    "C. krusei 天生抗藥；C. glabrata 不建議用於陰道感染。",
+    "懷孕：高劑量（≥400 mg/day）第一孕期有致畸報告；可懷孕者用 ≥400 mg/day 時治療中與停藥後約 1 週需避孕。",
+    "NIOSH 危害藥品（table 2），依院內規範處理。",
+    "口服生體可用率 >90%，不受食物影響；IV 轉 PO 劑量相同。蛋白結合 11–12%；CSF 穿透 50–90%；80% 原形經尿排出。"
+   ],
+   "info": {
+    "up": "2026-11-25",
+    "times": [
+     "—",
+     "PO 1–2 hr",
+     "t½ ~30 hr"
+    ],
+    "tnote": "t½ 成人 20–50 hr；≥65 歲 46 hr；腎功能下降時延長",
+    "prep": "IV 預混 2 mg/mL（200 mg/100 mL、400 mg/200 mL NS）；輸注 ≥1–2 小時，速率 ≤200 mg/hr；混濁或沉澱勿用。口服懸液每次用前搖勻，管灌以至少等量（建議 3 倍）純水稀釋，給藥時暫停灌食。",
+    "alert": "QTc 延長；CYP2C19（強）、2C9、3A4 抑制，交互作用多（warfarin、tacrolimus、amiodarone、clopidogrel、midazolam 等）。"
+   },
+   "peds": {
+    "source": [
+     {
+      "ref": "Lexicomp (UpToDate Lexidrug Multinational) — Fluconazole（Last Updated 11/19/26）",
+      "sections": "Dosing: Adult（Candidiasis treatment 展開；prophylaxis、cryptococcal、coccidioido 等未展開）; Older Adult; Altered Kidney/Liver Function; Obesity; Pediatric（General、ECMO；適應症細項僅 esophageal/oropharyngeal 取自 Dental 段）; Administration; Contraindications; Warnings; Adverse Reactions; Interactions; Monitoring; Pharmacokinetics",
+      "addedAt": "2026-11-25",
+      "by": "JC"
+     }
+    ],
+    "doses": [
+     {
+      "ind": "一般劑量（Infants–Adolescents）",
+      "routes": [
+       "IV",
+       "PO",
+       "NG"
+      ],
+      "lo": 6,
+      "hi": 12,
+      "unit": "mg/kg",
+      "freq": "QD",
+      "max": {
+       "v": 800,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "食道／口咽（低劑量 3–6 mg/kg，Day 1 6 mg/kg）",
+      "routes": [
+       "IV",
+       "PO",
+       "NG"
+      ],
+      "lo": 3,
+      "hi": 6,
+      "unit": "mg/kg",
+      "freq": "QD",
+      "max": {
+       "v": 400,
+       "unit": "mg"
+      }
+     },
+     {
+      "ind": "ECMO 治療 Day 1 loading",
+      "routes": [
+       "IV"
+      ],
+      "when": "stat",
+      "lo": 35,
+      "hi": 35,
+      "unit": "mg/kg"
+     }
+    ],
+    "renal": {
+     "text": "CrCl ≥50 mL/min/1.73m²：常用劑量 q24h。<50：常用劑量 q48h，或先給 100% 劑量（或 loading），之後 50% q24h。HD：每次透析後給常用劑量。PD：50% q24–48h。CVVH/CVVHD/CVVHDF：loading 6–12 mg/kg，之後 6–12 mg/kg q24h（max 800 mg/dose），建議 TDM（重症目標 AUC24/MIC 50–100 或 trough 10–15 mg/L，MIC ≤4）。陰道單劑不需調整。",
+     "bands": [
+      {
+       "min": 50,
+       "max": 9999,
+       "text": "常用劑量 q24h。"
+      },
+      {
+       "min": 0,
+       "max": 50,
+       "level": "warn",
+       "text": "常用劑量 q48h，或 100% 起始後 50% q24h。"
+      }
+     ]
+    },
+    "hepatic": {
+     "text": "仿單無調整建議，小心使用。"
+    },
+    "concomitant": [
+     {
+      "re": "erythromycin|pimozide|quinidine|cisapride",
+      "text": "禁忌（Risk X）：fluconazole 增加 QTc 延長與該藥濃度，禁止併用。"
+     },
+     {
+      "re": "voriconazole",
+      "text": "Voriconazole（Risk X）：濃度與 QTc 延長增加，避免併用。"
+     },
+     {
+      "re": "domperidone|ivabradine|lemborexant|aprepitant|fosaprepitant|ziprasidone|lomitapide|eletriptan",
+      "text": "Risk X：fluconazole 抑制 CYP3A4 致濃度上升或 QTc 延長，避免併用。"
+     },
+     {
+      "re": "amiodarone|dronedarone",
+      "text": "Amiodarone／dronedarone（Risk D）：QTc 延長與濃度上升，考慮替代；併用時監測 QTc 與心律不整。"
+     },
+     {
+      "re": "quetiapine|methadone",
+      "text": "Quetiapine／methadone（Risk D）：QTc 延長與濃度上升，考慮替代；併用時監測 QTc。"
+     },
+     {
+      "re": "haloperidol|ondansetron|levofloxacin|moxifloxacin|ciprofloxacin|pentamidine|escitalopram|olanzapine|risperidone",
+      "text": "QT 延長藥物（Risk C）：監測 QTc 與心律不整，尤其有其他 QT 風險因子者。"
+     },
+     {
+      "re": "citalopram",
+      "text": "Citalopram：QTc 延長與濃度上升；併用時 citalopram 最多 20 mg/day（fluconazole 為強效 CYP2C19 抑制劑）。"
+     },
+     {
+      "re": "clopidogrel",
+      "text": "Clopidogrel（Risk D）：強效 CYP2C19 抑制降低活性代謝物，可能療效下降；盡量用替代藥。"
+     },
+     {
+      "re": "warfarin|coumadin|acenocoumarol",
+      "text": "Warfarin（Risk D）：濃度上升；考慮替代，併用時 warfarin 減量 10–20% 並密切監測 INR。"
+     },
+     {
+      "re": "tacrolimus|prograf|advagraf",
+      "text": "Tacrolimus（Risk D）：濃度上升，密切監測血中濃度，通常需減量。"
+     },
+     {
+      "re": "sirolimus|everolimus",
+      "text": "Sirolimus／everolimus：濃度上升（sirolimus Risk D），監測濃度、可能需減量。"
+     },
+     {
+      "re": "cyclosporin",
+      "text": "Cyclosporine（Risk C）：濃度上升，監測血中濃度。"
+     },
+     {
+      "re": "rifampin|rifampicin|rifadin",
+      "text": "Rifampin（Risk D）：降低 fluconazole 濃度並增加 rifampin 毒性；考慮提高 fluconazole 劑量並監測療效。"
+     },
+     {
+      "re": "midazolam|alprazolam|triazolam",
+      "text": "Midazolam／alprazolam／triazolam（Risk D）：濃度上升致鎮靜延長、呼吸抑制；考慮替代或減量（鼻噴 midazolam 避免併用）。"
+     },
+     {
+      "re": "fentanyl|oxycodone|hydrocodone|tramadol|alfentanil|sufentanil|buprenorphine",
+      "text": "Opioid（CYP3A4）：濃度上升，監測呼吸抑制與鎮靜；fentanyl 考慮減量，停 fluconazole 後可能需回調。"
+     },
+     {
+      "re": "phenytoin|fosphenytoin",
+      "text": "Phenytoin（Risk C）：濃度上升（CYP2C19／2C9 抑制），監測血中濃度。"
+     },
+     {
+      "re": "carbamazepine",
+      "text": "Carbamazepine（Risk C）：濃度上升，監測。"
+     },
+     {
+      "re": "glimepiride|gliclazide|glipizide|glibenclamide|glyburide",
+      "text": "Sulfonylurea（Risk C）：濃度上升，注意低血糖。"
+     },
+     {
+      "re": "theophylline|aminophylline",
+      "text": "Theophylline（Risk C）：濃度上升，監測。"
+     },
+     {
+      "re": "tolvaptan|samsca",
+      "text": "Tolvaptan：濃度上升；Samsca 避免併用。"
+     },
+     {
+      "re": "colchicine",
+      "text": "Colchicine：濃度上升；依腎肝功能與 P-gp 抑制劑併用，可能需避免、減量或加強監測。"
+     },
+     {
+      "re": "simvastatin|atorvastatin|lovastatin|fluvastatin",
+      "text": "Statin：濃度上升（Risk C；fluvastatin 最多 20 mg BID），注意肌病變。"
+     },
+     {
+      "re": "rivaroxaban|apixaban|dabigatran",
+      "text": "DOAC（Risk C）：濃度或抗凝作用增加，監測出血。"
+     },
+     {
+      "re": "ticagrelor",
+      "text": "Ticagrelor（Risk C）：濃度上升，監測出血。"
+     },
+     {
+      "re": "ruxolitinib|tofacitinib|venetoclax|ibrutinib",
+      "text": "Ruxolitinib／tofacitinib／venetoclax／ibrutinib（Risk D）：濃度上升，需依該藥仿單減量（ruxolitinib 併用時 fluconazole 不超過 200 mg/day）。"
+     },
+     {
+      "re": "omeprazole|lansoprazole|esomeprazole",
+      "text": "PPI（Risk C）：CYP2C19 抑制致濃度上升，通常臨床意義小。"
+     },
+     {
+      "re": "diazepam",
+      "text": "Diazepam（Risk C）：CYP2C19 抑制致濃度上升，注意鎮靜。"
+     },
+     {
+      "re": "cyclophosphamide",
+      "text": "Cyclophosphamide（Risk C）：可能增加 bilirubin、SCr 與濃度，監測。"
+     }
+    ],
+    "notes": [
+     "適應症細項（預防、全身性、CNS、眼內炎、隱球菌等）貼上時未展開；資料庫只放一般劑量 6–12 mg/kg/dose QD（max 800 mg/dose）。",
+     "食道（高劑量）6–12 mg/kg QD × 14–21 天，max 400 mg/dose（HIV 600）；低劑量 Day 1 6 mg/kg（max 200）後 3–6 mg/kg QD（max 100 mg/dose）。口咽 Day 1 6 mg/kg 後 3–6 mg/kg QD × 7–14 天，max 200 mg/dose。",
+     "ECMO：Vd 增加；預防 Day 1 12 mg/kg 後 6 mg/kg QD；治療 Day 1 35 mg/kg 後 12 mg/kg QD，建議 TDM。",
+     "仿單：loading max 800 mg，之後 max 400 mg/day；GA <30 週且 <3 個月的嬰兒 loading 後 9 mg/kg QD 至 PNA 3 個月（目標 AUC24 400–800）。",
+     "早產兒 <750 g 預防使用需小心（腸穿孔報告）。部分劑型含 benzoate，新生兒小心。",
+     "兒科 IV 輸注 1–2 小時，≤200 mg/hr；新生兒 loading 25 mg/kg 跑 2 小時。"
+    ],
+    "info": {
+     "alert": "兒科常用 6–12 mg/kg QD，max 800 mg/dose；腎功能 <50 延長間隔。"
     }
    }
   },
