@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-26f';
+const APP_VER='2026-11-26g';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -6161,12 +6161,15 @@ function tpnParseLine(cur,raw,ctx){
   return null;
 }
 // 普通 IV 混合液（例：D0.225s(500)+2pc 50% G/W）：基礎液體積與葡萄糖 %、每 PC 體積在成分表填入後自動算混合濃度
+// 內建成分（使用者在成分表填的值優先）
+const PN_BUILTIN={'D0.225s':{dex:5,note:'5% 葡萄糖＋0.225% NaCl'},'50% G/W':{pcml:20,note:'每 PC 20 mL'}};
+function pnv(prod,k,f){const P=prod[k];if(P&&P[f]!=null&&P[f]!=='')return +P[f];const B=PN_BUILTIN[k]||PN_BUILTIN[Object.keys(PN_BUILTIN).find(x=>x.toLowerCase()===String(k).toLowerCase())];return B&&B[f]!=null?+B[f]:null;}
 function tpnMix(name){const t=String(name||'').trim(),m=t.match(/^(.+?)\s*\(\s*(\d+(?:\.\d+)?)\s*(?:ml)?\s*\)\s*(\+.+)$/i);if(!m)return null;
   const adds=[];const re=/\+\s*([\d.]+(?:\/\d+)?)\s*(?:pc|amp|vial|支)\s*([\d.]+)\s*%\s*G\s*\/?\s*W/gi;let a,len=0;while((a=re.exec(m[3]))){const n=/\//.test(a[1])?a[1].split('/').reduce((x,y)=>x/y):+a[1];adds.push({n,pct:+a[2],key:`${+a[2]}% G/W`});len+=a[0].length;}
   if(!adds.length||m[3].replace(/\s/g,'').length>len+2)return null;return {base:m[1].trim(),vol:+m[2],adds};}
-function tpnDexBase(prod,name){const P=prod[name];if(P&&P.dex!=null&&P.dex!=='')return +P.dex;const t=String(name||'');const m=t.match(/\bD\s*(\d{1,2}(?:\.\d)?)\s*W\b/i)||t.match(/Dex(?:trose)?\s*(\d{1,2}(?:\.\d)?)\s*%/i)||t.match(/glucose\s*(\d{1,2}(?:\.\d)?)\s*%/i)||t.match(/^([\d.]+)\s*%\s*G\s*\/?\s*W$/i);return m?+m[1]:null;}
+function tpnDexBase(prod,name){const pv=pnv(prod,name,'dex');if(pv!=null)return pv;const t=String(name||'');const m=t.match(/\bD\s*(\d{1,2}(?:\.\d)?)\s*W\b/i)||t.match(/Dex(?:trose)?\s*(\d{1,2}(?:\.\d)?)\s*%/i)||t.match(/glucose\s*(\d{1,2}(?:\.\d)?)\s*%/i)||t.match(/^([\d.]+)\s*%\s*G\s*\/?\s*W$/i);return m?+m[1]:null;}
 function tpnMixCalc(prod,name){const x=tpnMix(name);if(!x)return null;const bd=tpnDexBase(prod,x.base);let g=bd==null?null:x.vol*bd/100,v=x.vol;const miss=[];if(bd==null)miss.push(`${x.base} 的 Dextrose %`);
-  x.adds.forEach(a=>{const P=prod[a.key]||{},ml=P.pcml!=null&&P.pcml!==''?+P.pcml:null;if(ml==null){miss.push(`${a.key} 每 PC mL`);return;}v+=a.n*ml;if(g!=null)g+=a.n*ml*a.pct/100;});
+  x.adds.forEach(a=>{const ml=pnv(prod,a.key,'pcml');if(ml==null){miss.push(`${a.key} 每 PC mL`);return;}v+=a.n*ml;if(g!=null)g+=a.n*ml*a.pct/100;});
   return {x,miss,pct:miss.length?null:g/v*100,g,v};}
 function tpnDexOf(prod,name){const P=prod[name];if(P&&P.dex!=null&&P.dex!=='')return +P.dex;const c=tpnMixCalc(prod,name);if(c)return c.pct;return tpnDexBase(prod,name);}
 function tpnOf(p){
@@ -6343,8 +6346,8 @@ function renderTPN(p,ro){
   h+=`<div class="card"><h3>成分表 <span class="small mute">（所有病人共用；填入葡萄糖濃度即可計算 GIR 與葡萄糖熱量）</span></h3>
     <div class="tblwrap"><table class="tbl"><thead><tr><th>品項</th><th>AA %</th><th>Dextrose %</th><th>每 PC mL</th><th>流速換算的 AA %</th></tr></thead><tbody>
     ${keys.map(k=>{const P=prod[k]||{};const imp=rows.filter(r=>r.pn&&r.pn.key===k&&r.calc.aaPct).map(r=>r.calc.aaPct.toFixed(2));
-      return `<tr><td>${esc(k)}</td><td><input class="sm" style="width:80px" data-pnp="${esc(k)}|aa" value="${esc(P.aa??'')}" ${ro?'disabled':''}></td><td><input class="sm" style="width:80px" data-pnp="${esc(k)}|dex" value="${esc(P.dex??'')}" placeholder="${tpnMix(k)?'由組成計算':/\bD\s*\d+\s*W\b|Dex\s*[\d.]+%|^[\d.]+\s*%\s*G\s*\/?\s*W$/i.test(k)?'依名稱':''}" ${ro?'disabled':''}>${(()=>{const c=tpnMixCalc(prod,k);if(!c)return '';return `<div class="small ${c.pct!=null?'':'mute'}">${c.pct!=null?`混合後 <b>${c.pct.toFixed(2)}%</b>（葡萄糖 ${fmtN(+c.g.toFixed(1))} g／${fmtN(+c.v.toFixed(0))} mL）`:'缺：'+esc(c.miss.join('、'))}</div>`;})()}</td><td>${/G\s*\/?\s*W$/i.test(k)&&!tpnMix(k)?`<input class="sm" style="width:70px" data-pnp="${esc(k)}|pcml" value="${esc(P.pcml??'')}" placeholder="mL" ${ro?'disabled':''}>`:''}</td><td class="small mute">${[...new Set(imp)].join('、')||'—'}</td></tr>`;}).join('')}
-    </tbody></table></div><div class="small mute" style="margin-top:6px">名稱寫明濃度者（D10W、Dex 2.5%）自動判讀；「D/W」等請自行填入。混合液（如 D0.225s(500)+2pc 50% G/W）填入基礎液的 Dextrose % 與高濃度葡萄糖每 PC 的 mL 後，自動算混合濃度。拿到院內 PN 成分表後填入即可，電解質與滲透壓之後再加。</div></div>`;
+      return `<tr><td>${esc(k)}</td><td><input class="sm" style="width:80px" data-pnp="${esc(k)}|aa" value="${esc(P.aa??'')}" ${ro?'disabled':''}></td><td><input class="sm" style="width:80px" data-pnp="${esc(k)}|dex" value="${esc(P.dex??'')}" placeholder="${pnv({},k,'dex')!=null?'內建 '+pnv({},k,'dex'):tpnMix(k)?'由組成計算':/\bD\s*\d+\s*W\b|Dex\s*[\d.]+%|^[\d.]+\s*%\s*G\s*\/?\s*W$/i.test(k)?'依名稱':''}" ${ro?'disabled':''}>${(()=>{const c=tpnMixCalc(prod,k);if(!c)return '';const ov=P.dex!=null&&P.dex!=='';return `<div class="small ${c.pct!=null?'':'mute'}">${ov?`使用手動填的 ${esc(P.dex)}%；`:''}${c.pct!=null?`組成計算 <b>${c.pct.toFixed(2)}%</b>（葡萄糖 ${fmtN(+c.g.toFixed(1))} g／${fmtN(+c.v.toFixed(0))} mL）`:'缺：'+esc(c.miss.join('、'))}</div>`;})()}</td><td>${/G\s*\/?\s*W$/i.test(k)&&!tpnMix(k)?`<input class="sm" style="width:70px" data-pnp="${esc(k)}|pcml"  value="${esc(P.pcml??'')}" placeholder="${pnv({},k,'pcml')!=null?'內建 '+pnv({},k,'pcml'):'mL'}" ${ro?'disabled':''}>`:''}</td><td class="small mute">${[...new Set(imp)].join('、')||'—'}</td></tr>`;}).join('')}
+    </tbody></table></div><div class="small mute" style="margin-top:6px">名稱寫明濃度者（D10W、Dex 2.5%）自動判讀；「D/W」等請自行填入。混合液（如 D0.225s(500)+2pc 50% G/W）填入基礎液的 Dextrose % 與高濃度葡萄糖每 PC 的 mL 後，自動算混合濃度。內建：D0.225s＝5% 葡萄糖＋0.225% NaCl、50% G/W 每 PC 20 mL（灰字「內建」；自行填入會覆蓋）。拿到院內 PN 成分表後填入即可，電解質與滲透壓之後再加。</div></div>`;
   h+=feedCard(p);
   return h;
 }
