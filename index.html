@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-26d';
+const APP_VER='2026-11-26e';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -1224,7 +1224,9 @@ const drugLabel = name => { const k=drugKey(name); return k.charAt(0).toUpperCas
 
 const D_CAT=/^\s{0,4}(NEWD|NEW|CHG|REN|EXTN|TAPE|PREP|EXP|DC-[A-Z]|DC|\*\*\*#|St|ST)\s/;
 // 劑量與頻次在欄寬不足時會黏在一起（如 0.75PCQ12H），所以單位用已知清單比對，頻次前的空白可省略
-const D_TAIL=/^(.*?)\s+(?:(\d*\.?\d+)\s*(PC|MG|UN|PK|ML|GM|UG|MU|KU|BT|DS|GT|IU|KE|ME|PI|PU|SP|UT|CC|U)|(QS))\s*([A-Z][A-Z0-9]*)\s+(?:(AC|PC|CC)\s+)?([A-Z]{2,4})(?:\s+(\S+))?(?:\s+(\S+))?$/;
+const D_TAIL=/^(.*?)\s+(?:(\d+\/\d+|\d*\.?\d+)\s*(PC|MG|UN|PK|ML|GM|UG|MU|KU|BT|DS|GT|IU|KE|ME|PI|PU|SP|UT|CC|U)|(QS))\s*([A-Z][A-Z0-9]*)\s+(?:(AC|PC|CC)\s+)?([A-Z]{2,4})(?:\s+(\S+))?(?:\s+(\S+))?$/;
+// 分數劑量（例：1/5PC、1/2PC）
+const fracNum=x=>{x=String(x);const f=x.match(/^(\d+)\/(\d+)$/);return f&&+f[2]?+(+f[1]/+f[2]).toFixed(4):parseFloat(x);};
 function parse(text){
   const orders=[], grid=[], batches=[], unrec=[];
   let nonDrug=0, sheets=0, seq=0, drugLines=0; const sheetTimes=[], sheetInfo=[]; let curSheet=null;
@@ -1237,7 +1239,7 @@ function parse(text){
     if(!m) return false;
     const cu=cat.toUpperCase();
     const info=CAT[cu]||{n:cu,stop:/^DC/.test(cu)?1:0};
-    const o={name:m[1].replace(/\s+/g," ").trim(),qty:m[4]?"":parseFloat(m[2]),unit:m[4]?"QS":m[3].toUpperCase(),freq:m[5],meal:m[6]||"",route:m[7],days:m[8]||"",
+    const o={name:m[1].replace(/\s+/g," ").trim(),qty:m[4]?"":fracNum(m[2]),qtyRaw:m[4]?"":m[2],unit:m[4]?"QS":m[3].toUpperCase(),freq:m[5],meal:m[6]||"",route:m[7],days:m[8]||"",
       t:curT,dc:!!info.stop,cat:cu,code:cu,notes:[],seq:seq++,src:"醫囑單"};
     orders.push(o); last=o; if(curSheet) curSheet.drugs.push({name:o.name,dc:o.dc,cat:cu}); return true;
   };
@@ -2353,12 +2355,12 @@ function parseHeaderLine(line){
 function parseMedLine(raw){
   const line=raw.replace(/\s+$/,'');
   const QU='(PC|PCS|TAB|CAP|AMP|VIAL|BOT|BAG|PK|SUP|DOSE|ML|UN|IU|U|MG|MCG|UG|GM|G|KU|MU|PU|DS|QS)';
-  let t=line.match(new RegExp('^(.*\\S)\\s+(\\d+(?:\\.\\d+)?)\\s*'+QU+'?\\s+([A-Za-z0-9]{1,10})\\s*$','i'));
+  let t=line.match(new RegExp('^(.*\\S)\\s+(\\d+\\/\\d+|\\d+(?:\\.\\d+)?)\\s*'+QU+'?\\s+([A-Za-z0-9]{1,10})\\s*$','i'));
   let freq='';
   if(t)freq=t[4].toUpperCase();
-  else{t=line.match(new RegExp('^(.*\\S)\\s+(\\d+(?:\\.\\d+)?)\\s*'+QU+'\\s*$','i'));if(!t)return null;}
+  else{t=line.match(new RegExp('^(.*\\S)\\s+(\\d+\\/\\d+|\\d+(?:\\.\\d+)?)\\s*'+QU+'\\s*$','i'));if(!t)return null;}
   let desc=t[1].trim();
-  const qty=parseFloat(t[2]),qunit=(t[3]||'PC').toUpperCase();
+  const qf=String(t[2]).match(/^(\d+)\/(\d+)$/),qty=qf&&+qf[2]?+(+qf[1]/+qf[2]).toFixed(4):parseFloat(t[2]),qunit=(t[3]||'PC').toUpperCase();
   let tag='';const tm=desc.match(/^\[([^\]]+)\]\s*/);if(tm){tag=tm[1];desc=desc.slice(tm[0].length);}
   // 拆括號（含巢狀）
   const parens=[];let spec=desc,guard=0;
