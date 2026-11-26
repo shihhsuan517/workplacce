@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-26c';
+const APP_VER='2026-11-26d';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -975,7 +975,7 @@ function renderTab(p,ro){
   if(S.tab==='overview')return renderOverview(p);
   if(S.tab==='meds')return crrtCard(p,ro)+renderMeds(p,ro)+prnCard(p)+sedCard(p)+renderCloud(p,ro);
   if(S.tab==='drip')return renderDrip(p,ro);
-  if(S.tab==='lab')return akiCard(p,ro)+cgCard(p)+plCard(p)+renderLab(p,ro);
+  if(S.tab==='lab')return renderLab(p,ro);
   if(S.tab==='soap')return renderSoap(p,ro);
   if(S.tab==='rt')return renderRT(p,ro);
   if(S.tab==='micro')return renderMicro(p,ro);
@@ -3293,38 +3293,33 @@ function bindDrip(p,ro){
 /* =====================================================================
    檢驗報告（移植自「檢驗報告自動分類工具」，改為累積式）
    ===================================================================== */
+// 檢驗大區（依 ICU 查看順序）；區內依下列代號順序排列，未列者排在最後
 const LAB_RULES=[
-  [["72A001","72B001","72E001","72F001","72G001","72H001","72I001","72C001","72D001","72A015","72B015","72C015","72D015","72E015","72F015","72G015","72H015","72L015","72-06A"],"CBC 血液常規"],
-  [["72A037","72B037","72C037","72A038","72B038","72C038","72-040","72-041"],"凝血功能"],
-  [["72-307","72-333","72-335"],"腎功能"],
-  [["72-355","72-356","72-357","72-327","72-343","72-329"],"電解質"],
-  [["72-361","72-360","72-365","72-366","72-363","72-368","72-534"],"肝功能"],
-  [["72-374","72-545"],"肌肉酵素"],
-  [["72-304","72-305","72-310","72A426","72B426","72C426","72D426","72E426","72H426"],"血脂"],
-  [["72-314","72-317","72-31A","72-541"],"血糖/糖化血色素/酮體"],
-  [["72-331"],"尿酸"],
-  [["72-336","72-339"],"胰臟酵素"],
-  [["72-511","72-512"],"滲透壓"],
-  [["72-390","72-393","72-488"],"內分泌"],
-  [["72-112","72-570"],"感染指標"],
-  [["72-571","72-576","72-553"],"心臟指標"],
-  [["72-419"],"乳酸"],
-  [["72-303"],"白蛋白"],
-  [["72-435"],"藥物濃度 TDM"],
-  [["72A530","72C530","72D530","72E530","72F530","72G530","72I530","72K530","72L530","72M530"],null],
-  [["72A730","72B730","72C730","72D730","72E730","72F730","72G730","72-731"],"糞便常規"],
-  [["72A721","72D721","72H721","72L721","72N721","72O721","72-723"],"痰液鏡檢/培養"],
-  [["72-919","72A768","72B768"],"病毒抗原快篩"],
-  [["72-140"],"腫瘤標記"],
-  [["72-326","72-334","72-33A"],"尿蛋白/肌酸酐"],
-  [["72A701","72B701","72C701","72D701","72E701","72F701","72G701","72H701","72I701","72J701","72K701","72L701","72M701","72N701","72O701"],"尿液常規"],
-  [["72P703","72U703","72V703","72W703","72E703"],"尿液鏡檢"],
+  [["72C530","72D530","72E530","72F530","72G530","72I530","72K530","72A530","72L530","72M530","72-419"],"血氣與酸鹼"],
+  [["72-307","72-333","72-335","72-355","72-356","72-357","72-327","72-343","72-329","72-511","72-512","72-331"],"腎臟與電解質"],
+  [["72-576","72-571","72-553","72-374","72-545"],"心臟"],
+  [["72A001","72-06A","72A015","72B015","72C015","72D015","72E015","72F015","72G015","72H015","72L015","72C001","72D001","72I001","72B001","72E001","72F001","72G001","72H001","72A037","72C037","72B037","72A038","72C038","72B038","72-040","72-041","72A380","72B380","72U380","72-489"],"血液與凝血"],
+  [["72-112","72-570","72-919","72A768","72B768","72A906","72B906","72-158","72-767","72A721","72D721","72H721","72L721","72N721","72O721","72-723"],"感染"],
+  [["72-361","72-360","72-365","72-366","72-363","72-368","72-534","72-303","72-325","72-376","72-336","72-339"],"肝膽胰"],
+  [["72-314","72-317","72-31A","72-541","72-305","72-310","72A426","72B426","72C426","72D426","72E426","72H426","72-304","72-390","72-393","72-488"],"代謝與內分泌"],
+  [["72-326","72-334","72-33A","72A701","72B701","72C701","72D701","72E701","72F701","72G701","72H701","72I701","72J701","72K701","72L701","72M701","72N701","72O701","72P703","72U703","72V703","72W703","72E703","72A730","72B730","72C730","72D730","72E730","72F730","72G730","72-731"],"尿液與糞便"],
+  [["72-435"],"TDM 藥物濃度"],
+  [["72-140"],"其他"],
 ];
-const LAB_ORDER=[...new Set(LAB_RULES.map(r=>r[1]).filter(Boolean))].concat(["動脈血氣 ABG","靜脈血氣 VBG","其他"]);
+// 心臟區另外重複顯示的電解質（心律不整相關；資料只存一份）
+const LAB_CARDIO_DUP=["72-356","72-343"];
+const LAB_FLUID=[[/^(PL|PE|PF|PLF)$/i,"體液：肋膜液"],[/^(AF|ASC|ASCITES|PERI)$/i,"體液：腹水"],[/^CSF$/i,"體液：腦脊髓液"],[/^(BF|JF|SF|DF|PCF)$/i,"體液：其他"]];
+const LAB_ORDER=["血氣與酸鹼","腎臟與電解質","心臟","血液與凝血","感染","肝膽胰","代謝與內分泌","體液：肋膜液","體液：腹水","體液：腦脊髓液","體液：其他","尿液與糞便","TDM 藥物濃度","其他"];
+const labIsPCR=code=>/Z97$|^72[AB]906$/.test(code||'');
 function labPanel(code,st){
-  for(const [codes,panel] of LAB_RULES)if(codes.includes(code)){if(panel===null)return st==="B"?"動脈血氣 ABG":"靜脈血氣 VBG";return panel;}
+  for(const [re,name] of LAB_FLUID)if(re.test(st||''))return name;
+  if(labIsPCR(code))return "感染";
+  for(const [codes,panel] of LAB_RULES)if(codes.includes(code))return panel;
+  if(/^(TH|NPS|SP|BAL|THR)$/i.test(st||''))return "感染";
+  if(/^(U|S|ST)$/i.test(st||''))return "尿液與糞便";
   return "其他";
 }
+function labRank(it,panel){const r=LAB_RULES.find(x=>x[1]===panel);const i=r?r[0].indexOf(it.code):-1;return (it.sampleType==='BV'?5000:0)+(i<0?900:i)*10;}
 function isLabReport(t){t=(t||'').replace(/\r/g,'');return /(^|\n)True\t/.test(t)||isLabDetail(t);}
 // HIS 單張檢驗報告（學門別：生化／血液…；檢驗項目 檢驗值 單位 H/L 參考值），微生物、病毒另走培養解析
 const LAB_MICRO_DEPT=/^(微生物|病毒)/;
@@ -3611,6 +3606,7 @@ function cgCard(p){const c=cgParts(p);if(!c)return '';const cr=latestLab(p,'72-3
     <div class="small" style="margin:2px 0 6px;font-family:ui-monospace,Menlo,monospace">CrCl ＝ (140 − 年齡) × 體重${c.f!==1?' × 0.85（女性）':''} ÷ (72 × SCr)</div>
     ${c.W.map(line).join('')}
     <div class="small mute" style="margin-top:6px">${p.sex==='F'?'女性乘 0.85。':'男性不乘校正係數（女性乘 0.85）。'}年齡 ${c.age} 歲；TBW＝基本資料體重；IBW＝${p.sex==='M'?50:45.5} + 0.91 ×（身高 − 152.4）；AdjBW＝IBW + 0.4 ×（TBW − IBW），只在 TBW >120% IBW 時列出。劑量規則的腎功能比對預設用 TBW 的 CrCl；藥品規則註明肥胖改用 AdjBW 時才改用 AdjBW。IBW 那列僅供參考。檢驗表的 Creatinine 下方另有每個時間點的 C-G 計算列。${rrtOn(p)?'<b>已在腎臟替代治療：CrCl 不適用於劑量調整。</b>':''}</div></div>`;}
+const LAB_CARD_AREAS=['血氣與酸鹼','腎臟與電解質','體液：肋膜液'];
 function labPanelsData(p){
   const L=p.labs,cols=labColsShown(p),groups={};
   Object.values(L.items).forEach(it=>{const k=labPanel(it.code,it.sampleType);(groups[k]=groups[k]||[]).push(it);});
@@ -3618,9 +3614,11 @@ function labPanelsData(p){
   // Cockcroft–Gault 計算列（成人）：緊接在 Creatinine 之後，每個時間點各算一次
   const cgRows=cgLabRows(p);
   LAB_ORDER.forEach(name=>{
-    let items=(groups[name]||[]).sort((a,b)=>a.code.localeCompare(b.code));if(!items.length)return;
+    let items=(groups[name]||[]).slice().sort((a,b)=>labRank(a,name)-labRank(b,name)||a.code.localeCompare(b.code)||a.name.localeCompare(b.name));
+    if(name==='心臟'){const dup=Object.values(L.items).filter(it=>LAB_CARDIO_DUP.includes(it.code)&&it.sampleType==='B').sort((a,b)=>LAB_CARDIO_DUP.indexOf(a.code)-LAB_CARDIO_DUP.indexOf(b.code)).map(it=>Object.assign(Object.create(it),{dup:'同腎臟與電解質，心律不整相關'}));if(items.length||dup.length)items=items.concat(dup);}
+    if(!items.length&&!LAB_CARD_AREAS.includes(name))return;
     const ci=items.findIndex(it=>it.code==='72-333'&&(!it.sampleType||it.sampleType==='B'));if(ci>=0&&cgRows.length)items=[...items.slice(0,ci+1),...cgRows,...items.slice(ci+1)];
-    const keep=cols.filter(c=>items.some(it=>it.vals[c]));if(!keep.length)return;
+    const keep=cols.filter(c=>items.some(it=>it.vals[c]));if(!keep.length&&!LAB_CARD_AREAS.includes(name))return;
     out.push({name,items,keep});
   });
   return out;
@@ -3649,7 +3647,7 @@ function bindLabNotes(p,ro){
 function labTableHTML(pd,L,forCopy){
   const ed=S.editMode&&!forCopy&&!S.archive,ik=it=>it.code+'|'+it.sampleType+'|'+it.name;
   const th=pd.keep.map(c=>`<th>${L.cols[c].dateShort}<br>${L.cols[c].timeShort}${labColTag(c,L,forCopy)}${ed?`<br><button class="xdel" data-del="labcol" data-k="${c}" title="刪除這個時間點">✕</button>`:''}</th>`).join('');
-  const body=pd.items.map(it=>`<tr${it.calc?' style="background:var(--chip)"':''}><td class="${forCopy?'':'litem'}" style="text-align:left;font-weight:600">${ed&&!it.calc?`<button class="xdel" data-del="labitem" data-k="${esc(ik(it))}" title="刪除此項目">✕</button> `:''}${esc(it.name)}</td><td>${esc(it.sampleType)}</td><td>${esc(it.unit)}</td><td class="lref">${esc(it.ref)}</td>${pd.keep.map(c=>labCell(it.vals[c])).join('')}</tr>`).join('');
+  const body=pd.items.map(it=>`<tr${it.calc?' style="background:var(--chip)"':''}><td class="${forCopy?'':'litem'}" style="text-align:left;font-weight:600">${ed&&!it.calc&&!it.dup?`<button class="xdel" data-del="labitem" data-k="${esc(ik(it))}" title="刪除此項目">✕</button> `:''}${esc(it.name)}${it.dup&&!forCopy?` <span class="small mute" title="${esc(it.dup)}">（同電解質）</span>`:''}</td><td>${esc(it.sampleType)}</td><td>${esc(it.unit)}</td><td class="lref">${esc(it.ref)}</td>${pd.keep.map(c=>labCell(it.vals[c])).join('')}</tr>`).join('');
   return `<table class="ltbl"><thead><tr><th class="${forCopy?'':'litem'}">項目</th><th>檢體</th><th>單位</th><th>參考值</th>${th}</tr></thead><tbody>${body}</tbody></table>`;
 }
 /* ===== AKI 分期（KDIGO 2026 AKI/AKD guideline，public review draft）：Table 1 判定標準、Table 6 分期、Practice Point 1.1.3／Figure 1 baseline 階層 =====
@@ -3777,8 +3775,14 @@ function renderLab(p,ro){
   if(!pd.length)return h+'<div class="todo">這個範圍內沒有檢驗數值。</div>';
   pd.forEach((x,i)=>{
     const open=U.open[x.name]!==false;
+    const cards=x.name==='腎臟與電解質'?akiCard(p,ro)+cgCard(p):x.name==='體液：肋膜液'?plCard(p):'';
+    const trend=x.name==='血氣與酸鹼'?abTrendHTML(p):'';
+    let y=x,neg=[];
+    if(x.name==='感染'){neg=x.items.filter(it=>labIsPCR(it.code)&&x.keep.every(c=>!it.vals[c]||/^(not detected|negative)/i.test(String(it.vals[c].value).trim())));if(neg.length&&!U.pcrAll)y=Object.assign({},x,{items:x.items.filter(it=>!neg.includes(it))});}
+    const tog=neg.length?`<div class="small" style="padding:6px 10px"><button class="ghost small" id="btnPcrAll">${U.pcrAll?'收起':'顯示'}呼吸道 PCR 陰性 ${neg.length} 項</button> <span class="mute">${U.pcrAll?'':'（Not Detected／Negative 已收起）'}</span></div>`:'';
+    if(!x.items.length&&!cards&&!trend)return;
     h+=`<details class="lgroup" data-lp="${esc(x.name)}" ${open?'open':''}><summary><span>${esc(x.name)} <span class="small mute">${x.items.length} 項</span></span>
-      <button class="small" data-lcopy="${i}">📋 複製本類別</button></summary><div class="tblwrap" style="border:none;border-radius:0">${labTableHTML(x,L)}</div>${/血氣/.test(x.name)&&x.name===(pd.find(y=>/血氣/.test(y.name))||{}).name?abTrendHTML(p):''}</details>`;
+      ${x.items.length?`<button class="small" data-lcopy="${i}">📋 複製本類別</button>`:''}</summary>${cards?`<div style="padding:8px 10px 0">${cards}</div>`:''}${y.items.length&&y.keep.length?`<div class="tblwrap" style="border:none;border-radius:0">${labTableHTML(y,L)}</div>`:x.items.length?'<div class="small mute" style="padding:6px 10px">這個範圍內沒有數值。</div>':''}${tog}${trend}</details>`;
   });
   return h;
 }
@@ -3794,6 +3798,7 @@ function bindLab(p,ro){
   const pd=labPanelsData(p),L=p.labs;
   const tbl=x=>`<div style="font-weight:700;margin:10px 0 6px">${esc(x.name)}</div>`+labTableHTML(x,L,true).replace('<table class="ltbl"','<table style="border-collapse:collapse" border="1"');
   $('labRange').onchange=e=>{S.labUI.range=e.target.value;renderMain();};
+  if($('btnPcrAll'))$('btnPcrAll').onclick=()=>{S.labUI.pcrAll=!S.labUI.pcrAll;renderMain();};
   if($('labFrom'))$('labFrom').onchange=e=>{S.labUI.from=e.target.value;renderMain();};
   if($('labTo'))$('labTo').onchange=e=>{S.labUI.to=e.target.value;renderMain();};
   document.querySelectorAll('[data-lcopy]').forEach(b=>b.onclick=e=>{e.preventDefault();e.stopPropagation();
