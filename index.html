@@ -427,7 +427,7 @@ $('btnOpen').onclick=async()=>{
     catch(e){/* 取消 */}
   } else {$('fileInput').dataset.purpose='work';$('fileInput').click();}
 };
-const APP_VER='2026-11-25c';
+const APP_VER='2026-11-26a';
 function readFileText(f){
   if(f.text)return f.text();
   return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error||new Error('讀取失敗'));r.readAsText(f);});
@@ -975,7 +975,7 @@ function renderTab(p,ro){
   if(S.tab==='overview')return renderOverview(p);
   if(S.tab==='meds')return crrtCard(p,ro)+renderMeds(p,ro)+prnCard(p)+sedCard(p)+renderCloud(p,ro);
   if(S.tab==='drip')return renderDrip(p,ro);
-  if(S.tab==='lab')return akiCard(p,ro)+cgCard(p)+renderLab(p,ro);
+  if(S.tab==='lab')return akiCard(p,ro)+cgCard(p)+plCard(p)+renderLab(p,ro);
   if(S.tab==='soap')return renderSoap(p,ro);
   if(S.tab==='rt')return renderRT(p,ro);
   if(S.tab==='micro')return renderMicro(p,ro);
@@ -3325,11 +3325,49 @@ function labPanel(code,st){
   for(const [codes,panel] of LAB_RULES)if(codes.includes(code)){if(panel===null)return st==="B"?"動脈血氣 ABG":"靜脈血氣 VBG";return panel;}
   return "其他";
 }
-function isLabReport(t){return /(^|\n)True\t/.test((t||'').replace(/\r/g,''));}
+function isLabReport(t){t=(t||'').replace(/\r/g,'');return /(^|\n)True\t/.test(t)||isLabDetail(t);}
+// HIS 單張檢驗報告（學門別：生化／血液…；檢驗項目 檢驗值 單位 H/L 參考值），微生物、病毒另走培養解析
+const LAB_MICRO_DEPT=/^(微生物|病毒)/;
+function labDetailBlocks(t){t=(t||'').replace(/\r/g,'').replace(/([^\n])[ \t]*(學門別\s*[:：])/g,'$1\n$2');
+  return t.split(/\n(?=學門別\s*[:：])/).filter(b=>/^學門別\s*[:：]/.test(b.trim())).map(b=>b.trim());}
+function isLabDetail(t){return /檢驗項目\s+檢驗值/.test(t||'')&&labDetailBlocks(t).some(b=>{const m=b.match(/^學門別\s*[:：]\s*(\S+)/);return m&&!LAB_MICRO_DEPT.test(m[1])&&/檢驗項目\s+檢驗值/.test(b);});}
+// 報告無檢驗代號：常見項目對應院內代號（與表格式報告合併、供計算卡片使用）；其餘以名稱為代號
+const LAB_NAME_CODE={B:{'bun':'72-307','bun (b)':'72-307','creatinine':'72-333','creatinine(b)':'72-333','na':'72-355','k':'72-356','cl':'72-357','mg':'72-343','calcium':'72-327','ca':'72-327','inorganic p':'72-329','alt/gpt':'72-361','ast/got':'72-360','alk-p':'72-363','γ-gt':'72-368','r-gt':'72-368','total bilirubin':'72-365','d. bilirubin':'72-366','direct bilirubi':'72-366','albumin':'72-303','albumin (b)':'72-303','total protein':'72-325','tp (b)':'72-325','tp':'72-325','glucose(ac)':'72-314','sugar':'72-314','glucose':'72-314','glucose(b)':'72-314','triglyceride':'72-310','t-cholesterol':'72-305','crp':'72-112','lactate(b)':'72-419','hb-a1c':'72-317','ammonia':'72-534','temperature':'72A530','ph':'72C530','pco2':'72D530','po2':'72E530','chco3':'72F530','hco3':'72F530','ctco2':'72G530','beecf':'72I530','sat':'72K530','fio2':'72L530','aado2':'72M530','lactate':'72-419','wbc':'72A001','hemoglobin':'72C001','hematocrit':'72D001','platelets':'72I001'}};
+function dispW(ch){const c=ch.codePointAt(0);return (c>=0x2100&&c<=0x214F)||(c>=0x2E80&&c<=0xA4CF)||(c>=0xAC00&&c<=0xD7A3)||(c>=0xF900&&c<=0xFAFF)||(c>=0xFF00&&c<=0xFF60)||(c>=0xFFE0&&c<=0xFFE6)?2:1;}
+function sliceCols(line,a,b){let x=0,o='';for(const ch of line){const w=dispW(ch);if(x>=a&&(b==null||x<b))o+=ch;x+=w;}return o.trim();}
+function colAt(line,word){const i=line.indexOf(word);if(i<0)return -1;let x=0;for(const ch of line.slice(0,i))x+=dispW(ch);return x;}
+function parseLabDetail(raw,p){
+  const blocks=labDetailBlocks(raw),dtMap={},recs=[],warnings=[],skipped=[];
+  const known={};if(p&&hasLabs(p))Object.values(p.labs.items).forEach(it=>{known[it.sampleType+'|'+it.name.toLowerCase()]=it.code;});
+  blocks.forEach(b=>{
+    const dept=(b.match(/^學門別\s*[:：]\s*(\S+)/)||[])[1]||'';if(LAB_MICRO_DEPT.test(dept))return;
+    const dm=b.match(/採檢日期\s*時間\s*[:：]\s*(\d{4})\/(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})/);
+    const st=((b.match(/檢體別\s*[:：]\s*(\S+)/)||[])[1]||'').trim();
+    if(!dm){warnings.push('有一段報告找不到採檢日期時間，已略過');return;}
+    const c=labCol(dm[1]+dm[2].padStart(2,'0')+dm[3].padStart(2,'0'),dm[4].padStart(2,'0')+dm[5]);dtMap[c.sortKey]=c;
+    const L=b.split('\n');const hi=L.findIndex(l=>/檢驗項目\s+檢驗值/.test(l));if(hi<0)return;
+    const H=L[hi],cV=colAt(H,'檢驗值'),cU=colAt(H,'單位'),cF=colAt(H,'H/L'),cR=colAt(H,'參考值');
+    L.slice(hi+1).forEach(l=>{if(!l.trim()||/^[=\-─]{5,}/.test(l.trim()))return;
+      if(/^(學門別|收件編號|檢體別|一日尿量)/.test(l.trim()))return;
+      let name,val,unit,flag,ref;
+      if(cV>0&&cU>cV&&cF>cU&&cR>cF){name=sliceCols(l,0,cV);val=sliceCols(l,cV,cU);unit=sliceCols(l,cU,cF);flag=sliceCols(l,cF,cR);ref=sliceCols(l,cR);
+        if(flag&&/\S/.test(sliceCols(l,cF-1,cF))&&/\S$/.test(unit)){const m=flag.match(/^(\S+)\s*(.*)$/);unit+=m[1];flag='';if(m[2])ref=(m[2]+' '+ref).trim();}}
+      else{const f=l.trim().split(/\s{2,}/);name=f[0];val=f[1]||'';unit=f[2]||'';flag=/^(H|L|HH|LL|\*)$/.test(f[3]||'')?f[3]:'';ref=f[flag?4:3]||'';}
+      if(!name||!val){skipped.push(l.slice(0,60));return;}
+      if(!/^(H|L|HH|LL|\*)?$/.test(flag)){ref=(flag+' '+ref).trim();flag='';}
+      const nk=name.toLowerCase();const code=known[st+'|'+nk]||((LAB_NAME_CODE[st]||{})[nk])||('~'+name);
+      recs.push({code,name,sampleType:st,unit,ref,sk:c.sortKey,cell:{value:val,flag:flag.replace(/^(HH|LL)$/,x=>x[0])}});});
+  });
+  const dtCols=Object.values(dtMap).sort((a,b)=>b.sortKey.localeCompare(a.sortKey));const idx={};dtCols.forEach((c,i)=>idx[c.sortKey]=i);
+  const rows={};recs.forEach(r=>{const k=r.code+'|'+r.sampleType+'|'+r.name;const R=rows[k]||(rows[k]={code:r.code,name:r.name,sampleType:r.sampleType,unit:r.unit,ref:r.ref,cells:dtCols.map(()=>null)});R.cells[idx[r.sk]]=r.cell;if(r.unit)R.unit=r.unit;if(r.ref)R.ref=r.ref;});
+  if(!recs.length)throw new Error('找不到檢驗數值。請確認貼上的是含「檢驗項目　檢驗值」的完整報告。');
+  return {dtCols,rows:Object.values(rows),warnings,skipped,detail:true};
+}
 function splitVF(raw){const t=(raw||"").trim();if(!t)return null;const m=t.match(/^(.*\S)\s+([HL])$/);return m?{value:m[1].trim(),flag:m[2]}:{value:t,flag:""};}
 function labCol(d,t){const y=d.slice(0,4),mo=d.slice(4,6),dd=d.slice(6,8),hh=(t||"").slice(0,2),mm=(t||"").slice(2,4);
   return {iso:`${y}-${mo}-${dd} ${hh}:${mm}`,dateShort:`${mo}/${dd}`,timeShort:`${hh}:${mm}`,sortKey:`${y}${mo}${dd}${hh}${mm}`};}
 function parseLab(raw){
+  if(!/(^|\n)True\t/.test(raw.replace(/\r/g,''))&&isLabDetail(raw))return parseLabDetail(raw,(typeof pasteTarget!=='undefined'&&pasteTarget&&S.data.patients.find(x=>x.id===pasteTarget))||curPatient());
   const lines=raw.replace(/\r\n?/g,"\n").split("\n");
   const ds=lines.findIndex(l=>l.startsWith("True\t"));
   if(ds<0)throw new Error("找不到資料行（應以 True 開頭）。請確認貼上的是完整的檢驗報告。");
@@ -3470,6 +3508,77 @@ const cgCalc=(c,w,scr)=>(140-c.age)*w*c.f/(72*scr);
 function cgLabRows(p){const c=cgParts(p);if(!c||!hasLabs(p))return [];const cr=Object.values(p.labs.items).find(it=>it.code==='72-333'&&(!it.sampleType||it.sampleType==='B'));if(!cr)return [];
   const ws=c.W.filter(([k])=>k==='TBW'||(k==='AdjBW'));return ws.map(([k,w])=>{const vals={};Object.entries(cr.vals).forEach(([sk,v])=>{const n=labNum(v);if(n>0)vals[sk]={value:cgCalc(c,w,n).toFixed(1)};});
     return {code:'CALC-CG-'+k,sampleType:'計算',name:`CrCl（C-G，${k}）`,unit:'mL/min',ref:`${k} ${w.toFixed(1)} kg`,vals,calc:true};});}
+// ===== 酸鹼時序（入院至今每次血氣；依 Barletta 2024 逐步法計算，數值與規則並列） =====
+const AB_SRC='Barletta, Ann Pharmacother 2024；Morikawa, Am Fam Physician 2025';
+function abNear(p,code,sk,h){const T=tsOf(sk);let best=null;if(!hasLabs(p))return null;
+  Object.values(p.labs.items).filter(it=>it.code===code&&it.sampleType==='B').forEach(it=>Object.entries(it.vals).forEach(([k,v])=>{const n=labNum(v),d=Math.abs(tsOf(k)-T);if(n===n&&d<=h*36e5&&(!best||d<best.d))best={v:n,sk:k,d};}));return best;}
+function abEval(pH,pc,hc){
+  const r={em:pH<7.35?'酸血症':pH>7.45?'鹼血症':'pH 正常範圍',pri:[],exp:[]};
+  const mA=hc<22,mK=hc>26,rA=pc>45,rK=pc<35;
+  if(pH<7.35){if(mA)r.pri.push('代謝性酸中毒');if(rA)r.pri.push('呼吸性酸中毒');}
+  else if(pH>7.45){if(mK)r.pri.push('代謝性鹼中毒');if(rK)r.pri.push('呼吸性鹼中毒');}
+  else{if(mA&&rK)r.pri.push('HCO₃⁻↓＋PCO₂↓（代酸／呼鹼皆可能）');else if(mK&&rA)r.pri.push('HCO₃⁻↑＋PCO₂↑（代鹼／呼酸皆可能）');else if(mA&&!rK)r.pri.push('HCO₃⁻↓');else if(mK)r.pri.push('HCO₃⁻↑');else if(rA)r.pri.push('PCO₂↑');else if(rK)r.pri.push('PCO₂↓');}
+  const cmp=(x,lo,hi)=>x<lo?'低於':x>hi?'高於':'在範圍內';const f=n=>+n.toFixed(1);
+  if(r.pri.includes('代謝性酸中毒')||(pH>=7.35&&pH<=7.45&&mA)){const e=1.5*hc+8;r.exp.push(`Winter 預期 PCO₂ ${f(e-2)}–${f(e+2)}，實測 ${pc} <b>${cmp(pc,e-2,e+2)}</b>`);}
+  if(r.pri.includes('代謝性鹼中毒')||(pH>=7.35&&pH<=7.45&&mK)){const e=40+0.7*(hc-24);r.exp.push(`預期 PCO₂ ${f(e-2)}–${f(e+2)}（部分來源 ±5：${f(e-5)}–${f(e+5)}），實測 ${pc} <b>${cmp(pc,e-2,e+2)}</b>`);}
+  if(r.pri.includes('呼吸性酸中毒')||(pH>=7.35&&pH<=7.45&&rA&&!mK)){const a=24+0.1*(pc-40),c=24+0.35*(pc-40);r.exp.push(`預期 HCO₃⁻ 急性 ${f(a)}、慢性 ${f(c)}，實測 ${hc}`);}
+  if(r.pri.includes('呼吸性鹼中毒')||(pH>=7.35&&pH<=7.45&&rK&&!mA)){const a=24-0.2*(40-pc),c1=24-0.4*(40-pc),c2=24-0.5*(40-pc);r.exp.push(`預期 HCO₃⁻ 急性 ${f(a)}、慢性 ${f(c2)}–${f(c1)}，實測 ${hc}`);}
+  return r;}
+function abTrendHTML(p){if(!hasLabs(p))return '';
+  const phIt=Object.values(p.labs.items).filter(it=>it.code==='72C530'&&it.sampleType==='B');const sks=new Set();phIt.forEach(it=>Object.keys(it.vals).forEach(k=>sks.add(k)));
+  let list=[...sks].sort();if(p.admitDate){const a=p.admitDate.replace(/-/g,'')+'0000';list=list.filter(k=>k>=a);}if(!list.length)return '';
+  const g=(c,sk,h)=>abNear(p,c,sk,h),f=n=>n==null?'—':(+n.toFixed(1)).toString();
+  const admT=p.admitDate?tsOf(p.admitDate+'T00:00:00'):null;
+  const rows=list.map(sk=>{const pH=g('72C530',sk,0.1),pc=g('72D530',sk,0.1);let hc=g('72F530',sk,0.1);if(!hc&&pH&&pc)hc={v:+(0.03*pc.v*Math.pow(10,pH.v-6.1)).toFixed(1),calc:true};const be=g('72I530',sk,0.1),po=g('72E530',sk,0.1),sat=g('72K530',sk,0.1);
+    if(!pH||!pc||!hc)return `<tr><td>${skMD(sk)} ${sk.slice(8,10)}:${sk.slice(10,12)}</td><td colspan="9" class="mute">pH／PCO₂／HCO₃⁻ 不完整</td></tr>`;
+    const na=g('72-355',sk,12),cl=g('72-357',sk,12),alb=g('72-303',sk,72),lac=g('72-419',sk,6),e=abEval(pH.v,pc.v,hc.v);
+    let ag=null,agc=null,dd=null;if(na&&cl){ag=na.v-(cl.v+hc.v);agc=alb?ag+2.5*(4-alb.v):null;const A=agc!=null?agc:ag;if(A>16&&hc.v<24)dd=(A-12)/(24-hc.v);}
+    const dayN=admT?Math.floor((tsOf(sk)-admT)/864e5)+1:null;
+    const ven=po&&sat&&po.v<60&&sat.v<90?`<div class="small mute">pO₂ ${po.v}、SAT ${sat.v}%：若為靜脈血，PCO₂ 與氧合以動脈血為準（Cochrane 2025）</div>`:'';
+    return `<tr><td style="white-space:nowrap">${skMD(sk)} ${sk.slice(8,10)}:${sk.slice(10,12)}${dayN?`<div class="small mute">入院 D${dayN}</div>`:''}</td>
+      <td style="text-align:right">${pH.v}</td><td style="text-align:right">${pc.v}</td><td style="text-align:right">${hc.v}${hc.calc?'<div class="small mute">計算</div>':''}</td><td style="text-align:right">${be?be.v:'—'}</td><td style="text-align:right">${lac?lac.v:'—'}</td>
+      <td style="text-align:right;white-space:nowrap">${ag!=null?`${f(ag)}${agc!=null?`<div class="small mute">校正 ${f(agc)}</div>`:''}`:`<span class="mute">${!na?'缺 Na':!cl?'缺 Cl':''}</span>`}</td>
+      <td style="text-align:right">${dd!=null?f(dd):'—'}</td>
+      <td>${e.em}${e.pri.length?'：'+e.pri.join('＋'):''}${e.exp.map(x=>`<div class="small">${x}</div>`).join('')}${ven}</td></tr>`;}).join('');
+  return `<div style="padding:8px 10px 10px"><b>酸鹼時序</b> <span class="small mute">${p.admitDate?`入院（${esc(p.admitDate)}）至今`:'全部時間點（基本資料未填入院日）'}・共 ${list.length} 次血氣・不受上方顯示範圍影響</span>
+    <div class="tblwrap" style="margin-top:4px"><table class="small" style="width:100%"><tr class="mute"><th style="text-align:left">時間</th><th>pH</th><th>PCO₂</th><th>HCO₃⁻</th><th>BE</th><th>Lactate</th><th>AG</th><th>Δ/Δ</th><th style="text-align:left">逐步法計算</th></tr>${rows}</table></div>
+    <div class="small mute" style="margin-top:4px">規則（${AB_SRC}）：pH &lt;7.35 酸血症、&gt;7.45 鹼血症；HCO₃⁻ 正常 22–26、PCO₂ 35–45。預期代償：代酸 Winter PCO₂＝1.5×HCO₃⁻＋8 ±2；代鹼 PCO₂＝40＋0.7×(HCO₃⁻−24)；呼酸 PCO₂ 每升 10，HCO₃⁻ 急性升 1、慢性升 3.5；呼鹼 PCO₂ 每降 10，HCO₃⁻ 急性降 2、慢性降 4–5。實測超出預期範圍時，原文提示合併另一種異常。AG＝Na−(Cl＋HCO₃⁻)，白蛋白校正＋2.5×(4−Alb)；&gt;16 為升高。Δ/Δ＝(AG−12)÷(24−HCO₃⁻)，只在 AG &gt;16 時計算；&lt;1 提示合併非 AG 代酸，&gt;2 提示合併代鹼。Na、Cl 取 ±12 小時、Alb 取 ±72 小時、Lactate 取 ±6 小時內最接近的一筆；HCO₃⁻ 用血氣 cHCO₃；缺值時以 Henderson–Hasselbalch（0.03×PCO₂×10^(pH−6.1)）計算並標「計算」。急性或慢性需依病程判斷，故兩者並列。</div></div>`;}
+// ===== 肋膜液（只列數字與文獻閾值，不寫結論） =====
+const PL_ST=/^(PL|PE|PF|PLF|胸水|肋膜)/i;
+const PL_SRC={N18:'Feller-Kopman & Light, NEJM 2018',J14:'Wilcox, JAMA 2014',E24:'ERS Statement, Eur Respir J 2024',A23:'Arrigo, Ann Clin Biochem 2023',F23:'Shen-Wagner, Am Fam Physician 2023',P11:'Porcel, Respirology 2011'};
+function plItems(p,re,stRe){return hasLabs(p)?Object.values(p.labs.items).filter(it=>stRe.test(it.sampleType||'')&&re.test(it.name)):[];}
+function plVal(p,re,sk){let best=null;plItems(p,re,PL_ST).forEach(it=>{const v=it.vals[sk];if(v&&labNum(v)===labNum(v))best={v:labNum(v),raw:v.value,unit:it.unit,name:it.name};});return best;}
+function plSerum(p,codes,re,sk){const T=tsOf(sk),its=hasLabs(p)?Object.values(p.labs.items).filter(it=>it.sampleType==='B'&&(codes.includes(it.code)||re.test(it.name))):[];let best=null;
+  its.forEach(it=>Object.entries(it.vals).forEach(([k,v])=>{const n=labNum(v),d=Math.abs(tsOf(k)-T);if(n===n&&d<=24*36e5&&(!best||d<best.d))best={v:n,sk:k,d,unit:it.unit,ref:it.ref,name:it.name};}));return best;}
+function plULN(ref){const m=String(ref||'').match(/(?:≦|<=|≤|<|-|~)\s*([\d.]+)\s*$/)||String(ref||'').match(/([\d.]+)\s*$/);return m?+m[1]:null;}
+function plCard(p){
+  const sks=new Set();plItems(p,/./,PL_ST).forEach(it=>Object.keys(it.vals).forEach(k=>sks.add(k)));if(!sks.size)return '';
+  const f2=n=>n==null?'—':(+n.toFixed(2)).toString(),tick=b=>b==null?'<span class="mute">—</span>':b?'<b style="color:var(--bad,#b42318)">✓</b>':'<span class="mute">✗</span>';
+  const tm=x=>x?`${skMD(x.sk)} ${x.sk.slice(8,10)}:${x.sk.slice(10,12)}`:'';
+  const blocks=[...sks].sort().reverse().slice(0,3).map(sk=>{
+    const pT=plVal(p,/prot|^tp\b/i,sk),pL=plVal(p,/^ldh/i,sk),pA=plVal(p,/^alb/i,sk),pG=plVal(p,/glu|sugar/i,sk),pH=plVal(p,/^ph\b/i,sk),pADA=plVal(p,/^ada\b|adenosine/i,sk),pTG=plVal(p,/trigly|^tg\b/i,sk),pCh=plVal(p,/chol/i,sk),pBNP=plVal(p,/bnp/i,sk),pMes=plVal(p,/mesothelin/i,sk);
+    const sT=plSerum(p,['72-325'],/^(tp\b|total protein)/i,sk),sL=plSerum(p,[],/^ldh/i,sk),sA=plSerum(p,['72-303'],/^albumin/i,sk),sG=plSerum(p,['72-314'],/^(glucose|sugar)/i,sk);
+    const uln=sL?plULN(sL.ref):null,rows=[];
+    const R=(k,val,thr,ok,src)=>rows.push(`<tr><td>${k}</td><td style="text-align:right;font-family:ui-monospace,Menlo,monospace">${val}</td><td class="small">${thr}</td><td style="text-align:center">${tick(ok)}</td><td class="small mute">${src}</td></tr>`);
+    const pr=pT&&sT?pT.v/sT.v:null,lr=pL&&sL?pL.v/sL.v:null;
+    R('蛋白比（PL／血清）',pT&&sT?`${pT.v} ÷ ${sT.v} = <b>${f2(pr)}</b>`:`${pT?pT.v:'—'} ÷ ${sT?sT.v:'—'}`,'&gt;0.5',pr==null?null:pr>0.5,PL_SRC.N18+'；'+PL_SRC.J14);
+    R('LDH 比（PL／血清）',pL&&sL?`${pL.v} ÷ ${sL.v} = <b>${f2(lr)}</b>`:`${pL?pL.v:'—'} ÷ ${sL?sL.v:'—'}`,'&gt;0.6',lr==null?null:lr>0.6,PL_SRC.N18+'；'+PL_SRC.J14);
+    R('PL LDH vs 血清 LDH 正常上限 2/3',pL&&uln?`${pL.v} vs ${f2(uln*2/3)}（上限 ${uln}）`:pL?`${pL.v}（缺血清 LDH 參考值）`:'—','&gt; 2/3 上限',pL&&uln?pL.v>uln*2/3:null,PL_SRC.N18+'；'+PL_SRC.J14);
+    if(sA||pA)R('白蛋白梯度（血清 − PL）',sA&&pA?`${sA.v} − ${pA.v} = <b>${f2(sA.v-pA.v)}</b> g/dL`:`${sA?sA.v:'—'} − ${pA?pA.v:'—'}`,'&gt;1.2 g/dL',sA&&pA?sA.v-pA.v>1.2:null,PL_SRC.N18+'；'+PL_SRC.A23);
+    if(sT&&pT)R('蛋白梯度（血清 − PL）',`${sT.v} − ${pT.v} = <b>${f2(sT.v-pT.v)}</b> g/dL`,'&gt;3.1 g/dL',sT.v-pT.v>3.1,PL_SRC.A23);
+    if(pBNP)R('PL NT-proBNP',`${pBNP.v} ${esc(pBNP.unit||'')}`,'&gt;1500 pg/mL',pBNP.v>1500,PL_SRC.N18);
+    if(pCh)R('PL Cholesterol',`${pCh.v} ${esc(pCh.unit||'')}`,'&gt;55 mg/dL（無血清時與 LDH &gt;67% 上限並用）',pCh.v>55,PL_SRC.E24);
+    if(pG)R('PL Glucose',`${pG.v}${sG?`　血清 ${sG.v}（${tm(sG)}），PL／血清 ${f2(pG.v/sG.v)}`:'　<span class="mute">無 ±24 h 血清配對</span>'}`,'&lt;60 mg/dL',pG.v<60,PL_SRC.A23);
+    if(pH)R('PL pH',`${pH.v}`,'&lt;7.30；&lt;7.20',pH.v<7.3,PL_SRC.A23+'；'+PL_SRC.F23);
+    if(pADA)R('PL ADA',`${pADA.v} ${esc(pADA.unit||'')}`,'&gt;40 U/L（另有 &gt;35）',pADA.v>40,PL_SRC.A23+'；'+PL_SRC.P11);
+    if(pTG)R('PL Triglyceride',`${pTG.v} ${esc(pTG.unit||'')}`,'&gt;110 mg/dL',pTG.v>110,PL_SRC.A23);
+    if(pMes)R('PL Mesothelin',`${pMes.v} ${esc(pMes.unit||'')}`,'&gt;20 nmol/L',pMes.v>20,PL_SRC.P11);
+    const pair=[sT&&`TP ${tm(sT)}`,sL&&`LDH ${tm(sL)}`,sA&&`Alb ${tm(sA)}`].filter(Boolean).join('、');
+    const miss=[!sT&&'TP',!sL&&'LDH'].filter(Boolean);
+    return `<div style="margin-top:6px"><b>PL 採檢 ${skMD(sk)} ${sk.slice(8,10)}:${sk.slice(10,12)}</b> <span class="small mute">血清配對（±24 h 最接近）：${pair||'無'}${miss.length?`；缺血清 ${miss.join('、')}`:''}</span>
+      <table class="small" style="width:100%;margin-top:4px"><tr class="mute"><th style="text-align:left">項目</th><th style="text-align:right">數值</th><th style="text-align:left">文獻閾值</th><th>達到</th><th style="text-align:left">出處</th></tr>${rows.join('')}</table></div>`;}).join('');
+  return `<div class="card"><h3>肋膜液數值對照 <span class="small mute">Light's criteria 與後續檢驗閾值</span></h3>${blocks}
+    <div class="small mute" style="margin-top:6px">只列計算值與文獻閾值，不做判讀。✓＝數值達到該閾值。血清 LDH 正常上限取自報告參考值。肋膜液與血清最好同時段採檢；顯示的是 ±24 小時內最接近的一筆。利尿後的心衰竭積液可能使 Light's 偏向滲出液，因此另列白蛋白與蛋白梯度。</div></div>`;}
 function cgCard(p){const c=cgParts(p);if(!c)return '';const cr=latestLab(p,'72-333');if(!cr)return '';const scr=labNum(cr);if(!(scr>0))return '';
   const fx=n=>+n.toFixed(1);
   const line=([k,w])=>`<div class="kv"><span class="k">${k} ${fx(w)} kg${k==='TBW'?' <span class="tag t-new">劑量規則預設</span>':k==='AdjBW'?' <span class="tag t-reg">肥胖規則改用</span>':' <span class="small mute">參考</span>'}</span><span style="text-align:right;font-family:ui-monospace,Menlo,monospace">(140 − ${c.age}) × ${fx(w)}${c.f!==1?' × 0.85':''} ÷ (72 × ${scr}) = <b>${cgCalc(c,w,scr).toFixed(1)}</b> mL/min</span></div>`;
@@ -3644,7 +3753,7 @@ function renderLab(p,ro){
   pd.forEach((x,i)=>{
     const open=U.open[x.name]!==false;
     h+=`<details class="lgroup" data-lp="${esc(x.name)}" ${open?'open':''}><summary><span>${esc(x.name)} <span class="small mute">${x.items.length} 項</span></span>
-      <button class="small" data-lcopy="${i}">📋 複製本類別</button></summary><div class="tblwrap" style="border:none;border-radius:0">${labTableHTML(x,L)}</div></details>`;
+      <button class="small" data-lcopy="${i}">📋 複製本類別</button></summary><div class="tblwrap" style="border:none;border-radius:0">${labTableHTML(x,L)}</div>${/血氣/.test(x.name)?abTrendHTML(p):''}</details>`;
   });
   return h;
 }
